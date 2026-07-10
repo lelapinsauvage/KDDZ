@@ -1,8 +1,9 @@
 # Kiddz Online State Pattern Validation
 
 **Date:** 2026-07-10  
-**Status:** Territory-neutral state fixtures browser-validated  
+**Status:** Executable territory-neutral contract; full semantic and responsive matrix browser-validated
 **Prototype:** `/design-lab/states`
+**Contract:** `src/lib/redesign-state-contracts.ts`
 
 ## Question
 
@@ -13,6 +14,8 @@ Can the design-system contract express every required data, input, system, and r
 The state lab uses one synthetic Meadow lunch-care object to exercise behavior. It does not call server actions, persist drafts, alter production components, select a creative territory, or prove backend integrity.
 
 It exists to make state requirements visible and testable before production screens compose them.
+
+The state labels, groups, source status, completion, revision, and acceptance rules now come from one typed contract. The prototype is a consumer of that contract rather than a second handwritten definition.
 
 ## Implemented Matrix
 
@@ -73,7 +76,7 @@ The fixture is local, but the UI contract correctly requires those values to com
 
 ### Responsive navigation
 
-- At `390 x 844`, the page has no horizontal overflow and no visible interactive target below 44px.
+- At `320 x 568` and `390 x 844`, all 15 states have no horizontal overflow and no visible interactive target below 44px.
 - Closed off-canvas navigation is hidden and non-interactive.
 - Opening moves focus to `Close state navigation`.
 - Closing returns focus to `Open state navigation`.
@@ -88,11 +91,16 @@ The fixture is local, but the UI contract correctly requires those values to com
 
 ## Automated Verification
 
-- `pnpm exec eslint src/app/design-lab/states --max-warnings=0`: passed.
-- `pnpm exec tsc --noEmit --pretty false`: passed.
-- `git diff --check`: passed.
+- `pnpm exec tsx src/scripts/verify-redesign-state-contracts.ts`: passed with 15 states, four groups, and 60 acceptance assertions.
+- Focused ESLint and `pnpm exec tsc --noEmit --pretty false`: passed.
+- Agent Browser executed every state through deterministic `?audit=axe&state=<id>` URLs at `1440 x 900`, `390 x 844`, and `320 x 568`.
+- All 45 state/viewport combinations completed with zero axe violations and zero unresolved/incomplete findings.
+- All 45 combinations expose one H1, no unnamed visible control, no horizontal overflow, and no clipped critical text.
+- Both phone matrices pass the 44px visible-target floor; the desktop matrix passes its 32px compact-control floor.
+- The shared harness regression check on `/design-lab/territories/daylight?audit=axe` also completed with zero violations or incomplete findings.
 - `pnpm build`: passed and emitted `/design-lab/states` as a static route.
-- Fresh production console: no state-route errors.
+
+The browser pass found and corrected four real defects before acceptance: unsupported labeling on the loading skeleton, low-contrast warning copy, opacity-reduced unavailable-record copy, and the unnamed mobile reset control.
 
 The repository build still logs known dynamic-route prerender messages from unrelated legacy pages using request-scoped APIs. The build exits successfully.
 
@@ -160,13 +168,13 @@ The following territory-neutral behaviors are accepted for future workflow fixtu
 Before shared production components are accepted:
 
 - Connect fixtures to real server result schemas and state machines.
-- Add automated axe/ARIA, contrast, keyboard, and screen-reader tests.
-- Verify 320px reflow and 200% zoom.
+- Add production interaction tests for keyboard focus order and the state-machine transitions that consume the contract.
+- Verify actual 200% browser zoom and VoiceOver/NVDA behavior.
 - Emulate reduced motion and verify loading/status meaning.
 - Validate offline storage and conflict policy with security/privacy review.
 - Test long Arabic/RTL and English labels.
 - Add dark/high-contrast token variants after creative selection.
-- Add visual regression fixtures for every state.
+- Add visual regression snapshots for every final-theme state after creative selection.
 - Test motion under CPU slowdown and real tablet/mobile hardware.
 
 ## Decision

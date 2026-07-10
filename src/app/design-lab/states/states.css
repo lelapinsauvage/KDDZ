@@ -6,7 +6,7 @@
   --state-muted: #696b66;
   --state-border: #dfe0da;
   --state-safe: #187a54;
-  --state-warning: #9b6600;
+  --state-warning: #865900;
   --state-critical: #b3323d;
   --state-info: #2d638c;
   min-height: 100dvh;
@@ -117,7 +117,7 @@
 .state-record-row small, .state-queue-record small { overflow: hidden; color: var(--state-muted); font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
 .state-record-row > span:last-child, .state-queue-record > span:last-child { color: var(--state-muted); font-size: 8px; }
 .state-record-row > span.is-safe { color: var(--state-safe); }
-.state-record-row.is-muted { opacity: 0.58; }
+.state-record-row.is-muted { background: #f7f7f6; }
 .state-partial .state-primary-action, .state-offline .state-primary-action, .state-waiting .state-primary-action, .state-success .state-primary-action, .state-closed .state-primary-action { margin-top: 18px; }
 .state-failure dl, .state-closed dl, .state-waiting dl { margin: 0; }
 .state-failure dl > div, .state-closed dl > div, .state-waiting dl > div { display: flex; min-height: 42px; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--state-border); }

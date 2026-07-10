@@ -2,8 +2,8 @@
 
 **Last updated:** 2026-07-10
 **Plan:** `docs/redesign-master-plan.md`
-**Program state:** Product discovery and benchmark research closed; territory-neutral staff IA, capability-derived navigation, Calls-under-Messages placement, route compatibility, native/parent convergence, state, motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; creative selection packet ready and explicit production choice open
-**Reported progress:** **50% done / 50% left**
+**Program state:** Product discovery and benchmark research closed; territory-neutral staff IA, capability-derived navigation, Calls-under-Messages placement, route compatibility, native/parent convergence, executable state matrix, motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; creative selection packet ready and explicit production choice open
+**Reported progress:** **51% done / 49% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -16,11 +16,11 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | 2. Benchmark research | 10% | Complete | 10% | Pinterest taxonomy, Mobbin flow sheets, direct-competitor operations, benchmark synthesis |
 | 3. Brand strategy and direction | 10% | In progress | 6% | Strategy, three complete territories, selected brand constitution |
 | 4. IA and core UX | 12% | In progress | 8% | Sitemap, navigation model, Today model, tested wireframes |
-| 5. Design system | 13% | In progress | 11% | Tokens, components, motion, responsive, accessibility, performance, and data-delivery foundations |
+| 5. Design system | 13% | In progress | 12% | Tokens, components, motion, responsive, accessibility, performance, and data-delivery foundations |
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **50%** |  |
+| **Total** | **100%** |  | **51%** |  |
 
 ## Confirmed Baseline
 
@@ -527,6 +527,18 @@ An item is complete only when:
 - **Evidence boundary:** The user has not selected a production direction. Actual zoom, assistive technology, OS/device settings, nursery operators, and field performance remain later gates for the selected system.
 - **Next action:** Receive the explicit Daylight, Signal, or Carebook selection; then write the brand/design constitution and begin final token and production pilot work.
 - **Progress earned:** 0 percentage points; Phase 3 remains 6 of 10% and total remains 50% because the irreversible selection gate is still open.
+
+### 2026-07-10 - Phase 5 executable state contract and full matrix audit
+
+- **Question:** Can every required data, input, system, and result state be one executable contract rather than duplicated prose and component-local logic, and does every fixture survive the same semantic and narrow-screen gate?
+- **Decision:** Extract all 15 state definitions, source status, completion, revision, and common/state-specific rules into a typed territory-neutral contract. Make the lab consume it, expose deterministic audit URLs, and share one axe harness with the creative-territory prototypes.
+- **Artifacts:** `src/lib/redesign-state-contracts.ts`, `src/scripts/verify-redesign-state-contracts.ts`, the shared `AxeAuditHarness`, `/design-lab/states?audit=axe&state=<id>`, and updated state/design-system/master-plan evidence.
+- **Verification:** The source verifier passes 15 unique states, four groups, and 60 acceptance assertions. All 15 states pass Agent Browser at `1440 x 900`, `390 x 844`, and `320 x 568`: zero axe violations, zero unresolved findings, one H1, no unnamed visible controls, no overflow, no clipped critical text, and no sub-44px phone target. The shared Daylight harness regression, focused ESLint, TypeScript, diff check, and production build pass; the build retains its documented legacy dynamic-prerender messages and print CSS warning.
+- **Defects closed:** Replaced unsupported skeleton labeling with a live busy status; corrected warning and unavailable-row contrast; named the icon-only mobile reset control.
+- **Parity:** No production route consumes the contract yet. No production visual, query, mutation, database behavior, permission, export, legacy alias, native contract, or restored capability changed.
+- **Evidence boundary:** Automated semantics and responsive geometry do not replace actual 200% zoom, VoiceOver/NVDA, reduced-motion, offline/privacy policy, real-device, final-theme, or server-state integration tests. Creative selection remains open.
+- **Next action:** Receive the explicit creative direction, then codify final tokens and consume this contract in the first complete production pilot with server-owned state and audit history.
+- **Progress earned:** 1 percentage point; Phase 5 reaches 12 of 13% and total reaches 51%.
 
 ## Work Log Template
 

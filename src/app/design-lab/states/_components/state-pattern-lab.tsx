@@ -19,70 +19,45 @@ import {
   X,
   XCircle,
 } from "lucide-react"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react"
+import {
+  isRedesignStateId,
+  redesignStateAcceptanceRules,
+  redesignStateContracts,
+  redesignStateGroups,
+  redesignStateOrder,
+  type RedesignStateId,
+} from "@/lib/redesign-state-contracts"
+import { StateAxeHarness } from "./state-axe-harness"
 
-type StateId =
-  | "initial"
-  | "loading"
-  | "empty"
-  | "partial"
-  | "unknown"
-  | "draft"
-  | "validation"
-  | "denied"
-  | "failure"
-  | "offline"
-  | "conflict"
-  | "waiting"
-  | "success"
-  | "corrected"
-  | "closed"
+const stateIcons = {
+  initial: CircleHelp,
+  loading: LoaderCircle,
+  empty: CircleHelp,
+  partial: FileWarning,
+  unknown: CircleHelp,
+  draft: Save,
+  validation: AlertTriangle,
+  denied: LockKeyhole,
+  failure: XCircle,
+  offline: WifiOff,
+  conflict: CloudOff,
+  waiting: History,
+  success: CheckCircle2,
+  corrected: Pencil,
+  closed: ShieldCheck,
+} satisfies Record<RedesignStateId, typeof CircleHelp>
 
-type StateDefinition = {
-  label: string
-  group: "Data" | "Input" | "System" | "Result"
-  summary: string
-  icon: typeof CircleHelp
+const subscribeToStaticLocation = () => () => undefined
+const readAuditSnapshot = () => {
+  const params = new URLSearchParams(window.location.search)
+  const requestedState = params.get("state")
+  return `${params.get("audit") === "axe" ? "axe" : "off"}:${isRedesignStateId(requestedState) ? requestedState : "initial"}`
 }
-
-const stateOrder: StateId[] = [
-  "initial",
-  "loading",
-  "empty",
-  "partial",
-  "unknown",
-  "draft",
-  "validation",
-  "denied",
-  "failure",
-  "offline",
-  "conflict",
-  "waiting",
-  "success",
-  "corrected",
-  "closed",
-]
-
-const states: Record<StateId, StateDefinition> = {
-  initial: { label: "Initial", group: "Data", summary: "Stable page identity appears before secondary data or action.", icon: CircleHelp },
-  loading: { label: "Loading", group: "Data", summary: "Structural placeholders preserve the final geometry and page identity.", icon: LoaderCircle },
-  empty: { label: "Empty", group: "Data", summary: "Accurate scope and date explain why there is no work.", icon: CircleHelp },
-  partial: { label: "Partial", group: "Data", summary: "Available facts remain useful while missing source data is explicit.", icon: FileWarning },
-  unknown: { label: "Unknown", group: "Input", summary: "An unobserved factual value stays unset with a clear owner and action.", icon: CircleHelp },
-  draft: { label: "Draft", group: "Input", summary: "Persisted but incomplete input exposes scope, revision, and resume state.", icon: Save },
-  validation: { label: "Validation", group: "Input", summary: "Errors stay beside their source and preserve every entered value.", icon: AlertTriangle },
-  denied: { label: "Permission denied", group: "System", summary: "The user receives a safe reason and return path without record leakage.", icon: LockKeyhole },
-  failure: { label: "Server failure", group: "System", summary: "Input and context survive while retry and escalation remain adjacent.", icon: XCircle },
-  offline: { label: "Offline", group: "System", summary: "The UI names what is cached, queued, blocked, and not yet authoritative.", icon: WifiOff },
-  conflict: { label: "Conflict", group: "System", summary: "Server and local revisions are compared before an authorized resolution.", icon: CloudOff },
-  waiting: { label: "Waiting", group: "Result", summary: "A dependency, owner, elapsed time, and next rule keep work accountable.", icon: History },
-  success: { label: "Success", group: "Result", summary: "Server confirmation updates the source object and linked work immediately.", icon: CheckCircle2 },
-  corrected: { label: "Corrected", group: "Result", summary: "The original record, reason, actor, and new revision remain visible.", icon: Pencil },
-  closed: { label: "Closed", group: "Result", summary: "Active treatment ends while result and evidence stay discoverable.", icon: ShieldCheck },
-}
+const readServerAuditSnapshot = () => "off:initial"
 
 export function StatePatternLab() {
-  const [activeState, setActiveState] = useState<StateId>("initial")
+  const [activeState, setActiveState] = useState<RedesignStateId>("initial")
   const [mobileOpen, setMobileOpen] = useState(false)
   const [meal, setMeal] = useState("")
   const [mood, setMood] = useState("")
@@ -91,11 +66,20 @@ export function StatePatternLab() {
   const menuTriggerRef = useRef<HTMLButtonElement>(null)
   const menuCloseRef = useRef<HTMLButtonElement>(null)
   const mealRef = useRef<HTMLSelectElement>(null)
+  const auditSnapshot = useSyncExternalStore(
+    subscribeToStaticLocation,
+    readAuditSnapshot,
+    readServerAuditSnapshot,
+  )
+  const [axeAudit, requestedState] = auditSnapshot.split(":") as [
+    "axe" | "off",
+    RedesignStateId,
+  ]
 
-  const selectState = (state: StateId) => {
+  const selectState = (state: RedesignStateId) => {
     setActiveState(state)
     setMobileOpen(false)
-    setAnnouncement(`${states[state].label} fixture loaded`)
+    setAnnouncement(`${redesignStateContracts[state].label} fixture loaded`)
     window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "auto" }))
   }
 
@@ -116,11 +100,16 @@ export function StatePatternLab() {
     return () => document.removeEventListener("keydown", handleKeyDown)
   }, [closeMobileNavigation, mobileOpen])
 
-  const activeDefinition = states[activeState]
-  const ActiveIcon = activeDefinition.icon
+  const renderedState = axeAudit === "axe" ? requestedState : activeState
+  const activeDefinition = redesignStateContracts[renderedState]
+  const ActiveIcon = stateIcons[renderedState]
 
   return (
-    <div className="state-lab">
+    <div className="state-lab" data-axe-audit={axeAudit} data-state={renderedState}>
+      <StateAxeHarness
+        enabled={axeAudit === "axe"}
+        signature={`state:${renderedState}`}
+      />
       <aside className={`state-sidebar${mobileOpen ? " is-open" : ""}`} aria-label="State fixtures">
         <div className="state-sidebar__header">
           <div><span>Design system lab</span><strong>State contracts</strong></div>
@@ -128,13 +117,13 @@ export function StatePatternLab() {
         </div>
         <p>Territory-neutral behavior fixtures. No production data or selected visual direction.</p>
         <nav aria-label="State matrix">
-          {(["Data", "Input", "System", "Result"] as const).map((group) => (
+          {redesignStateGroups.map((group) => (
             <div className="state-nav-group" key={group}>
               <span>{group}</span>
-              {stateOrder.filter((state) => states[state].group === group).map((state) => {
-                const definition = states[state]
-                const Icon = definition.icon
-                return <button key={state} className={activeState === state ? "is-active" : undefined} aria-current={activeState === state ? "page" : undefined} onClick={() => selectState(state)} type="button"><Icon aria-hidden="true" /><span>{definition.label}</span><ChevronRight aria-hidden="true" /></button>
+              {redesignStateOrder.filter((state) => redesignStateContracts[state].group === group).map((state) => {
+                const definition = redesignStateContracts[state]
+                const Icon = stateIcons[state]
+                return <button key={state} className={renderedState === state ? "is-active" : undefined} aria-current={renderedState === state ? "page" : undefined} onClick={() => selectState(state)} type="button"><Icon aria-hidden="true" /><span>{definition.label}</span><ChevronRight aria-hidden="true" /></button>
               })}
             </div>
           ))}
@@ -148,37 +137,37 @@ export function StatePatternLab() {
           <button ref={menuTriggerRef} className="state-icon-button state-menu-button" aria-label="Open state navigation" onClick={() => setMobileOpen(true)} type="button"><Menu aria-hidden="true" /></button>
           <div><span>Meadow · lunch observation</span><strong>Room care state fixture</strong></div>
           <span className="state-context"><span />Synthetic data · Tue 14 Jul · 09:18</span>
-          <button className="state-reset" type="button" onClick={() => { setMeal(""); setMood(""); setNote(""); selectState("initial") }}><RotateCcw aria-hidden="true" /><span>Reset fixture</span></button>
+          <button className="state-reset" type="button" aria-label="Reset state fixture" onClick={() => { setMeal(""); setMood(""); setNote(""); selectState("initial") }}><RotateCcw aria-hidden="true" /><span>Reset fixture</span></button>
         </header>
 
         <main className="state-main">
           <section className="state-heading">
-            <div className={`state-heading__icon is-${activeState}`}><ActiveIcon aria-hidden="true" /></div>
+            <div className={`state-heading__icon is-${renderedState}`}><ActiveIcon aria-hidden="true" /></div>
             <div><span>{activeDefinition.group} state</span><h1>{activeDefinition.label}</h1><p>{activeDefinition.summary}</p></div>
           </section>
 
           <div className="state-layout">
             <section className="state-source" aria-labelledby="state-source-heading">
-              <header><div><span>Source object</span><h2 id="state-source-heading">Meadow lunch care</h2></div><span className={`state-source__status is-${activeState}`}>{sourceStatus(activeState)}</span></header>
+              <header><div><span>Source object</span><h2 id="state-source-heading">Meadow lunch care</h2></div><span className={`state-source__status is-${renderedState}`}>{activeDefinition.sourceStatus}</span></header>
               <dl>
                 <div><dt>Room</dt><dd>Meadow · 2-3 years</dd></div>
-                <div><dt>Observed children</dt><dd>{activeState === "empty" ? "0" : "Theo Martin · Mila Costa"}</dd></div>
-                <div><dt>Current completion</dt><dd>{completionText(activeState)}</dd></div>
-                <div><dt>Source revision</dt><dd>{revisionText(activeState)}</dd></div>
+                <div><dt>Observed children</dt><dd>{renderedState === "empty" ? "0" : "Theo Martin · Mila Costa"}</dd></div>
+                <div><dt>Current completion</dt><dd>{activeDefinition.completion}</dd></div>
+                <div><dt>Source revision</dt><dd>{activeDefinition.revision}</dd></div>
               </dl>
               <footer><span>Why this panel stays stable</span><p>Page identity, object scope, and source status do not disappear while secondary data loads, fails, conflicts, or completes.</p></footer>
             </section>
 
             <section className="state-fixture" aria-labelledby="state-fixture-heading">
-              <header><div><span>Behavior fixture</span><h2 id="state-fixture-heading">{activeDefinition.label} presentation</h2></div><span>State {stateOrder.indexOf(activeState) + 1} of {stateOrder.length}</span></header>
-              <div className="state-fixture__body">{renderFixture({ activeState, meal, mood, note, mealRef, setMeal, setMood, setNote, selectState })}</div>
+              <header><div><span>Behavior fixture</span><h2 id="state-fixture-heading">{activeDefinition.label} presentation</h2></div><span>State {redesignStateOrder.indexOf(renderedState) + 1} of {redesignStateOrder.length}</span></header>
+              <div className="state-fixture__body">{renderFixture({ activeState: renderedState, meal, mood, note, mealRef, setMeal, setMood, setNote, selectState })}</div>
             </section>
           </div>
 
           <section className="state-contract" aria-labelledby="state-contract-heading">
             <div><span>Acceptance contract</span><h2 id="state-contract-heading">What must remain true</h2></div>
-            <ul>{contractRules(activeState).map((rule) => <li key={rule}><CheckCircle2 aria-hidden="true" /><span>{rule}</span></li>)}</ul>
-            {activeState === "validation" && <button type="button" onClick={() => mealRef.current?.focus()}>Focus first error</button>}
+            <ul>{redesignStateAcceptanceRules(renderedState).map((rule) => <li key={rule}><CheckCircle2 aria-hidden="true" /><span>{rule}</span></li>)}</ul>
+            {renderedState === "validation" && <button type="button" onClick={() => mealRef.current?.focus()}>Focus first error</button>}
           </section>
         </main>
         <p className="state-announcement" aria-live="polite">{announcement}</p>
@@ -188,7 +177,7 @@ export function StatePatternLab() {
 }
 
 type FixtureProps = {
-  activeState: StateId
+  activeState: RedesignStateId
   meal: string
   mood: string
   note: string
@@ -196,7 +185,7 @@ type FixtureProps = {
   setMeal: (value: string) => void
   setMood: (value: string) => void
   setNote: (value: string) => void
-  selectState: (state: StateId) => void
+  selectState: (state: RedesignStateId) => void
 }
 
 function renderFixture(props: FixtureProps) {
@@ -217,7 +206,7 @@ function renderFixture(props: FixtureProps) {
     case "initial":
       return form()
     case "loading":
-      return <div className="state-skeleton" aria-label="Loading care record"><div /><div className="is-short" /><div className="state-skeleton__fields"><span /><span /></div><div className="is-large" /><p>Loading care record…</p></div>
+      return <div className="state-skeleton" role="status" aria-live="polite" aria-busy="true"><div /><div className="is-short" /><div className="state-skeleton__fields"><span /><span /></div><div className="is-large" /><p>Loading care record…</p></div>
     case "empty":
       return <div className="state-empty"><CircleHelp aria-hidden="true" /><strong>No children are assigned to Meadow for lunch</strong><p>Riverside · Tue 14 Jul. Check the live room roster before creating care records.</p><button type="button">Open room roster<ChevronRight aria-hidden="true" /></button></div>
     case "partial":
@@ -245,50 +234,4 @@ function renderFixture(props: FixtureProps) {
     case "closed":
       return <div className="state-closed"><ShieldCheck aria-hidden="true" /><div><span>Closed at 09:24</span><strong>Meadow lunch care is handled</strong><p>Submission, review, correction, and handover obligations are complete.</p></div><dl><div><dt>Final revision</dt><dd>6</dd></div><div><dt>Submitted by</dt><dd>Karim S.</dd></div><div><dt>Reviewed by</dt><dd>Noor H.</dd></div><div><dt>Evidence</dt><dd>3 history events · 0 attachments</dd></div></dl><button className="state-primary-action" type="button" onClick={() => props.selectState("initial")}>Start another record<ChevronRight aria-hidden="true" /></button></div>
   }
-}
-
-function sourceStatus(state: StateId) {
-  if (["success", "corrected", "closed"].includes(state)) return state === "success" ? "Submitted" : states[state].label
-  if (state === "waiting") return "Submitted · waiting"
-  if (state === "draft" || state === "offline" || state === "conflict") return "Draft"
-  if (state === "loading") return "Loading"
-  if (state === "failure") return "Save failed"
-  return "Not submitted"
-}
-
-function completionText(state: StateId) {
-  if (["success", "corrected", "closed", "waiting"].includes(state)) return "2 of 2 submitted"
-  if (state === "empty") return "No roster records"
-  if (state === "partial") return "1 available · 1 blocked"
-  return "0 of 2 submitted"
-}
-
-function revisionText(state: StateId) {
-  if (state === "corrected" || state === "closed") return "6 · original preserved"
-  if (state === "success" || state === "waiting") return "5 · server confirmed"
-  if (state === "conflict") return "4 local · 5 server"
-  if (state === "draft" || state === "offline" || state === "failure") return "3 · local draft"
-  return "No revision"
-}
-
-function contractRules(state: StateId) {
-  const common = ["Page identity and source scope remain visible.", "No toast or animation is the only proof of state."]
-  const specific: Record<StateId, string[]> = {
-    initial: ["Factual fields remain unset until observed.", "One primary action explains the next step."],
-    loading: ["Placeholder geometry matches final content.", "Loading status is announced without moving focus."],
-    empty: ["Scope and date make the empty meaning accurate.", "The action repairs the source, not a generic dead end."],
-    partial: ["Available records remain usable.", "Missing source and freshness prevent false completion."],
-    unknown: ["Unknown is visibly different from zero or none.", "The missing fact has an owner and valid action."],
-    draft: ["Saved time, device, scope, and revision are visible.", "Draft is never counted as submitted completion."],
-    validation: ["Errors sit beside the affected field.", "Input is preserved and the first error can receive focus."],
-    denied: ["The reason category and safe return path are visible.", "Out-of-scope record existence is not revealed."],
-    failure: ["Entered values survive the failure.", "Retry is idempotent and escalation remains adjacent."],
-    offline: ["Queued work is not presented as server-confirmed.", "Unsynced scope and conflict policy are visible."],
-    conflict: ["Server and local revisions are compared.", "Resolution preserves the discarded revision and reason."],
-    waiting: ["Dependency, owner, elapsed time, and next rule are named.", "The source record remains submitted while work stays open."],
-    success: ["The server result updates source and linked work.", "Counts and history derive from the accepted response."],
-    corrected: ["Original values and revisions remain visible.", "Reason, actor, and corrected result are explicit."],
-    closed: ["Active-work treatment ends.", "Result, evidence, and audit history remain discoverable."],
-  }
-  return [...common, ...specific[state]]
 }

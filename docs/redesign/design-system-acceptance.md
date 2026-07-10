@@ -373,6 +373,8 @@ Every page, component, and workflow documents these states before acceptance:
 
 Status messages are exposed programmatically without forcing focus. Toasts may supplement but never replace inline source-state proof.
 
+The matrix is executable in `src/lib/redesign-state-contracts.ts` and consumed by `/design-lab/states`. Its verifier requires all 15 unique states, four groups, and 60 common-plus-state-specific acceptance assertions. Agent Browser evidence in `state-pattern-validation.md` covers every state at desktop, 390px, and 320px with the shared axe violation/incomplete protocol.
+
 ## Motion Contract
 
 ### Motion jobs
@@ -581,7 +583,7 @@ The territory-neutral shell fixture baseline is executable in `navigation-capabi
 - Converge final motion tokens from the accepted prototype evidence; Motion is available, but production use still requires a validated transition.
 - Preserve the territory axe harness as pre-merge evidence and extend the same violation/incomplete/manual-disposition protocol to selected pilot routes and visual-regression infrastructure.
 - Add field Web Vitals instrumentation and budgets.
-- Build component fixtures for the complete state matrix.
+- Adopt the executable state contract in the first production pilot and prove its server result, permission, revision, and audit-history integrations.
 - Integrate the navigation projector with a server-owned production authorization service, then add non-disclosing forbidden, pending-setup, revoked-assignment, and request-access fixtures.
 - Validate touch, screen reader, reduced motion, offline, and CPU performance on real devices.
 
