@@ -2,8 +2,8 @@
 
 **Last updated:** 2026-07-10
 **Plan:** `docs/redesign-master-plan.md`
-**Program state:** Three creative territories built and provisionally evaluated; selection gate open
-**Reported progress:** **25% done / 75% left**
+**Program state:** Territory-neutral IA and critical workflow model browser-tested; creative selection gate open
+**Reported progress:** **29% done / 71% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -15,12 +15,12 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | 1. Product discovery | 12% | In progress | 9% | Flow inventory, role/task matrix, current journeys, friction/risk register |
 | 2. Benchmark research | 10% | In progress | 9% | Pinterest taxonomy, Mobbin flow sheets, benchmark synthesis |
 | 3. Brand strategy and direction | 10% | In progress | 4% | Strategy, three complete territories, selected brand constitution |
-| 4. IA and core UX | 12% | Not started | 0% | Sitemap, navigation model, Today model, tested wireframes |
+| 4. IA and core UX | 12% | In progress | 4% | Sitemap, navigation model, Today model, tested wireframes |
 | 5. Design system | 13% | Not started | 0% | Tokens, components, motion, responsive and accessibility docs |
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **25%** |  |
+| **Total** | **100%** |  | **29%** |  |
 
 ## Confirmed Baseline
 
@@ -285,6 +285,17 @@ An item is complete only when:
 - **Evidence boundary:** Real-user observation, automated accessibility and contrast scans, 200% zoom, screen readers, reduced-motion emulation, and native-device testing remain open. User selection remains an irreversible gate; production UI is untouched.
 - **Next action:** Continue territory-neutral IA and workflow specification while preparing the selected-direction constitution gate.
 - **Progress earned:** 3 percentage points; total 25%.
+
+### 2026-07-10 - Phase 4 territory-neutral IA and core workflow validation
+
+- **Question:** Can one shallow domain model make daily work findable across manager, teacher, nurse, and doctor projections while preserving branch scope, source-object routing, legacy parity, and responsive behavior?
+- **Evidence:** 22 canonical domains, 1,713 mapped parity rows, role/runtime audit, seven journey-state contracts, interactive IA lab, production captures, role/branch projection tests, search and queue routing tests, 768 and 390 responsive measurements.
+- **Decision:** Use Today, Children, Rooms, Team, Messages, Finance, and Reports as the working staff domains, with Settings separated. Replace actionable alarm taxonomy with owned work that resolves to canonical source objects. Treat route renames and production navigation changes as gated hypotheses.
+- **Artifacts:** `docs/redesign/information-architecture.md`, `docs/redesign/core-workflow-blueprints.md`, `docs/redesign/ia-validation.md`, `src/app/design-lab/ia`, and `docs/redesign/ia`.
+- **Verification:** IA lint, repository TypeScript, diff checks, production build, clean route console, role and branch scope changes, global search, queue routing, 768 overflow, 390 overflow/targets, and mobile focus return passed.
+- **Evidence boundary:** Operator card sorting/first-click tests, first-market terminology, capability fixtures, 200% zoom, screen readers, native comparison, and route compatibility analytics remain open.
+- **Next action:** Define territory-neutral design-system acceptance criteria and build workflow wireflows that exercise loading, empty, validation, failure, waiting, success, correction, and offline states without selecting production visuals.
+- **Progress earned:** 4 percentage points; total 29%.
 
 ## Work Log Template
 
