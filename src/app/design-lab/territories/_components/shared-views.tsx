@@ -155,7 +155,7 @@ export function CareView({ territory }: { territory: TerritoryId }) {
           <div className="care-child-list">
             {cohort.map((child) => (
               <label className={selectedIds.includes(child.id) ? "is-selected" : undefined} key={child.id}>
-                <input checked={selectedIds.includes(child.id)} onChange={() => toggleChild(child.id)} type="checkbox" />
+                <input aria-label={`Select ${child.name}`} checked={selectedIds.includes(child.id)} onChange={() => toggleChild(child.id)} type="checkbox" />
                 <span className="child-avatar">{child.initials}</span>
                 <span><strong>{child.name}</strong><small>{child.attendance} · {child.care} report</small></span>
                 {selectedIds.includes(child.id) && <Check aria-hidden="true" />}

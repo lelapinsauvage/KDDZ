@@ -13,7 +13,7 @@ import {
   Settings,
   UsersRound,
 } from "lucide-react"
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
 import { CareView, ChildrenView, ReviewView } from "./shared-views"
 import { TodayView } from "./today-views"
 import {
@@ -33,13 +33,23 @@ const primaryNavigation: Array<{
   { id: "review", icon: HeartPulse },
 ]
 
+const subscribeToStaticLocation = () => () => undefined
+const readForcedMotionPreference = () => new URLSearchParams(window.location.search).get("motion") === "reduce"
+const readServerMotionPreference = () => false
+
 export function TerritoryPrototype({ territory }: { territory: TerritoryId }) {
   const [activeView, setActiveView] = useState<PrototypeView>("today")
   const [selectedRoomId, setSelectedRoomId] = useState("meadow")
   const [coverAssigned, setCoverAssigned] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const forceReducedMotion = useSyncExternalStore(
+    subscribeToStaticLocation,
+    readForcedMotionPreference,
+    readServerMotionPreference,
+  )
   const menuTriggerRef = useRef<HTMLButtonElement>(null)
   const menuCloseRef = useRef<HTMLButtonElement>(null)
+  const sidebarRef = useRef<HTMLElement>(null)
   const meta = territoryMeta[territory]
 
   const statusMessage = useMemo(
@@ -58,6 +68,24 @@ export function TerritoryPrototype({ territory }: { territory: TerritoryId }) {
     menuCloseRef.current?.focus()
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") closeMobileMenu()
+      if (event.key !== "Tab" || !sidebarRef.current) return
+
+      const focusable = Array.from(
+        sidebarRef.current.querySelectorAll<HTMLElement>(
+          "a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])",
+        ),
+      ).filter((element) => element.getClientRects().length > 0)
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (!first || !last) return
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
     }
     document.addEventListener("keydown", handleKeyDown)
     return () => document.removeEventListener("keydown", handleKeyDown)
@@ -69,8 +97,18 @@ export function TerritoryPrototype({ territory }: { territory: TerritoryId }) {
   }
 
   return (
-    <div className="territory-lab" data-territory={territory}>
-      <aside className={`territory-sidebar${mobileMenuOpen ? " is-open" : ""}`}>
+    <div
+      className="territory-lab"
+      data-reduced-motion={forceReducedMotion ? "true" : undefined}
+      data-territory={territory}
+    >
+      <aside
+        aria-label={mobileMenuOpen ? "Main navigation" : undefined}
+        aria-modal={mobileMenuOpen ? "true" : undefined}
+        className={`territory-sidebar${mobileMenuOpen ? " is-open" : ""}`}
+        ref={sidebarRef}
+        role={mobileMenuOpen ? "dialog" : undefined}
+      >
         <div className="territory-brand-row">
           <KiddzWordmark />
           <button
@@ -124,9 +162,13 @@ export function TerritoryPrototype({ territory }: { territory: TerritoryId }) {
         </button>
       </aside>
 
-      {mobileMenuOpen && <button className="territory-mobile-scrim" aria-label="Close navigation" onClick={closeMobileMenu} type="button" />}
+      {mobileMenuOpen && <button className="territory-mobile-scrim" aria-hidden="true" onClick={closeMobileMenu} tabIndex={-1} type="button" />}
 
-      <div className="territory-workspace">
+      <div
+        aria-hidden={mobileMenuOpen ? "true" : undefined}
+        className="territory-workspace"
+        inert={mobileMenuOpen}
+      >
         <header className="territory-topbar">
           <button
             className="territory-icon-button territory-mobile-menu"
