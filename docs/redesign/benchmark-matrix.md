@@ -1,8 +1,8 @@
 # Product and Brand Benchmark Matrix
 
-**Status:** Research pass 1
+**Status:** Research pass 2
 **Last updated:** 2026-07-10
-**Mobile flow source:** Mobbin extraction pending in this running task
+**Mobile flow source:** Mobbin flow pass 1 complete; `mobbin-flow-study.md`
 
 ## Research Standard
 
@@ -93,7 +93,7 @@ Duolingo maintains one documented system across identity, imagery, writing, char
 
 ### Duolingo ABC
 
-**Evidence status:** Mobile flow capture pending.
+**Evidence:** [Alphabet lesson](https://mobbin.com/flows/f7cb5d59-e2de-4d7d-b4b4-d512c8d327dd) and [story lesson](https://mobbin.com/flows/bd0fc0b4-4e4a-46c4-8d40-556990c7cf83) inspected in Mobbin.
 
 **Study:** Child-safe interaction, guided progression, instruction without reading dependence, large targets, audio/visual reinforcement, and guardian trust.
 
@@ -155,24 +155,27 @@ No comparative ease-of-use or visual-quality claims are made from marketing page
 5. **Motion preserves continuity.** Shared context, completion, reordering, and return-to-work benefit from motion; routine repetition does not.
 6. **The product must explain consequence.** Financial and operational leaders show what changed, what is pending, and what the user can do next.
 7. **Cross-device means workflow continuity.** It is not the same layout scaled down.
+8. **Keep the source context visible.** Strong actions resolve in place, in a sheet, or beside the object they change.
+9. **Preflight before irreversible work.** Review totals, conflicts, evidence, and consequence before confirmation.
+10. **Progress must be inspectable.** Long work needs named stages, outputs, and recovery rather than an indefinite spinner or ellipsis.
 
 ## Flow Capture Matrix
 
 | Product | Web evidence | iOS/Mobbin | Priority flows still required |
 | --- | --- | --- | --- |
-| Revolut | Official process reviewed | Pending | Home, onboarding, transaction, card control, failure/recovery |
-| Notion | Product principles reviewed | Pending | Page creation, database, search, command, sharing, mobile handoff |
-| Cursor | Current public product reviewed | Pending | Task launch, progress, review, command palette, panels, mobile handoff |
-| Cosmos | Current web/App Store reviewed | Pending | Save, search, collection, provenance, collaboration, mobile import |
-| Vercel | Geist system reviewed | N/A | Dashboard entity/status, deployment detail, destructive action |
-| Duolingo | Brand system identified | Pending | Onboarding, lesson loop, progress, error, celebration, subscription |
-| Duolingo ABC | Pending | Pending | Guided activity, guardian flow, progress, accessibility |
-| Genie | App Store identified | Pending | First launch, quick actions, chat, media result, history, upgrade |
-| Anything | Current web/mobile positioning reviewed | Pending | Start project, voice, progress, preview, publish, cross-device resume |
+| Revolut | Official process reviewed | Sending-money flows inspected | Home, onboarding, card control, failure/recovery |
+| Notion | Product principles reviewed | Web creation and advanced filtering inspected | Search, command, sharing, mobile handoff |
+| Cursor | Current public product reviewed | Agent task/progress/review flows inspected | Command palette, local desktop panels, mobile handoff |
+| Cosmos | Current web/App Store reviewed | Save and library flows inspected | Search modes, provenance, collaboration, mobile import |
+| Vercel | Geist system reviewed | Web project/deployment flows inspected | Failure/recovery and destructive action |
+| Duolingo | Brand system identified | Lesson, error, completion, and return inspected | Onboarding, subscription, live motion/accessibility |
+| Duolingo ABC | Official context reviewed | Alphabet and story lessons inspected | Guardian flow and accessibility behavior |
+| Genie | App Store identified | Text/image chat flows inspected | History, upgrade, live progress behavior |
+| Anything | Current web/mobile positioning reviewed | Exact Mobbin match unavailable | Start project, voice, progress, preview, publish, cross-device resume |
 
 ## Evidence Boundary
 
-This pass establishes principles from current official sources, the public Pinterest references, and the direct nursery competitor capability pass. It does not claim complete mobile-flow analysis or comparative competitor usability. Mobbin and live-product inspection remain required for screen-by-screen evidence as soon as those tools or authenticated products are available.
+This pass combines current official sources, the public Pinterest references, the direct nursery competitor capability pass, and the first Mobbin flow study. It does not claim complete live motion/accessibility analysis or comparative nursery-competitor usability. Exact Mobbin searches did not surface Anything, Brightwheel, or Famly, and unrelated matches were excluded.
 
 ## Next Research Output
 

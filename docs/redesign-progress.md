@@ -3,7 +3,7 @@
 **Last updated:** 2026-07-10
 **Plan:** `docs/redesign-master-plan.md`
 **Program state:** Current-state discovery and benchmark synthesis active
-**Reported progress:** **15% done / 85% left**
+**Reported progress:** **17% done / 83% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -13,14 +13,14 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | --- | ---: | --- | ---: | --- |
 | 0. Safety and baseline | 3% | Complete | 3% | Clean branch, approved asset preservation, baseline screenshots and checks |
 | 1. Product discovery | 12% | In progress | 8% | Flow inventory, role/task matrix, current journeys, friction/risk register |
-| 2. Benchmark research | 10% | In progress | 4% | Pinterest taxonomy, Mobbin flow sheets, benchmark synthesis |
+| 2. Benchmark research | 10% | In progress | 6% | Pinterest taxonomy, Mobbin flow sheets, benchmark synthesis |
 | 3. Brand strategy and direction | 10% | Not started | 0% | Strategy, three complete territories, selected brand constitution |
 | 4. IA and core UX | 12% | Not started | 0% | Sitemap, navigation model, Today model, tested wireframes |
 | 5. Design system | 13% | Not started | 0% | Tokens, components, motion, responsive and accessibility docs |
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **15%** |  |
+| **Total** | **100%** |  | **17%** |  |
 
 ## Confirmed Baseline
 
@@ -74,33 +74,32 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | Reference | Web | Mobile/Mobbin | Flow notes | Synthesis |
 | --- | --- | --- | --- | --- |
 | Pinterest board | Initial visible set reviewed | N/A | Started | Started |
-| Revolut | Official product/design process reviewed | Pending | Started | Started |
-| Notion | Current spacing/adjacency system reviewed | Pending | Started | Started |
-| Cursor | Current public product and state model reviewed | Pending | Started | Started |
-| Cosmos | Official web/App Store reviewed | Pending | Started | Started |
-| Vercel / Geist | Official system reviewed | N/A | Started | Started |
-| Duolingo | Official brand guidelines and saved motion reference identified | Pending | Started | Started |
-| Duolingo ABC | Pending | Pending | Pending | Pending |
-| Genie iOS | Exact App Store product identified | Pending | Started | Pending |
-| Anything web/iOS | Official product/docs reviewed | Pending | Started | Started |
+| Revolut | Official product/design process reviewed | Sending-money flows inspected | Complete first pass | Started |
+| Notion | Current spacing/adjacency system reviewed | Web creation/filter flows inspected | Complete first pass | Started |
+| Cursor | Current public product and state model reviewed | Agent task/review flows inspected | Complete first pass | Started |
+| Cosmos | Official web/App Store reviewed | Save/library flows inspected | Complete first pass | Started |
+| Vercel / Geist | Official system reviewed | Project/deployment flows inspected | Complete first pass | Started |
+| Duolingo | Official brand guidelines and saved motion reference identified | Lesson/completion flows inspected | Complete first pass | Started |
+| Duolingo ABC | Official context reviewed | Alphabet/story flows inspected | Complete first pass | Started |
+| Genie iOS | Exact App Store product identified | Text/image chat flows inspected | Complete first pass | Started |
+| Anything web/iOS | Official product/docs reviewed | Exact Mobbin match unavailable | Started | Started |
 | Apple first-party apps | Guidance reviewed | Pending | Started | Started |
 | Headspace | Two saved references cataloged | Pending | Started | Started |
 | Direct nursery competitors | Ten-product official-source capability pass complete | Pending live/Mobbin flows | Started | Started |
 
 ## Current Tooling Note
 
-The Mobbin MCP is registered and enabled at `https://api.mobbin.com/mcp` with OAuth. Its tools were not exposed to the current Codex task after installation. A Codex restart or fresh task is required before direct Mobbin flow extraction. This does not block repository inventory, Pinterest review, official research, or planning.
+The Mobbin MCP is registered, authenticated, and available in this task. The first flow study covers Revolut, Notion, Cursor, Cosmos, Vercel, Duolingo, Duolingo ABC, Genie, and 7shifts. Exact Anything, Brightwheel, and Famly results were not available; unrelated search matches were excluded.
 
 ## Next Work Queue
 
 1. Inspect migrated permission variants without exposing identities.
-2. Complete Mobbin flow sheets for Revolut, Notion, Cosmos, Duolingo, Duolingo ABC, Genie, and Anything.
-3. Inspect direct competitor flows in live products or Mobbin; official-source capability research is complete.
-4. Expand the Pinterest taxonomy when the board changes.
-5. Build the operational, brand-expression, and cross-device synthesis maps.
-6. Draft the brand strategy and personality spectrum.
-7. Build three complete creative territories using realistic product content.
-8. Review the territories against the award and usability scorecards.
+2. Inspect Anything and direct competitor flows in live products or exact future Mobbin results; official-source capability research is complete.
+3. Expand the Pinterest taxonomy when the board changes.
+4. Build the operational, brand-expression, and cross-device synthesis maps.
+5. Draft the brand strategy and personality spectrum.
+6. Build three complete creative territories using realistic product content.
+7. Review the territories against the award and usability scorecards.
 
 ## Definition of a Completed Tracker Item
 
@@ -209,6 +208,16 @@ An item is complete only when:
 - **Open items:** Browser interaction/error states, 200% zoom, real device safe areas/keyboards, permission variants, and target prototype testing.
 - **Next action:** Finish permission discovery and benchmark flow synthesis.
 - **Progress earned:** 1 additional percentage point; total 15%.
+
+### 2026-07-10 - Phase 2 Mobbin flow study
+
+- **Question:** Which concrete interaction patterns from the named references improve Kiddz workflows, and which surface conventions or product assumptions must be rejected?
+- **Evidence:** Mobbin flow previews for Revolut transactions; Notion database creation/filtering; Cosmos save/library; Cursor agent lifecycle/review; Vercel setup/deployment; Duolingo and Duolingo ABC learning/completion; Genie text/image chat; and 7shifts schedule preflight/publish.
+- **Decision:** Center the redesign on preserved context, consequence review, durable status, adjacent progressive disclosure, stable feedback regions, semantic color, and named progress. Exclude fintech styling, blank-canvas ambiguity, AI transcript primacy, opaque automation, and gamified high-risk work.
+- **Artifact:** `docs/redesign/mobbin-flow-study.md`; flow status and principles integrated into `benchmark-matrix.md`.
+- **Evidence boundary:** Exact Anything, Brightwheel, and Famly searches returned unrelated apps, which were excluded. Static previews do not prove motion, accessibility, or performance.
+- **Next action:** Complete permission discovery, then build the operational, brand-expression, and cross-device synthesis maps.
+- **Progress earned:** 2 additional percentage points; total 17%.
 
 ## Work Log Template
 
