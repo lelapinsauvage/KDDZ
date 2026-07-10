@@ -2,8 +2,8 @@
 
 **Last updated:** 2026-07-10
 **Plan:** `docs/redesign-master-plan.md`
-**Program state:** Clean redesign branch established; current-state discovery active
-**Reported progress:** **6% done / 94% left**
+**Program state:** Current-state discovery and benchmark synthesis active
+**Reported progress:** **8% done / 92% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -13,14 +13,14 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | --- | ---: | --- | ---: | --- |
 | 0. Safety and baseline | 3% | In progress | 2% | Clean branch, approved asset preservation, baseline screenshots and checks |
 | 1. Product discovery | 12% | In progress | 3% | Flow inventory, role/task matrix, current journeys, friction/risk register |
-| 2. Benchmark research | 10% | Started | 1% | Pinterest taxonomy, Mobbin flow sheets, benchmark synthesis |
+| 2. Benchmark research | 10% | In progress | 3% | Pinterest taxonomy, Mobbin flow sheets, benchmark synthesis |
 | 3. Brand strategy and direction | 10% | Not started | 0% | Strategy, three complete territories, selected brand constitution |
 | 4. IA and core UX | 12% | Not started | 0% | Sitemap, navigation model, Today model, tested wireframes |
 | 5. Design system | 13% | Not started | 0% | Tokens, components, motion, responsive and accessibility docs |
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **6%** |  |
+| **Total** | **100%** |  | **8%** |  |
 
 ## Confirmed Baseline
 
@@ -68,17 +68,17 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | Reference | Web | Mobile/Mobbin | Flow notes | Synthesis |
 | --- | --- | --- | --- | --- |
 | Pinterest board | Initial visible set reviewed | N/A | Started | Started |
-| Revolut | Preliminary official research | Pending | Pending | Pending |
-| Notion | Preliminary official research | Pending | Pending | Pending |
-| Cursor | Preliminary product research | Pending | Pending | Pending |
-| Cosmos | Official web/App Store reviewed | Pending | Pending | Started |
+| Revolut | Official product/design process reviewed | Pending | Started | Started |
+| Notion | Current spacing/adjacency system reviewed | Pending | Started | Started |
+| Cursor | Current public product and state model reviewed | Pending | Started | Started |
+| Cosmos | Official web/App Store reviewed | Pending | Started | Started |
 | Vercel / Geist | Official system reviewed | N/A | Started | Started |
-| Duolingo | Official brand guidelines identified | Pending | Pending | Started |
+| Duolingo | Official brand guidelines and saved motion reference identified | Pending | Started | Started |
 | Duolingo ABC | Pending | Pending | Pending | Pending |
-| Genie iOS | Exact App Store product identified | Pending | Pending | Pending |
-| Anything web/iOS | Official product/docs identified | Pending | Pending | Pending |
-| Apple first-party apps | Guidance started | Pending | Pending | Started |
-| Headspace | Prior references available | Pending | Pending | Pending |
+| Genie iOS | Exact App Store product identified | Pending | Started | Pending |
+| Anything web/iOS | Official product/docs reviewed | Pending | Started | Started |
+| Apple first-party apps | Guidance reviewed | Pending | Started | Started |
+| Headspace | Two saved references cataloged | Pending | Started | Started |
 | Direct nursery competitors | Existing secondary research | Pending refresh | Pending | Pending |
 
 ## Current Tooling Note
@@ -90,10 +90,10 @@ The Mobbin MCP is registered and enabled at `https://api.mobbin.com/mcp` with OA
 1. Capture authenticated teacher, manager, nurse, doctor, and parent runtime baselines.
 2. Trace the seven critical journeys through mutations, errors, and recovery.
 3. Capture compact desktop, tablet, and mobile current-state evidence.
-4. Tag the Pinterest board using the master-plan taxonomy.
-5. Complete Mobbin flow sheets for Revolut, Notion, Cosmos, Duolingo, Duolingo ABC, Genie, and Anything.
-6. Refresh direct competitor flow research.
-7. Write the benchmark synthesis and explicit product implications.
+4. Complete Mobbin flow sheets for Revolut, Notion, Cosmos, Duolingo, Duolingo ABC, Genie, and Anything.
+5. Refresh direct competitor flow research.
+6. Expand the Pinterest taxonomy when the board changes.
+7. Build the operational, brand-expression, and cross-device synthesis maps.
 8. Draft the brand strategy and personality spectrum.
 9. Build three complete creative territories using realistic product content.
 10. Review the territories against the award and usability scorecards.
@@ -143,6 +143,16 @@ An item is complete only when:
 - **Open items:** Role-specific sessions, mutation/error traces, responsive baselines, and parity-row linking.
 - **Next action:** Build the reproducible domain-to-parity ledger, then continue role and responsive runtime discovery.
 - **Progress earned:** 3 additional percentage points; total 6%.
+
+### 2026-07-10 - Phase 2 benchmark research pass 1
+
+- **Question:** Which qualities from the user's references and named world-class products are transferable to Kiddz Online, and where must copying stop?
+- **Evidence:** Public Pinterest board and ten saved pins; official sources from Revolut, Notion, Cursor, Cosmos, Vercel/Geist, Duolingo, Anything, Genie, Apple, and award/accessibility standards.
+- **Decision:** Separate a high-expression brand/guidance layer from a precise operational layer; use state, contextual density, complete lifecycle feedback, and governed character/motion rules as cross-benchmark principles.
+- **Artifacts:** `docs/redesign/pinterest-taxonomy.md`, `docs/redesign/benchmark-matrix.md`, and dated Pinterest screenshots.
+- **Open items:** Mobbin screen-by-screen mobile flows, Duolingo ABC, direct nursery competitor refresh, and complete cross-device synthesis.
+- **Next action:** Continue discovery responsive baselines while expanding direct competitor and mobile-flow research.
+- **Progress earned:** 2 additional percentage points; total 8%.
 
 ## Work Log Template
 
