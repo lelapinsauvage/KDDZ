@@ -2,8 +2,8 @@
 
 **Last updated:** 2026-07-10
 **Plan:** `docs/redesign-master-plan.md`
-**Program state:** Brand strategy and three build-ready creative territories active
-**Reported progress:** **22% done / 78% left**
+**Program state:** Three creative territories built and provisionally evaluated; selection gate open
+**Reported progress:** **25% done / 75% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -14,13 +14,13 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | 0. Safety and baseline | 3% | Complete | 3% | Clean branch, approved asset preservation, baseline screenshots and checks |
 | 1. Product discovery | 12% | In progress | 9% | Flow inventory, role/task matrix, current journeys, friction/risk register |
 | 2. Benchmark research | 10% | In progress | 9% | Pinterest taxonomy, Mobbin flow sheets, benchmark synthesis |
-| 3. Brand strategy and direction | 10% | In progress | 1% | Strategy, three complete territories, selected brand constitution |
+| 3. Brand strategy and direction | 10% | In progress | 4% | Strategy, three complete territories, selected brand constitution |
 | 4. IA and core UX | 12% | Not started | 0% | Sitemap, navigation model, Today model, tested wireframes |
 | 5. Design system | 13% | Not started | 0% | Tokens, components, motion, responsive and accessibility docs |
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **22%** |  |
+| **Total** | **100%** |  | **25%** |  |
 
 ## Confirmed Baseline
 
@@ -274,6 +274,17 @@ An item is complete only when:
 - **Verification:** All required strategy outputs and territory screen/state requirements are explicit; each territory defines palette, type, geometry, motion, illustration, cross-device behavior, strengths, risks, and kill criteria.
 - **Next action:** Build the shared territory lab and implement all three directions before scoring or recommendation.
 - **Progress earned:** 1 percentage point; total 22%.
+
+### 2026-07-10 - Phase 3 creative territory prototypes and provisional evaluation
+
+- **Question:** Which creative system best makes one realistic nursery state immediately understandable, distinctly Kiddz, operationally trustworthy, and scalable across dense and cross-device work?
+- **Evidence:** Three implemented Today compositions; shared Children, Daily care, and Safety review workflows; production screenshots; browser measurements at 1440, 1280, 1024, 768, and 390 widths; interaction checks for room/queue continuity, search, factual care submission, accident review history, and payment allocation.
+- **Decision:** Advance Daylight as the provisional leading foundation. Reinterpret only Signal's dense alignment grammar and Carebook's record-first language inside Daylight if selected; do not blend their visual systems.
+- **Artifacts:** `src/app/design-lab/territories`, `docs/redesign/territories`, and `docs/redesign/territory-evaluation.md`.
+- **Verification:** Territory lint, repository TypeScript, diff checks, production build, clean production console, responsive overflow, 44px mobile targets, drawer focus return, and source-state interaction checks passed.
+- **Evidence boundary:** Real-user observation, automated accessibility and contrast scans, 200% zoom, screen readers, reduced-motion emulation, and native-device testing remain open. User selection remains an irreversible gate; production UI is untouched.
+- **Next action:** Continue territory-neutral IA and workflow specification while preparing the selected-direction constitution gate.
+- **Progress earned:** 3 percentage points; total 25%.
 
 ## Work Log Template
 
