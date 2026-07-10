@@ -1,8 +1,8 @@
 # Product and Brand Benchmark Matrix
 
-**Status:** Research pass 2
+**Status:** Research pass 3; benchmark phase complete
 **Last updated:** 2026-07-10
-**Mobile flow source:** Mobbin flow pass 1 complete; `mobbin-flow-study.md`
+**Flow sources:** `mobbin-flow-study.md`, `targeted-reference-flow-study.md`, and `direct-competitor-flow-study.md`
 
 ## Research Standard
 
@@ -140,11 +140,11 @@ Anything presents cross-device creation: projects appear on mobile, voice can re
 
 ## Direct Nursery Competitor Synthesis
 
-The current official-source capability pass covers Famly, Brightwheel, Blossom, Connect Childcare, Tapestry, Cheqdin, Lillio, Procare, Illumine, and Nursery Story. The detailed evidence, category baseline, white-space hypotheses, and research boundary live in `docs/redesign/competitor-gap-analysis.md`.
+The current official-source capability pass covers Famly, Brightwheel, Blossom, Connect Childcare, Tapestry, Cheqdin, Lillio, Procare, Illumine, and Nursery Story. The detailed evidence, category baseline, white-space hypotheses, and research boundary live in `docs/redesign/competitor-gap-analysis.md`. Current official-support operational sequences for Brightwheel, Famly, Tapestry, and Cheqdin are traced in `docs/redesign/direct-competitor-flow-study.md`.
 
 The category already expects attendance, ratios, occupancy, staffing, billing, communication, records, reporting, role separation, and multi-site oversight. Kiddz cannot differentiate through a cleaner feature directory. The emerging product opportunity is to join those domains into a live, explainable, resolution-oriented operating model for the desktop manager, with focused cross-device companion flows.
 
-No comparative ease-of-use or visual-quality claims are made from marketing pages. Those require current flow inspection.
+The support-flow pass confirms a category operating chain from configuration and booking through expected state, observed child/staff attendance, live ratios, correction, downstream finance/funding, parent delivery, and evidence. No comparative ease-of-use or visual-quality claim is made without authenticated product use.
 
 ## Cross-Benchmark Principles Emerging
 

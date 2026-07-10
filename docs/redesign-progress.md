@@ -2,8 +2,8 @@
 
 **Last updated:** 2026-07-10
 **Plan:** `docs/redesign-master-plan.md`
-**Program state:** Product discovery closed; territory-neutral IA, state, motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; creative selection gate open
-**Reported progress:** **42% done / 58% left**
+**Program state:** Product discovery and benchmark research closed; territory-neutral IA, state, motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; creative selection gate open
+**Reported progress:** **43% done / 57% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -13,14 +13,14 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | --- | ---: | --- | ---: | --- |
 | 0. Safety and baseline | 3% | Complete | 3% | Clean branch, approved asset preservation, baseline screenshots and checks |
 | 1. Product discovery | 12% | Complete | 12% | Flow inventory, role/task matrix, current journeys, friction/risk register |
-| 2. Benchmark research | 10% | In progress | 9% | Pinterest taxonomy, Mobbin flow sheets, benchmark synthesis |
+| 2. Benchmark research | 10% | Complete | 10% | Pinterest taxonomy, Mobbin flow sheets, direct-competitor operations, benchmark synthesis |
 | 3. Brand strategy and direction | 10% | In progress | 4% | Strategy, three complete territories, selected brand constitution |
 | 4. IA and core UX | 12% | In progress | 4% | Sitemap, navigation model, Today model, tested wireframes |
 | 5. Design system | 13% | In progress | 10% | Tokens, components, motion, responsive, accessibility, performance, and data-delivery foundations |
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **42%** |  |
+| **Total** | **100%** |  | **43%** |  |
 
 ## Confirmed Baseline
 
@@ -406,6 +406,17 @@ An item is complete only when:
 - **Parity:** No route imports the reducer yet; current loading, query, database, export, verifier, legacy, and native behavior is unchanged.
 - **Next action:** Use the state foundation only inside the first complete selected-direction collection pilot, with visible loading/stale/error semantics and Agent Browser evidence.
 - **Progress earned:** 1 percentage point; Phase 5 reaches 10 of 13%; total 42%.
+
+### 2026-07-10 - Phase 2 direct-competitor operational flow closure
+
+- **Question:** Beyond feature claims, how do current nursery platforms connect configuration, booking, expected attendance, child/staff check-in, room moves, ratios, occupancy, correction, parent delivery, funding/billing, and evidence?
+- **Evidence:** Current official Brightwheel student/staff Attendance Mode, Kiosk, QR, room-ratio, assignment, and overlapping-timecard recovery guidance; Famly separate check-in, Room Overview, Room Planner, and Occupancy guidance; Tapestry Config-to-Booking-to-Registers/Invoicing chain; Cheqdin room/ratio/access/PIN prerequisites, booked live registers, bulk sign-in, occupancy overrides, and NCS/ECCE reporting; repeated exact-name Mobbin flow/screen searches plus inspected adjacent Partiful/Luma check-in and reversal previews.
+- **Decision:** Model the nursery as configured policy and access -> expected schedules -> observed child/staff transitions -> current room ratio/location -> owned staffing/capacity resolution -> finance/funding/parent/audit outcomes. Keep live occupancy, future staffing, sellable capacity, funded hours, and invoiced hours distinct.
+- **Artifacts:** `docs/redesign/direct-competitor-flow-study.md`; updated `competitor-gap-analysis.md`, `benchmark-matrix.md`, master-plan artifact index, and progress tracker.
+- **Evidence boundary:** Exact Brightwheel/Famly Mobbin results remain unavailable and unrelated results were excluded. Official support paths establish documented sequence, not usability, accessibility, motion, speed, or real failure quality. Authenticated-product and operator tests remain pilot gates.
+- **Verification:** Source links, named paths, cross-product state chain, Kiddz transfers, rejects, remaining debt, and Mobbin boundaries are recorded; diff checks pass. No product code, route, database, or visual UI changed.
+- **Next action:** Close creative selection; then codify the brand/design constitution and use the confirmed operating chain in the first production pilot.
+- **Progress earned:** Final 1 percentage point for Phase 2; benchmark research closes at 10%; total 43%.
 
 ## Work Log Template
 

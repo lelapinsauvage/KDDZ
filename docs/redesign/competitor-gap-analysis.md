@@ -1,6 +1,6 @@
 # Direct Nursery Competitor Gap Analysis
 
-**Status:** Official-source capability pass 1
+**Status:** Official-source capability and operational-flow pass 2
 **Last updated:** 2026-07-10
 **Scope:** Famly, Brightwheel, Blossom, Connect Childcare, Tapestry, Cheqdin, Lillio, Procare, Illumine, and Nursery Story
 
@@ -12,7 +12,7 @@ What has become expected in nursery-management software, and where can Kiddz Onl
 
 This pass uses current official product, feature, support, and documentation pages. It can confirm advertised capabilities and product architecture. It cannot yet prove click count, hierarchy quality, accessibility, motion quality, failure handling, or whether a competitor's live product makes the advertised capability easy to use.
 
-Those experience judgments remain open until authenticated demos, Mobbin flows, current app-store captures, or direct operator observation are available. Marketing claims are treated as claims, not independently verified outcomes.
+Those experience judgments remain open until authenticated demos, exact Mobbin flows, current app-store captures, or direct operator observation are available. Marketing claims are treated as claims, not independently verified outcomes. Current official support sequences for Brightwheel, Famly, Tapestry, and Cheqdin are analyzed separately in `direct-competitor-flow-study.md`.
 
 ## Competitor Evidence
 
@@ -151,8 +151,8 @@ The manager should be able to open any number and answer what it means, which re
 
 ## Research Debt Before Convergence
 
-1. Inspect current home, attendance, ratio, staffing, occupancy, billing, and communication flows in live products or Mobbin.
-2. Record click paths, default states, interruptions, undo, error recovery, loading, offline, permissions, and audit evidence.
+1. Validate the official Brightwheel, Famly, Tapestry, and Cheqdin support sequences in authenticated products when access is available; exact Mobbin results remain unavailable.
+2. Record measured click paths, interruptions, undo, error recovery, loading, offline, permissions, focus, and audit evidence in live products.
 3. Capture desktop and mobile relationships rather than treating screenshots as isolated inspiration.
 4. Validate manager opening, midday, handover, and closing routines with an operator or authoritative operating policy.
 5. Confirm the deployed jurisdiction's ratio, funding, inspection, retention, and consent rules before designing compliance logic.

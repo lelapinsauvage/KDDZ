@@ -574,6 +574,7 @@ Commits must be small enough to review but complete enough to run. Do not mix un
 - `docs/redesign-progress.md`: weighted status, queue, evidence, and blockers.
 - `docs/brand-design-constitution.md`: selected brand and product design rules.
 - `docs/redesign/benchmark-matrix.md`: product-by-product findings.
+- `docs/redesign/direct-competitor-flow-study.md`: official-support attendance, staffing, ratio, room, booking, occupancy, correction, and evidence sequences for Brightwheel, Famly, Tapestry, and Cheqdin.
 - `docs/redesign/flow-inventory.md`: canonical current and target flows.
 - `docs/redesign/operational-architecture-synthesis.md`: live operating model, canonical objects, work lifecycle, and UX integrity rules.
 - `docs/redesign/brand-expression-synthesis.md`: brand/product expression layers and creative-territory acceptance rules.
