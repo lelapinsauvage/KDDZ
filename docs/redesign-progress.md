@@ -3,7 +3,7 @@
 **Last updated:** 2026-07-10
 **Plan:** `docs/redesign-master-plan.md`
 **Program state:** Current-state discovery and benchmark synthesis active
-**Reported progress:** **12% done / 88% left**
+**Reported progress:** **14% done / 86% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -12,7 +12,7 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | Phase | Weight | Status | Earned | Evidence required to close |
 | --- | ---: | --- | ---: | --- |
 | 0. Safety and baseline | 3% | Complete | 3% | Clean branch, approved asset preservation, baseline screenshots and checks |
-| 1. Product discovery | 12% | In progress | 5% | Flow inventory, role/task matrix, current journeys, friction/risk register |
+| 1. Product discovery | 12% | In progress | 7% | Flow inventory, role/task matrix, current journeys, friction/risk register |
 | 2. Benchmark research | 10% | In progress | 4% | Pinterest taxonomy, Mobbin flow sheets, benchmark synthesis |
 | 3. Brand strategy and direction | 10% | Not started | 0% | Strategy, three complete territories, selected brand constitution |
 | 4. IA and core UX | 12% | Not started | 0% | Sitemap, navigation model, Today model, tested wireframes |
@@ -20,7 +20,7 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **12%** |  |
+| **Total** | **100%** |  | **14%** |  |
 
 ## Confirmed Baseline
 
@@ -49,6 +49,8 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 - The first confirmed runtime defects include dashboard horizontal overflow, colliding chart labels, unsafe all-present attendance defaults, ambiguous time context, and missing live ratio state.
 - `docs/redesign/role-runtime-audit.md` records authenticated manager, teacher, nurse, doctor, and parent structure without committing personal data; all temporary audit users were deleted.
 - Role runtime confirms an admin-clone manager home, identical nurse/doctor homes, teacher redirection to Today with 14 children selected by default, and a 213-report parent history rendered eagerly.
+- `docs/redesign/journey-state-audit.md` traces J01-J07 through source of truth, mutation, validation, completion, recovery, audit, downstream effects, and parity constraints.
+- The state audit confirms that present child attendance is not persisted, factual care defaults can be submitted, drafts can appear done, medical transitions are not server-owned, live ratio resolution is absent, payment and balance stores are disconnected, and export descriptions overstate package content.
 
 ## Locked Decisions
 
@@ -89,16 +91,15 @@ The Mobbin MCP is registered and enabled at `https://api.mobbin.com/mcp` with OA
 
 ## Next Work Queue
 
-1. Trace the seven critical journeys through mutations, errors, and recovery.
-2. Capture compact desktop, tablet, and mobile current-state evidence.
-3. Inspect migrated permission variants without exposing identities.
-4. Complete Mobbin flow sheets for Revolut, Notion, Cosmos, Duolingo, Duolingo ABC, Genie, and Anything.
-5. Inspect direct competitor flows in live products or Mobbin; official-source capability research is complete.
-6. Expand the Pinterest taxonomy when the board changes.
-7. Build the operational, brand-expression, and cross-device synthesis maps.
-8. Draft the brand strategy and personality spectrum.
-9. Build three complete creative territories using realistic product content.
-10. Review the territories against the award and usability scorecards.
+1. Capture compact desktop, tablet, and mobile current-state evidence.
+2. Inspect migrated permission variants without exposing identities.
+3. Complete Mobbin flow sheets for Revolut, Notion, Cosmos, Duolingo, Duolingo ABC, Genie, and Anything.
+4. Inspect direct competitor flows in live products or Mobbin; official-source capability research is complete.
+5. Expand the Pinterest taxonomy when the board changes.
+6. Build the operational, brand-expression, and cross-device synthesis maps.
+7. Draft the brand strategy and personality spectrum.
+8. Build three complete creative territories using realistic product content.
+9. Review the territories against the award and usability scorecards.
 
 ## Definition of a Completed Tracker Item
 
@@ -185,6 +186,17 @@ An item is complete only when:
 - **Open items:** Real permission variants, critical-journey mutations, responsive behavior, and operator validation.
 - **Next action:** Trace J01-J07 through create, edit, confirmation, error, and recovery states.
 - **Progress earned:** 2 additional percentage points; total 12%.
+
+### 2026-07-10 - Phase 1 critical journey state audit
+
+- **Question:** Do J01-J07 end in a durable, validated, recoverable, and auditable state, or only appear complete in the interface?
+- **Evidence:** Dashboard/Today actions; child and staff attendance persistence; daily-report batch, validation, approval, and nested updates; medical form mutations; staff events/logs/classes; payment and accounting stores; monthly/settings/SQL exports; authenticated role runtime.
+- **Decision:** Treat canonical operational state as a prerequisite to visual redesign. Establish explicit attendance sessions, room care sessions, staff presence/assignment and ratio snapshots, server-owned health transitions, one family ledger, work-item ownership, and versioned inspection packages while preserving compatibility projections.
+- **Artifact:** `docs/redesign/journey-state-audit.md`; severe findings integrated into `current-state-findings.md` and `flow-inventory.md`.
+- **Verification:** Read-only source trace across every journey; no migrated operational record mutated; parity constraints and unresolved legal/operator questions recorded.
+- **Open items:** Operator validation, jurisdiction rules, real permission variants, offline conflict policy, responsive runtime, and final canonical object schemas.
+- **Next action:** Capture responsive current-state behavior, then finish benchmark flow evidence and synthesis.
+- **Progress earned:** 2 additional percentage points; total 14%.
 
 ## Work Log Template
 

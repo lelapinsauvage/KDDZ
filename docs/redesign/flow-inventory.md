@@ -73,6 +73,8 @@ A canonical flow is the modern experience. Legacy `.php` routes, encrypted-id br
 
 **Current gap:** no single surface combines staff presence, child attendance, and live room ratios.
 
+**State trace:** no readiness object or confirmation exists. The latent morning briefing estimates presence from daily reports and employee headcount minus absence events rather than actual room-scoped attendance. See `journey-state-audit.md`.
+
 ### J02 - Mark attendance with exceptions
 
 1. Select branch and room.
@@ -86,6 +88,8 @@ A canonical flow is the modern experience. Legacy `.php` routes, encrypted-id br
 
 **Current risk:** the visible Today screen begins with every child selected and instructs the user to uncheck absent children, making accidental false-present confirmation possible.
 
+**State trace:** confirmation writes only newly absent child records. It writes no present or roster-confirmation fact, does not hydrate existing absences, and can hide the task using a date-only browser flag.
+
 ### J03 - Record the room's care activity
 
 1. Start from the room roster.
@@ -97,6 +101,8 @@ A canonical flow is the modern experience. Legacy `.php` routes, encrypted-id br
 
 **Current components:** `/daily-reports/batch`, single reports, drafts, child report history.
 
+**Current risk:** factual care fields are pre-filled, drafts are counted as done, and the daily-report absent mode does not create the absence object used by attendance.
+
 ### J04 - Resolve a child safety or health issue
 
 1. Enter from alert, Today, child search, or room roster.
@@ -105,6 +111,8 @@ A canonical flow is the modern experience. Legacy `.php` routes, encrypted-id br
 4. Attach evidence and identify the responsible staff member.
 5. Notify or follow up with authorized people.
 6. Preserve an audit trail.
+
+**Current risk:** form-specific required evidence and status authority are not fully enforced by the generic server action; destructive nested updates and hard deletion weaken recovery and audit.
 
 ### J05 - Resolve a staffing and ratio exception
 
@@ -118,6 +126,8 @@ A canonical flow is the modern experience. Legacy `.php` routes, encrypted-id br
 
 **Current gap:** these components are separate and no ratio-resolution flow exists.
 
+**State trace:** there is no rota, qualification, effective-dated ratio rule, time-bounded room assignment, ratio snapshot, cover recommendation, or resolution record. Repeated staff attendance submission can append duplicate logs.
+
 ### J06 - Collect and reconcile payment
 
 1. Find a child, family, invoice, or overdue amount.
@@ -126,6 +136,8 @@ A canonical flow is the modern experience. Legacy `.php` routes, encrypted-id br
 4. Confirm allocation and updated balance.
 5. Generate receipt or invoice and communicate it.
 
+**Current risk:** `Payment` and `AccountingEntry` are disconnected stores. Payment totals and the accounting-entry balance can disagree, and no allocation/reconciliation workflow exists.
+
 ### J07 - Prepare for inspection
 
 1. See missing or expiring evidence by branch.
@@ -133,6 +145,8 @@ A canonical flow is the modern experience. Legacy `.php` routes, encrypted-id br
 3. Inspect child, staff, branch, medical, attendance, and policy evidence.
 4. Export a complete, dated package.
 5. Preserve who generated it and from which source data.
+
+**Current risk:** export labels and format controls overstate the generated content, while inspection preflight, manifest, provenance, missing-evidence checks, and generation audit are absent. SQL backup is restorable but is not an inspection package.
 
 ## Role-to-Task Matrix
 
@@ -205,7 +219,7 @@ Initial high-priority flows:
 
 ## Next Discovery Actions
 
-1. Trace J01 through J07 step by step, including mutations and error recovery.
+1. Validate the J01-J07 state-contract findings with nursery operators and the first-market legal requirements.
 2. Record real nursery policy inputs for ratios, funded hours, billing, and compliance jurisdiction.
 3. Validate task priority with nursery operators or operational evidence.
 4. Inspect migrated permission variants without exposing identities.

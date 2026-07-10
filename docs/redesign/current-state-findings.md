@@ -175,6 +175,46 @@ The authenticated parent pass rendered 213 daily reports into the active tab at 
 
 **Design requirement:** Prioritize today, unread state, obligations, and recent changes. Paginate, virtualize, or progressively disclose history while keeping every legacy record reachable.
 
+### 17. Attendance confirmation does not prove presence
+
+The Today confirmation sends only absent child IDs and creates only new absence reports. Confirming every child present writes no durable attendance or confirmation record. A date-only browser storage flag can then hide the attendance task, while existing absence records are not loaded back into the visible selection.
+
+**Risk:** The interface can report completion without a database fact proving who was present, who checked the room, or which roster was confirmed.
+
+**Design requirement:** Use a server-confirmed, room-scoped attendance session with explicit unknown/present/absent/late/left states, correction history, and downstream ratio/parent projections.
+
+### 18. Batch care entry can turn defaults into invented observations
+
+The batch daily-report form pre-fills meal portions, nap, sleep time, and mood. It also labels any existing report, including a draft, as done. The separate absent mode writes absence metadata into a daily report instead of the absence object consumed by attendance.
+
+**Risk:** Unobserved care can be submitted, drafts can look complete, and adjacent modules can disagree about a child's day.
+
+**Design requirement:** Begin factual observations unset, support explicit shared values plus exceptions, preserve autosaved drafts, and converge attendance and care on one child-day state.
+
+### 19. High-risk records lack complete server-owned transitions
+
+Medical form clients enforce important required fields, but the generic server action does not independently enforce each form's evidence, role authority, or status transition. Several medical and daily-report updates destructively replace nested records without a complete transaction or revision ledger.
+
+**Risk:** Direct action calls can bypass visible safeguards, partial failures can remove evidence, and reviewers cannot reconstruct corrections reliably.
+
+**Design requirement:** Give every high-risk workflow a server-owned schema, state machine, atomic versioned mutation, action-level authorization, owner, escalation, and durable audit history.
+
+### 20. Recorded payments and displayed balance are separate truths
+
+Payments and accounting entries are stored independently, with no allocation relation. The child surface calculates balance from accounting entries while showing paid totals from payment rows. Recording a payment does not necessarily reduce the balance source.
+
+**Risk:** Staff and parents can see contradictory financial state, and reconciliation cannot explain which charge a payment settled.
+
+**Design requirement:** Establish one family ledger with explicit charge, payment, allocation, credit, reversal, and balance events while preserving imported provenance.
+
+### 21. Export descriptions overstate package completeness
+
+Settings export cards promise parent contacts, detailed care, medical categories, invoices, and multiple file formats that the generated files do not fully contain. There is no inspection preflight, manifest, data-as-of time, generated-by audit, or missing-evidence summary.
+
+**Risk:** A manager may trust an incomplete inspection package or discover omissions only under deadline.
+
+**Design requirement:** Make export labels exact and introduce versioned inspection packages with completeness checks, provenance, redaction, progress, and an audit trail. Keep database backup separate from regulator evidence.
+
 ## Existing Strengths to Preserve
 
 1. **Functional breadth:** The modern app exposes a large restored legacy surface.
@@ -261,11 +301,12 @@ These are hypotheses to test, not final navigation:
 9. Which records require dual approval or immutable audit evidence?
 10. Which terms should be localized or replaced while keeping legacy aliases stable?
 
+The complete mutation and recovery evidence for J01-J07 is recorded in `docs/redesign/journey-state-audit.md`.
+
 ## Next Validation
 
-- Capture teacher, manager, nurse, doctor, and parent runtime sessions.
-- Trace attendance confirmation, batch reporting, payment, message composition, and medical incident mutations.
 - Test compact desktop, tablet, and mobile behavior.
 - Connect findings to specific parity rows and existing verification scripts.
 - Validate priority and terminology with real nursery operators or owner-provided operational policy.
 - Use `docs/redesign/role-runtime-audit.md` as the current role-home evidence and preserve its privacy boundary.
+- Use `docs/redesign/journey-state-audit.md` as the critical mutation/recovery baseline and validate its open legal and operator questions.
