@@ -577,6 +577,7 @@ Commits must be small enough to review but complete enough to run. Do not mix un
 - `docs/redesign/jurisdiction-policy-baseline.md`: effective-dated England and Ireland ratio, funding, record, and evidence architecture.
 - `docs/redesign/localization-runtime-audit.md`: locale, time-zone, money, writing-system, address, PDF, and native compatibility contracts.
 - `docs/redesign/reliability-offline-audit.md`: service-worker, browser-storage, draft, retry, idempotency, transaction, conflict, and cross-device delivery contracts.
+- `docs/redesign/accessibility-runtime-audit.md`: source/runtime keyboard, screen-reader, form, target, contrast, reflow, chart, table, motion, and assistive-technology acceptance baseline.
 - `docs/redesign/brand-strategy.md`: purpose, promise, positioning, audience, narrative, messages, personality, and voice.
 - `docs/redesign/creative-territory-briefs.md`: Daylight, Signal, and Carebook build specifications and comparison gates.
 - `docs/redesign/information-architecture.md`: navigation and sitemap decisions.

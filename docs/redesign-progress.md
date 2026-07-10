@@ -2,8 +2,8 @@
 
 **Last updated:** 2026-07-10
 **Plan:** `docs/redesign-master-plan.md`
-**Program state:** Product discovery closed with territory-neutral IA, state, motion, jurisdiction, localization, and reliability contracts documented and tested; creative selection gate open
-**Reported progress:** **37% done / 63% left**
+**Program state:** Product discovery closed; territory-neutral IA, state, motion, jurisdiction, localization, reliability, and accessibility contracts documented and tested; creative selection gate open
+**Reported progress:** **38% done / 62% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -16,11 +16,11 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | 2. Benchmark research | 10% | In progress | 9% | Pinterest taxonomy, Mobbin flow sheets, benchmark synthesis |
 | 3. Brand strategy and direction | 10% | In progress | 4% | Strategy, three complete territories, selected brand constitution |
 | 4. IA and core UX | 12% | In progress | 4% | Sitemap, navigation model, Today model, tested wireframes |
-| 5. Design system | 13% | In progress | 5% | Tokens, components, motion, responsive and accessibility docs |
+| 5. Design system | 13% | In progress | 6% | Tokens, components, motion, responsive and accessibility docs |
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **37%** |  |
+| **Total** | **100%** |  | **38%** |  |
 
 ## Confirmed Baseline
 
@@ -351,6 +351,18 @@ An item is complete only when:
 - **Evidence boundary:** File-level multi-write counts are triage signals; representative medical and payment risks were manually confirmed. No protected cache/storage content was opened, no worker/cache was mutated, and no product capability was removed. Managed-device policy, queueable workflows, retention, parent-session migration, and native release matrix remain implementation gates.
 - **Next action:** After creative selection, secure the worker/browser boundary and add receipt/version primitives before any production pilot claims optimistic or offline completion.
 - **Progress earned:** 1 percentage point; Phase 1 closes at 12%; total 37%.
+
+### 2026-07-10 - Phase 5 accessibility and input-method runtime audit
+
+- **Question:** Can the selected design system make complete nursery workflows work for keyboard, screen-reader, touch, zoom, reduced-motion, color-vision, and interruption needs without hiding capability?
+- **Evidence:** AST scan of 756 production files/533 TSX files; authenticated Agent Browser measurements on eight core routes at desktop and 320px; partial 640px zoom-equivalent pass; empty New Child validation; Global Search dialog/focus return; shared Button/Input and global motion/focus CSS; current token contrast; current WCAG 2.2, WAI forms/status/dialog, and Apple accessibility guidance.
+- **Decision:** Make accessibility a component/API invariant and complete-process release gate. Require PageFrame/PageHeader/skip-link, Field/ErrorSummary, IconAction, StatusRegion, DataTable/RecordList, DataFigure, and focus-safe Dialog/Drawer contracts before pilot rollout. Keep WCAG 2.2 AA as the floor and the 44px Kiddz operational target.
+- **Artifacts:** `docs/redesign/accessibility-runtime-audit.md`, `src/scripts/report-redesign-accessibility.ts`, and updated design-system, current-state, cross-device, master-plan, and progress evidence links.
+- **Verification:** Runtime confirms no skip links/live regions, unnamed tables, missing/breakpoint-dependent H1s, widespread sub-44px targets, multiple page-overflow failures, five unannounced/unassociated child-form errors, lost dialog focus return, and failing primary/focus contrast. Scanner reports 74 name candidates, four non-semantic click targets, 216 sub-44px target candidates, zero missing-alt/positive-tab/autofocus candidates, and a global reduced-motion baseline. Focused lint, full TypeScript, and diff checks pass.
+- **Privacy:** The short-lived local admin audit user was signed out and deleted with sessions/accounts; zero audit users remain. No operational record was mutated and no personal-record screenshot was captured.
+- **Evidence boundary:** Scanner findings remain candidates until manual/runtime confirmation; no VoiceOver/NVDA or automated axe pass was performed; the 200% route matrix is incomplete after a browser load timeout. These remain pilot release gates, not hidden assumptions.
+- **Next action:** Close creative selection, then codify accessible final tokens/primitives before production pilot implementation; meanwhile continue territory-neutral performance and data-contract evidence.
+- **Progress earned:** 1 percentage point; total 38%.
 
 ## Work Log Template
 

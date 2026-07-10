@@ -18,6 +18,7 @@ Cross-device continuity does not mean one universal layout. The same operational
 - `authorization-scope-audit.md` for role, assignment, and effective-scope boundaries.
 - `localization-runtime-audit.md` for machine/display separation, operational time, bidi behavior, and native payload evolution.
 - `reliability-offline-audit.md` for platform-specific storage, service-worker boundaries, operation receipts, drafts, replay, and conflict behavior.
+- `accessibility-runtime-audit.md` for semantic parity, targets, reflow, focus, status, forms, tables, charts, and assistive-technology fixtures across projections.
 - `operational-architecture-synthesis.md` for canonical objects and Today hierarchy.
 - `mobbin-flow-study.md` for contextual sheets, durable status, progress, and return-to-work.
 - `flow-inventory.md` and parity ledger for legacy web aliases and native parent APIs.

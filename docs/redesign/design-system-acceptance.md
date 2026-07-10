@@ -15,6 +15,9 @@ The system is not a component gallery. Components are accepted only when they su
 - `journey-state-audit.md`;
 - `authorization-scope-audit.md`;
 - `cross-device-synthesis.md`;
+- `localization-runtime-audit.md`;
+- `reliability-offline-audit.md`;
+- `accessibility-runtime-audit.md`;
 - `territory-evaluation.md`.
 
 ## Standards and Evidence

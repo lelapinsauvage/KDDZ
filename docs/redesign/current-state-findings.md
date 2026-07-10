@@ -247,6 +247,14 @@ The production runtime has 230 transition calls but no optimistic-state primitiv
 
 **Design requirement:** Introduce typed operation IDs and receipts, aggregate versions, server-owned drafts, atomic mutation boundaries, explicit interrupted/conflict states, and consequence-specific offline classes. High-risk work remains online-confirmed.
 
+### 26. Core workflows are not accessibility-complete processes
+
+An authenticated eight-route audit found no skip links or persistent live regions, unnamed tables, missing/unstable page headings, widespread icon/control naming gaps, and hundreds of targets below the 44px product rule. New Child displays validation errors without moving focus, associating errors, or announcing them. Children, Daily Reports, New Child, and Today fail 320px page reflow; current primary button and focus-color pairings fail contrast targets.
+
+**Risk:** Keyboard, screen-reader, low-vision, color-vision, touch, and interruption needs can prevent staff from completing safety, care, medical, and financial work even when every legacy route technically exists.
+
+**Design requirement:** Make accessibility a shared component/API invariant and complete-process release gate: PageFrame/heading/skip link, Field/ErrorSummary, IconAction, StatusRegion, DataTable/RecordList, DataFigure, and focus-safe Dialog/Drawer contracts must pass semantic, target, contrast, reflow, reduced-motion, keyboard, and assistive-technology fixtures before rollout.
+
 ## Existing Strengths to Preserve
 
 1. **Functional breadth:** The modern app exposes a large restored legacy surface.
@@ -344,3 +352,4 @@ The complete mutation and recovery evidence for J01-J07 is recorded in `docs/red
 - Use `docs/redesign/responsive-runtime-audit.md` and `responsive-baseline-metrics.json` as the current cross-device evidence baseline.
 - Use `docs/redesign/authorization-scope-audit.md` as the role, capability, scope, and denial baseline.
 - Use `docs/redesign/reliability-offline-audit.md` as the browser storage, cache, retry, transaction, draft, and cross-device delivery baseline.
+- Use `docs/redesign/accessibility-runtime-audit.md` as the source/runtime accessibility debt, shared-component migration, and assistive-technology acceptance baseline.
