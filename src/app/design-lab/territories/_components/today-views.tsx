@@ -83,7 +83,7 @@ function SignalToday(props: TodayViewProps) {
           <h1>{copy.heading}</h1>
           <p>{copy.summary}</p>
         </div>
-        <div className="signal-heading__facts" aria-label="Current totals">
+        <div className="signal-heading__facts" aria-label="Current totals" role="group">
           <span><strong>41</strong> present</span>
           <span><strong>11</strong> staff</span>
           <span><strong>2</strong> open items</span>
@@ -96,9 +96,9 @@ function SignalToday(props: TodayViewProps) {
             <div><span className="territory-eyebrow">Room operating plane</span><h2 id="signal-plane-title">Now and next</h2></div>
             <div className="signal-time-scale" aria-hidden="true"><span>09:18</span><span>11:00</span><span>12:30</span><span>14:00</span></div>
           </div>
-          <div className="signal-room-table" role="table" aria-label="Room operating state">
-            <div className="signal-room-table__head" role="row">
-              <span role="columnheader">Room</span><span role="columnheader">Children</span><span role="columnheader">Staff</span><span role="columnheader">Ratio</span><span role="columnheader">Next change</span>
+          <div className="signal-room-table">
+            <div className="signal-room-table__head" aria-hidden="true">
+              <span>Room</span><span>Children</span><span>Staff</span><span>Ratio</span><span>Next change</span>
             </div>
             {rooms.map((room) => <SignalRoomRow key={room.id} room={room} {...props} />)}
           </div>
@@ -171,13 +171,20 @@ function RoomRow({ room, selectedRoomId, onSelectRoom, coverAssigned }: TodayVie
 function SignalRoomRow({ room, selectedRoomId, onSelectRoom, coverAssigned }: TodayViewProps & { room: Room }) {
   const selected = room.id === selectedRoomId
   const resolved = room.id === "meadow" && coverAssigned
+  const observedState = room.unknown ? `${room.unknown} attendance unknown` : "all attendance observed"
+  const nextChange = resolved ? "Cover Leila N. from 12:30 to 13:00" : `${room.nextChange}. ${room.detail}`
   return (
-    <button className={`signal-room-row signal-room-row--${resolved ? "safe" : room.state}${selected ? " is-selected" : ""}`} onClick={() => onSelectRoom(room.id)} role="row" type="button">
-      <span role="cell"><span className="signal-state-dot" /><strong>{room.name}</strong><small>{room.age}</small></span>
-      <span role="cell"><strong>{room.present}/{room.expected}</strong><small>{room.unknown ? `${room.unknown} unknown` : "observed"}</small></span>
-      <span role="cell"><strong>{room.staffPresent}/{room.staffRequired}</strong><small>on floor</small></span>
-      <span role="cell"><strong>{resolved ? "1:4" : room.ratio}</strong><small>{resolved ? "covered" : room.stateLabel}</small></span>
-      <span role="cell"><strong>{resolved ? "Cover: Leila N." : room.nextChange}</strong><small>{resolved ? "12:30-13:00" : room.detail}</small></span>
+    <button
+      aria-label={`${room.name}, ${room.age}. ${room.present} of ${room.expected} children, ${observedState}. ${room.staffPresent} of ${room.staffRequired} staff on floor. Ratio ${resolved ? "1 to 4, covered" : `${room.ratio}, ${room.stateLabel}`}. ${nextChange}`}
+      className={`signal-room-row signal-room-row--${resolved ? "safe" : room.state}${selected ? " is-selected" : ""}`}
+      onClick={() => onSelectRoom(room.id)}
+      type="button"
+    >
+      <span><span className="signal-state-dot" /><strong>{room.name}</strong><small>{room.age}</small></span>
+      <span><strong>{room.present}/{room.expected}</strong><small>{room.unknown ? `${room.unknown} unknown` : "observed"}</small></span>
+      <span><strong>{room.staffPresent}/{room.staffRequired}</strong><small>on floor</small></span>
+      <span><strong>{resolved ? "1:4" : room.ratio}</strong><small>{resolved ? "covered" : room.stateLabel}</small></span>
+      <span><strong>{resolved ? "Cover: Leila N." : room.nextChange}</strong><small>{resolved ? "12:30-13:00" : room.detail}</small></span>
       <ArrowRight aria-hidden="true" />
     </button>
   )

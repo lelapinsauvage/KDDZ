@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
 import { CareView, ChildrenView, ReviewView } from "./shared-views"
+import { TerritoryAxeHarness } from "./territory-axe-harness"
 import { TodayView } from "./today-views"
 import {
   territoryMeta,
@@ -42,9 +43,10 @@ const readStressSnapshot = () => {
   const stressMode: TerritoryStressMode = stress === "long" || stress === "rtl" ? stress : "default"
   const textSize = params.get("text") === "200" ? "200" : "default"
   const contrastMode = params.get("contrast") === "forced" ? "forced" : "default"
-  return `${stressMode}:${textSize}:${contrastMode}`
+  const axeAudit = params.get("audit") === "axe" ? "axe" : "off"
+  return `${stressMode}:${textSize}:${contrastMode}:${axeAudit}`
 }
-const readServerStressSnapshot = () => "default:default:default"
+const readServerStressSnapshot = () => "default:default:default:off"
 
 export function TerritoryPrototype({ territory }: { territory: TerritoryId }) {
   const [activeView, setActiveView] = useState<PrototypeView>("today")
@@ -61,15 +63,16 @@ export function TerritoryPrototype({ territory }: { territory: TerritoryId }) {
     readStressSnapshot,
     readServerStressSnapshot,
   )
-  const [stressMode, textSize, contrastMode] = stressSnapshot.split(":") as [
+  const [stressMode, textSize, contrastMode, axeAudit] = stressSnapshot.split(":") as [
     TerritoryStressMode,
     "default" | "200",
     "default" | "forced",
+    "axe" | "off",
   ]
   const stressCopy = territoryStressCopy[stressMode]
   const menuTriggerRef = useRef<HTMLButtonElement>(null)
   const menuCloseRef = useRef<HTMLButtonElement>(null)
-  const sidebarRef = useRef<HTMLElement>(null)
+  const sidebarRef = useRef<HTMLDivElement>(null)
   const meta = territoryMeta[territory]
 
   const statusMessage = useMemo(
@@ -119,6 +122,7 @@ export function TerritoryPrototype({ territory }: { territory: TerritoryId }) {
   return (
     <div
       className="territory-lab"
+      data-axe-audit={axeAudit}
       data-content-stress={stressMode}
       data-forced-colors={contrastMode === "forced" ? "true" : undefined}
       data-reduced-motion={forceReducedMotion ? "true" : undefined}
@@ -127,12 +131,16 @@ export function TerritoryPrototype({ territory }: { territory: TerritoryId }) {
       dir={stressMode === "rtl" ? "rtl" : "ltr"}
       lang={stressMode === "rtl" ? "ar" : "en"}
     >
-      <aside
-        aria-label={mobileMenuOpen ? "Main navigation" : undefined}
+      <TerritoryAxeHarness
+        enabled={axeAudit === "axe"}
+        signature={`${territory}:${activeView}:${stressMode}:${textSize}:${contrastMode}`}
+      />
+      <div
+        aria-label={mobileMenuOpen ? "Main navigation" : "Product sidebar"}
         aria-modal={mobileMenuOpen ? "true" : undefined}
         className={`territory-sidebar${mobileMenuOpen ? " is-open" : ""}`}
         ref={sidebarRef}
-        role={mobileMenuOpen ? "dialog" : undefined}
+        role={mobileMenuOpen ? "dialog" : "complementary"}
       >
         <div className="territory-brand-row">
           <KiddzWordmark />
@@ -185,7 +193,7 @@ export function TerritoryPrototype({ territory }: { territory: TerritoryId }) {
           <Settings aria-hidden="true" />
           <span>Settings</span>
         </button>
-      </aside>
+      </div>
 
       {mobileMenuOpen && <button className="territory-mobile-scrim" aria-hidden="true" onClick={closeMobileMenu} tabIndex={-1} type="button" />}
 

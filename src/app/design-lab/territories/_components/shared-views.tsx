@@ -60,12 +60,12 @@ export function ChildrenView({ territory, stressMode }: { territory: TerritoryId
 
       <section className="record-toolbar" aria-label="Children controls">
         <label className="record-search"><Search aria-hidden="true" /><span className="territory-visually-hidden">{copy.search}</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={copy.search} /></label>
-        <div className="record-filter-group" aria-label="Saved views">
+        <div className="record-filter-group" aria-label="Saved views" role="group">
           <button className={activeFilter === "all" ? "is-active" : undefined} onClick={() => setActiveFilter("all")} type="button">{copy.all} <span>47</span></button>
           <button className={activeFilter === "unknown" ? "is-active" : undefined} onClick={() => setActiveFilter("unknown")} type="button">{copy.unknown} <span>1</span></button>
           <button className={activeFilter === "incomplete" ? "is-active" : undefined} onClick={() => setActiveFilter("incomplete")} type="button">{copy.incomplete} <span>4</span></button>
         </div>
-        <button className="territory-secondary-button record-filter-button" type="button"><SlidersHorizontal aria-hidden="true" /> {copy.filters} <span>2</span></button>
+        <button aria-label={`${copy.filters}: 2`} className="territory-secondary-button record-filter-button" type="button"><SlidersHorizontal aria-hidden="true" /> {copy.filters} <span aria-hidden="true">2</span></button>
       </section>
 
       {selectedIds.length > 0 && (

@@ -1155,7 +1155,7 @@
   .territory-index__icon { margin-bottom: 38px; }
   .territory-lab,
   .territory-lab[data-territory="signal"] { display: block; }
-  .territory-sidebar { --drawer-closed-shift: -104%; position: fixed; top: 0; bottom: 0; inset-inline-start: 0; z-index: 50; width: 260px; height: 100dvh; visibility: hidden; pointer-events: none; transform: translateX(var(--drawer-closed-shift)); box-shadow: 12px 0 32px rgba(31, 32, 34, 0.12); transition: transform 180ms ease-out, visibility 0s linear 180ms; }
+  .territory-sidebar { --drawer-closed-shift: -104%; position: fixed; top: 0; bottom: 0; inset-inline-start: 0; z-index: 50; width: 260px; height: 100dvh; visibility: hidden; pointer-events: none; transform: translateX(var(--drawer-closed-shift)); background: var(--surface); box-shadow: 12px 0 32px rgba(31, 32, 34, 0.12); transition: transform 180ms ease-out, visibility 0s linear 180ms; }
   .territory-lab[dir="rtl"] .territory-sidebar { --drawer-closed-shift: 104%; box-shadow: -12px 0 32px rgba(31, 32, 34, 0.12); }
   .territory-sidebar.is-open { visibility: visible; pointer-events: auto; transform: translateX(0); transition-delay: 0s; }
   .territory-mobile-scrim { position: fixed; inset: 0; z-index: 45; display: block; border: 0; background: rgba(31, 32, 34, 0.24); cursor: pointer; }
