@@ -282,6 +282,8 @@ Client-supplied organization IDs are never trusted as authorization. The server 
 
 `src/scripts/verify-collection-contracts.ts` covers valid and adjusted windows, mutually exclusive cursors, stable ID handling, invalid/valid selections, count invariants, and accepted/partial operation receipts. No production route consumes the types yet; adoption remains a complete-workflow migration so compatibility behavior cannot change accidentally.
 
+`src/lib/collection-state.ts` adds the request-state reducer for future controllers. It preserves a usable result while refresh is pending, ignores success/failure from superseded request IDs, retains rows and marks them stale after refresh failure, distinguishes an initial blocking failure from a refresh warning, and honors server-reported stale completeness. `src/scripts/verify-collection-state.ts` proves those transitions. This is deliberately framework-neutral so React screens, server-action adapters, and native-facing clients can share the same truth model without importing presentation.
+
 ## Pagination Decision
 
 ### Offset/page-number pagination

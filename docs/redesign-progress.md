@@ -3,7 +3,7 @@
 **Last updated:** 2026-07-10
 **Plan:** `docs/redesign-master-plan.md`
 **Program state:** Product discovery closed; territory-neutral IA, state, motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; creative selection gate open
-**Reported progress:** **41% done / 59% left**
+**Reported progress:** **42% done / 58% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -16,11 +16,11 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | 2. Benchmark research | 10% | In progress | 9% | Pinterest taxonomy, Mobbin flow sheets, benchmark synthesis |
 | 3. Brand strategy and direction | 10% | In progress | 4% | Strategy, three complete territories, selected brand constitution |
 | 4. IA and core UX | 12% | In progress | 4% | Sitemap, navigation model, Today model, tested wireframes |
-| 5. Design system | 13% | In progress | 9% | Tokens, components, motion, responsive, accessibility, performance, and data-delivery foundations |
+| 5. Design system | 13% | In progress | 10% | Tokens, components, motion, responsive, accessibility, performance, and data-delivery foundations |
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **41%** |  |
+| **Total** | **100%** |  | **42%** |  |
 
 ## Confirmed Baseline
 
@@ -396,6 +396,16 @@ An item is complete only when:
 - **Parity:** No route imports the new foundation yet; no query, action, database behavior, verifier, legacy alias, export, or native contract changed.
 - **Next action:** Close creative selection, then use the foundation in one complete Daily Reports server-list vertical slice with URL state, stable selection, bulk-submit receipts, print/export parity, scale tests, and Agent Browser evidence.
 - **Progress earned:** 1 percentage point; Phase 5 reaches 9 of 13%; total 41%.
+
+### 2026-07-10 - Phase 5 collection request-state foundation
+
+- **Question:** Can collection screens distinguish initial loading, usable refresh, stale data, superseded responses, blocking failure, and refresh failure without blanking trusted context or accepting an old request over a new one?
+- **Decision:** Add a framework-neutral collection state reducer keyed by request ID. Preserve the previous result while refreshing, ignore superseded success/failure, retain and mark rows stale after refresh failure, keep initial failure blocking, and honor server-reported stale completeness.
+- **Artifacts:** `src/lib/collection-state.ts`, `src/scripts/verify-collection-state.ts`, and updated implementation evidence in `docs/redesign/data-delivery-contract.md`.
+- **Verification:** Focused verifier proves initial load/success, stale-response rejection, refresh preservation, refresh failure with usable stale rows, server-stale success, blocking initial failure, explicit stale marking, reset, and invalid request IDs. Focused ESLint, full TypeScript, and diff checks pass.
+- **Parity:** No route imports the reducer yet; current loading, query, database, export, verifier, legacy, and native behavior is unchanged.
+- **Next action:** Use the state foundation only inside the first complete selected-direction collection pilot, with visible loading/stale/error semantics and Agent Browser evidence.
+- **Progress earned:** 1 percentage point; Phase 5 reaches 10 of 13%; total 42%.
 
 ## Work Log Template
 
