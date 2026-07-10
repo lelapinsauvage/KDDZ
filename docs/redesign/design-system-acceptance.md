@@ -18,6 +18,7 @@ The system is not a component gallery. Components are accepted only when they su
 - `localization-runtime-audit.md`;
 - `reliability-offline-audit.md`;
 - `accessibility-runtime-audit.md`;
+- `performance-runtime-audit.md`;
 - `territory-evaluation.md`.
 
 ## Standards and Evidence
@@ -503,6 +504,10 @@ Product-specific targets:
 - Offline/service-worker behavior is tested against sensitive-data and stale-state policy.
 
 Performance budgets become CI checks after baseline instrumentation is added. Lab-only scores do not replace field measurement.
+
+The current delivery baseline is recorded in `performance-runtime-audit.md`: 192 client files, only two explicit Suspense boundaries and three dynamic imports, 395 unbounded-`findMany` triage candidates, eager interactive `all` reads on Daily Reports and Accounting, and route DOM densities above 2,000 elements on Today and Accounting. These are architecture inputs, not permission to remove capability or silently cap records.
+
+Every selected-system component must therefore expose enough composition control to support server windows, progressive rendering, geometry-stable loading, route-local optional dependencies, and privacy-safe instrumentation. Shared primitives may not force charts, PDF, maps, rich editors, motion, or complete datasets into unrelated routes.
 
 ## Component Release Gate
 

@@ -255,6 +255,14 @@ An authenticated eight-route audit found no skip links or persistent live region
 
 **Design requirement:** Make accessibility a shared component/API invariant and complete-process release gate: PageFrame/heading/skip link, Field/ErrorSummary, IconAction, StatusRegion, DataTable/RecordList, DataFigure, and focus-safe Dialog/Drawer contracts must pass semantic, target, contrast, reflow, reduced-motion, keyboard, and assistive-technology fixtures before rollout.
 
+### 27. Warm route speed hides eager data and delivery breadth
+
+Authenticated production-build navigation is usually sub-second after the first visit, but the architecture does more work than the first viewport requires. Daily Reports requests every matching report and paginates in the client; Accounting requests every payment and child before building a 2,136-element main matrix; Today renders the complete roster with 266 interactive elements; and the parent portal eagerly maps multi-domain histories. Source/build scanning finds 192 client files, only two explicit Suspense boundaries, three dynamic imports, 395 unbounded-query triage candidates, and no cursor-based `findMany` contract.
+
+**Risk:** Current demo-scale and warm-cache performance can degrade sharply with real nursery history, slower hardware, patchy Wi-Fi, larger organizations, or a cold service-worker state. Browser filtering can also ship protected records outside the visible/needed window.
+
+**Design requirement:** Instrument field CWV and server/query cost, attribute route payloads, bound interactive data on the server, stream secondary evidence, split optional client modules, and test representative scale/cold/warm/offline fixtures. Preserve complete access through pagination, history, and export contracts; never improve a metric by silently dropping records or capability.
+
 ## Existing Strengths to Preserve
 
 1. **Functional breadth:** The modern app exposes a large restored legacy surface.

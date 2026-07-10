@@ -19,6 +19,7 @@ Cross-device continuity does not mean one universal layout. The same operational
 - `localization-runtime-audit.md` for machine/display separation, operational time, bidi behavior, and native payload evolution.
 - `reliability-offline-audit.md` for platform-specific storage, service-worker boundaries, operation receipts, drafts, replay, and conflict behavior.
 - `accessibility-runtime-audit.md` for semantic parity, targets, reflow, focus, status, forms, tables, charts, and assistive-technology fixtures across projections.
+- `performance-runtime-audit.md` for authenticated route density, eager-list risks, bounded data contracts, route-local delivery, field instrumentation, and scale fixtures.
 - `operational-architecture-synthesis.md` for canonical objects and Today hierarchy.
 - `mobbin-flow-study.md` for contextual sheets, durable status, progress, and return-to-work.
 - `flow-inventory.md` and parity ledger for legacy web aliases and native parent APIs.
@@ -377,7 +378,7 @@ Attendance, health transitions, ratio overrides, financial allocation, and acces
 - Slow or long-running work exposes named stages, retry, and durable output.
 - Unreliable Wi-Fi is tested deliberately, not inferred from a loading spinner.
 
-Exact route budgets are set during implementation after measuring the current baseline and target hardware.
+The initial route, DOM, collection, media, motion, and measurement gates are defined in `performance-runtime-audit.md`. Exact per-route byte budgets are calibrated only after route-aware JavaScript, RSC, CSS, font, image, and third-party attribution exists on representative hardware; total files on build disk are not a transfer budget.
 
 ## Accessibility Across Devices
 

@@ -468,6 +468,7 @@ Record completion, time, wrong turns, hesitation, recovery, confidence, and subj
 
 ## 14. Performance and Quality Budgets
 
+- `docs/redesign/performance-runtime-audit.md` is the authoritative delivery baseline and target architecture. It separates field Core Web Vitals, controlled traces, authenticated route readiness, build artifacts, and source triage so that no proxy is reported as another metric.
 - No layout shift from counters, charts, images, or loading states.
 - Core interactions must acknowledge input immediately.
 - Avoid long blocking spinners; preserve context with skeletons or optimistic updates where safe.
@@ -476,6 +477,8 @@ Record completion, time, wrong turns, hesitation, recovery, confidence, and subj
 - Large tables use pagination or virtualization appropriate to real dataset sizes.
 - Images are sized, compressed, and lazy-loaded appropriately.
 - The app remains usable on unreliable nursery Wi-Fi.
+- Interactive collections use named server bounds, cursor/window/page semantics, and representative scale fixtures. Browser-side `pageSize: "all"` is not a list architecture.
+- Privacy-safe field CWV, route-aware bundle/RSC attribution, server/query timing, and cold/warm/service-worker-disabled traces are pilot gates.
 
 ## 15. Award Quality Scorecard
 
@@ -578,6 +581,7 @@ Commits must be small enough to review but complete enough to run. Do not mix un
 - `docs/redesign/localization-runtime-audit.md`: locale, time-zone, money, writing-system, address, PDF, and native compatibility contracts.
 - `docs/redesign/reliability-offline-audit.md`: service-worker, browser-storage, draft, retry, idempotency, transaction, conflict, and cross-device delivery contracts.
 - `docs/redesign/accessibility-runtime-audit.md`: source/runtime keyboard, screen-reader, form, target, contrast, reflow, chart, table, motion, and assistive-technology acceptance baseline.
+- `docs/redesign/performance-runtime-audit.md`: source/build inventory, authenticated route baseline, target delivery architecture, budgets, scale fixtures, and measurement gates.
 - `docs/redesign/brand-strategy.md`: purpose, promise, positioning, audience, narrative, messages, personality, and voice.
 - `docs/redesign/creative-territory-briefs.md`: Daylight, Signal, and Carebook build specifications and comparison gates.
 - `docs/redesign/information-architecture.md`: navigation and sitemap decisions.
@@ -594,6 +598,9 @@ Commits must be small enough to review but complete enough to run. Do not mix un
 - Apple Human Interface Guidelines, motion: <https://developer.apple.com/design/human-interface-guidelines/motion>
 - Apple Design Awards: <https://developer.apple.com/design/awards/>
 - W3C WCAG 2.2: <https://www.w3.org/WAI/standards-guidelines/wcag/new-in-22/>
+- web.dev Core Web Vitals: <https://web.dev/articles/vitals>
+- Next.js production checklist: <https://nextjs.org/docs/app/guides/production-checklist>
+- Prisma pagination: <https://www.prisma.io/docs/orm/prisma-client/queries/pagination>
 - Awwwards evaluation system: <https://www.awwwards.com/about-evaluation/>
 - Vercel Geist design system: <https://vercel.com/geist/introduction>
 - Duolingo brand guidelines: <https://design.duolingo.com/>
@@ -603,4 +610,4 @@ Commits must be small enough to review but complete enough to run. Do not mix un
 
 ## 21. Immediate Next Action
 
-Close the creative-selection gate using the scored Daylight, Signal, and Carebook prototypes and the provisional Daylight recommendation. After selection, write the brand/design constitution and codify final visual, type, responsive, accessibility, and motion tokens before production pilot implementation. Until selection is available, continue only territory-neutral parity, policy, localization, data, accessibility, and workflow evidence work; do not modify production visual UI.
+Close the creative-selection gate using the scored Daylight, Signal, and Carebook prototypes and the provisional Daylight recommendation. After selection, write the brand/design constitution and codify final visual, type, responsive, accessibility, performance, and motion tokens before production pilot implementation. Until selection is available, continue only territory-neutral parity, policy, localization, data, accessibility, performance, and workflow evidence work; do not modify production visual UI.

@@ -2,8 +2,8 @@
 
 **Last updated:** 2026-07-10
 **Plan:** `docs/redesign-master-plan.md`
-**Program state:** Product discovery closed; territory-neutral IA, state, motion, jurisdiction, localization, reliability, and accessibility contracts documented and tested; creative selection gate open
-**Reported progress:** **38% done / 62% left**
+**Program state:** Product discovery closed; territory-neutral IA, state, motion, jurisdiction, localization, reliability, accessibility, and performance contracts documented and tested; creative selection gate open
+**Reported progress:** **39% done / 61% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -16,11 +16,11 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | 2. Benchmark research | 10% | In progress | 9% | Pinterest taxonomy, Mobbin flow sheets, benchmark synthesis |
 | 3. Brand strategy and direction | 10% | In progress | 4% | Strategy, three complete territories, selected brand constitution |
 | 4. IA and core UX | 12% | In progress | 4% | Sitemap, navigation model, Today model, tested wireframes |
-| 5. Design system | 13% | In progress | 6% | Tokens, components, motion, responsive and accessibility docs |
+| 5. Design system | 13% | In progress | 7% | Tokens, components, motion, responsive, accessibility, and performance docs |
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **38%** |  |
+| **Total** | **100%** |  | **39%** |  |
 
 ## Confirmed Baseline
 
@@ -363,6 +363,18 @@ An item is complete only when:
 - **Evidence boundary:** Scanner findings remain candidates until manual/runtime confirmation; no VoiceOver/NVDA or automated axe pass was performed; the 200% route matrix is incomplete after a browser load timeout. These remain pilot release gates, not hidden assumptions.
 - **Next action:** Close creative selection, then codify accessible final tokens/primitives before production pilot implementation; meanwhile continue territory-neutral performance and data-contract evidence.
 - **Progress earned:** 1 percentage point; total 38%.
+
+### 2026-07-10 - Phase 5 performance and delivery architecture
+
+- **Question:** Can the redesign remain fast at real nursery scale without hiding records, weakening authorization, trusting warm service-worker state, or confusing build files and wall-clock readiness with field Core Web Vitals?
+- **Evidence:** Reproducible source/build scanner across 755 production files and build `WZpaVFGUMIcx9VwDs8l4F`; authenticated production-build route readiness, resource-count, DOM-density, geometry-stability, and console-log sampling on eight routes; manual source inspection of Dashboard, Today, Daily Reports, Accounting, Child enrollment, and Parent portal; current web.dev, Next.js, React, and Prisma guidance; existing reliability, accessibility, scope, journey, and cross-device contracts.
+- **Decision:** Make privacy-safe field CWV, route-aware payload attribution, server/query timing, named collection bounds, server-first projections, stable streaming boundaries, route-local optional dependencies, representative scale fixtures, and cold/warm/service-worker-disabled traces design-system and pilot release gates. Preserve full history through pagination/export, never silent caps.
+- **Artifacts:** `docs/redesign/performance-runtime-audit.md`, `src/scripts/report-redesign-performance.ts`, and updated master-plan, design-system, current-state, cross-device, and progress evidence links.
+- **Verification:** Scanner reports 192 client files, 70 loading files covering 224 pages, two explicit Suspense boundaries, three dynamic imports, 423 `findMany` calls with 395 unbounded triage candidates and zero cursor calls, plus 7.72MB raw / 2.49MB gzip JavaScript across the complete build inventory. Runtime shows stable warm Dashboard around 827-844ms, Accounting around 738-760ms, variable Daily Reports at 726-1,332ms after one initial slow/load-event sample, Today and Accounting above 2,000 DOM elements, and zero captured console warnings/errors. Focused lint, full TypeScript, scanner rerun, and diff checks pass.
+- **Privacy:** The short-lived local performance audit user was signed out and deleted with sessions/accounts; zero audit users remain. No operational record was mutated, no personal-record screenshot was captured, and browser tabs were finalized.
+- **Evidence boundary:** Local warm readiness is not LCP or public-network performance; DOM geometry sampling is not CLS; build-disk totals are not one-route transfer; query candidates need semantic classification. Field RUM, route attribution, server traces, cold network traces, and representative hardware remain pilot gates.
+- **Next action:** Close creative selection, then codify final tokens and implement instrumentation plus bounded server-first data architecture with the first production pilot; meanwhile continue only territory-neutral data-contract evidence.
+- **Progress earned:** 1 percentage point; Phase 5 reaches 7 of 13%; total 39%.
 
 ## Work Log Template
 
