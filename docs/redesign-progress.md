@@ -2,8 +2,8 @@
 
 **Last updated:** 2026-07-10
 **Plan:** `docs/redesign-master-plan.md`
-**Program state:** Territory-neutral IA, state, and purposeful-motion contracts browser-tested; England/Ireland policy baseline documented; creative selection gate open
-**Reported progress:** **35% done / 65% left**
+**Program state:** Territory-neutral IA, state, motion, jurisdiction, and localization contracts documented and tested; creative selection gate open
+**Reported progress:** **36% done / 64% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -12,7 +12,7 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | Phase | Weight | Status | Earned | Evidence required to close |
 | --- | ---: | --- | ---: | --- |
 | 0. Safety and baseline | 3% | Complete | 3% | Clean branch, approved asset preservation, baseline screenshots and checks |
-| 1. Product discovery | 12% | In progress | 10% | Flow inventory, role/task matrix, current journeys, friction/risk register |
+| 1. Product discovery | 12% | In progress | 11% | Flow inventory, role/task matrix, current journeys, friction/risk register |
 | 2. Benchmark research | 10% | In progress | 9% | Pinterest taxonomy, Mobbin flow sheets, benchmark synthesis |
 | 3. Brand strategy and direction | 10% | In progress | 4% | Strategy, three complete territories, selected brand constitution |
 | 4. IA and core UX | 12% | In progress | 4% | Sitemap, navigation model, Today model, tested wireframes |
@@ -20,7 +20,7 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **35%** |  |
+| **Total** | **100%** |  | **36%** |  |
 
 ## Confirmed Baseline
 
@@ -329,6 +329,17 @@ An item is complete only when:
 - **Evidence boundary:** Legal review, launch market, exact provider/service classes, mixed-age/school exceptions, local-authority agreements, current NCS provider pack, operator practice, and final retention schedule remain open.
 - **Next action:** Convert the selected launch policy pack into schema and executable fixtures during the production pilot; keep calculations fixture-only until legal approval.
 - **Progress earned:** 1 percentage point; total 35%.
+
+### 2026-07-10 - Phase 1 localization and cross-device data audit
+
+- **Question:** Can the redesign support branch-local operations, England/Ireland policy, Lebanese legacy data, Arabic content, PDFs, and native clients without ambiguous dates, currencies, or writing direction?
+- **Evidence:** Reproducible scan of 755 production files; Prisma organization/branch/user/payment/address models; root font/language configuration; finance validation and formatting; PDF primitives; Arabic compliance and identity forms; parent/native compatibility modules; public-shell browser check.
+- **Decision:** Make localization operational infrastructure. Branch time zone defines operational date, user locale defines display, legal templates own language, and existing native fields remain compatibility data. Plain dates, plain times, instants, local date-times, intervals, and money are distinct domain types.
+- **Artifacts:** `docs/redesign/localization-runtime-audit.md`, `src/scripts/report-redesign-localization.ts`, and updated cross-device/master-plan evidence links.
+- **Verification:** Scanner summary reports 181 UTC date truncations, 28 UTC-today defaults, 95 hard-coded English locales, zero centralized number formatters, 56 explicit RTL attributes, 16 production files with Arabic, no locale/time-zone schema fields, USD payment default, Lebanon address default, and no i18n/time-zone dependency. Focused lint and full TypeScript checks pass.
+- **Evidence boundary:** Private settings runtime was not opened because displayed demo credentials were stale; field-level bidi behavior is source-confirmed. Launch languages, legal locales, base-currency ownership, address profiles, PDF fonts, and native release matrix remain selection gates.
+- **Next action:** Add localization context and domain primitives during the selected production pilot, preserving legacy/native adapters and proving time-zone, money, RTL, PDF, and parser fixtures first.
+- **Progress earned:** 1 percentage point; total 36%.
 
 ## Work Log Template
 

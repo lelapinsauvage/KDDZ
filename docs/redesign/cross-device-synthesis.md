@@ -16,6 +16,7 @@ Cross-device continuity does not mean one universal layout. The same operational
 - `role-runtime-audit.md` for manager, teacher, nurse, doctor, and parent homes.
 - `journey-state-audit.md` for state, mutation, interruption, and recovery contracts.
 - `authorization-scope-audit.md` for role, assignment, and effective-scope boundaries.
+- `localization-runtime-audit.md` for machine/display separation, operational time, bidi behavior, and native payload evolution.
 - `operational-architecture-synthesis.md` for canonical objects and Today hierarchy.
 - `mobbin-flow-study.md` for contextual sheets, durable status, progress, and return-to-work.
 - `flow-inventory.md` and parity ledger for legacy web aliases and native parent APIs.
