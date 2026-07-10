@@ -82,7 +82,7 @@ Scores are out of 5. Weighted totals are out of 100. Operational clarity or acce
 
 Carebook's original score was not accessibility-gate-valid: post-score measurement found muted and accent text below 4.5:1. The prototype was corrected and now passes the same computed/runtime floor as Daylight and Signal, but the score is not retroactively inflated. Its serif/editorial system still carries greater large-text, localization, and dense-work risk.
 
-The scorecard remains provisional because real-user observation, full automated semantic scanning, actual browser zoom, screen-reader verification, real OS reduced motion/forced colors, color-vision simulation, and native-device validation remain open. Detailed evidence and limits are in `territory-accessibility-validation.md` and `territory-localization-validation.md`.
+The scorecard remains provisional because real-user observation, actual browser zoom, screen-reader verification, real OS reduced motion/forced colors, color-vision simulation, and native-device validation remain open. Automated prototype semantics now pass with documented manual dispositions. Detailed evidence and limits are in `territory-accessibility-validation.md`, `territory-localization-validation.md`, and `territory-semantic-validation.md`.
 
 ## Territory Findings
 
@@ -156,7 +156,8 @@ Those imports must inherit Daylight tokens, typography, geometry, and motion. Si
 - Provisional scoring and recommendation: **complete**.
 - Computed contrast, source-token, 320/390 target/reflow, deterministic reduced-motion, and drawer keyboard evidence: **complete for prototype gate**.
 - Expanded English, Arabic/RTL, 200% type-token, logical-direction, and deterministic forced-color evidence: **complete for prototype gate**.
-- Full automated semantics, actual browser zoom, screen readers, real OS/device motion, color vision, and native-device evidence: **open**.
+- Automated steady-state, worst-case, and interactive semantics: **complete for prototype gate with documented manual dispositions**.
+- Actual browser zoom, screen readers, real OS/device motion, color vision, and native-device evidence: **open**.
 - User selection of the production direction: **open and irreversible**.
 - Production UI migration: **not started by design**.
 

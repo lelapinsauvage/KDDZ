@@ -96,6 +96,7 @@ The query hook exists only to make the source contract reproducible. It does not
 
 - All 12 desktop and all 24 mobile/narrow combinations expose exactly one main H1.
 - No visible unnamed buttons were detected.
+- The complete axe-core steady-state, worst-case, and interactive-state evidence is recorded in `territory-semantic-validation.md`.
 - No territory-specific warning or error was present in the Agent Browser dev log after the final pass.
 - The source reporter confirms visible focus styling, desktop/mobile target rules, system reduced motion, and the deterministic reduced-motion hook.
 
@@ -123,7 +124,6 @@ Carebook's original accessibility score was not gate-valid because its visible c
 
 Still open:
 
-- a full axe or equivalent automated semantic scan;
 - actual browser zoom at 200% and 400%;
 - VoiceOver, NVDA, and other assistive-technology task completion;
 - Windows high-contrast and forced-colors behavior on real hardware; the source and deterministic prototype contracts pass;
@@ -134,4 +134,4 @@ Still open:
 - real-user task observation;
 - field performance and animation frame timing.
 
-These remain selection, design-system, pilot, and final hardening gates. This document proves that the isolated prototypes now meet their defined pre-selection accessibility floor; it does not claim WCAG conformance for the product.
+Automated prototype semantics are now complete, with every axe incomplete result manually dispositioned in `territory-semantic-validation.md`. The remaining items stay selection, design-system, pilot, and final hardening gates. This document proves that the isolated prototypes now meet their defined pre-selection accessibility floor; it does not claim WCAG conformance for the product.

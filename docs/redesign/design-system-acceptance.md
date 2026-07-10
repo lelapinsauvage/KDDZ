@@ -22,7 +22,8 @@ The system is not a component gallery. Components are accepted only when they su
 - `data-delivery-contract.md`;
 - `territory-evaluation.md`;
 - `territory-accessibility-validation.md`;
-- `territory-localization-validation.md`.
+- `territory-localization-validation.md`;
+- `territory-semantic-validation.md`.
 
 ## Standards and Evidence
 
@@ -576,7 +577,7 @@ A redesigned screen cannot replace production presentation until:
 - Test product/display typography across Latin, Arabic/RTL, long names, and 200% zoom.
 - Preserve the territory lab's paired type-scale, logical-direction, and writing-system stress fixtures as pre-merge component evidence.
 - Converge final motion tokens from the accepted prototype evidence; Motion is available, but production use still requires a validated transition.
-- Extend the territory source reporter into production axe/semantic and visual-regression infrastructure.
+- Preserve the territory axe harness as pre-merge evidence and extend the same violation/incomplete/manual-disposition protocol to selected pilot routes and visual-regression infrastructure.
 - Add field Web Vitals instrumentation and budgets.
 - Build component fixtures for the complete state matrix.
 - Validate touch, screen reader, reduced motion, offline, and CPU performance on real devices.

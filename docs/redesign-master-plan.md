@@ -590,6 +590,7 @@ Commits must be small enough to review but complete enough to run. Do not mix un
 - `docs/redesign/territory-evaluation.md`: scored territory comparison, recommendation, and selection boundary.
 - `docs/redesign/territory-accessibility-validation.md`: computed contrast, target, reflow, focus, motion, and evidence-limit record for the territory gate.
 - `docs/redesign/territory-localization-validation.md`: expanded-copy, Arabic/RTL, type-scale, logical-direction, and forced-color stress evidence for the territory gate.
+- `docs/redesign/territory-semantic-validation.md`: axe-core steady-state, worst-case, interactive-state, defect-remediation, and manual-disposition evidence for the territory gate.
 - `docs/redesign/information-architecture.md`: navigation and sitemap decisions.
 - `docs/redesign/motion-system.md`: motion tokens and behavior.
 - `docs/redesign/accessibility-checklist.md`: component and flow acceptance.

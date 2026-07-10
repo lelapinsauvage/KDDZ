@@ -451,6 +451,18 @@ An item is complete only when:
 - **Next action:** Present the now-hardened territories at the irreversible selection gate. After selection, write the brand/design constitution and codify final production tokens before pilot implementation.
 - **Progress earned:** 1 percentage point; Phase 3 reaches 6 of 10%; total 46%.
 
+### 2026-07-10 - Phase 3 territory automated semantic validation
+
+- **Question:** Do the three territory systems preserve valid names, roles, structure, steady-state contrast, and dynamic feedback across desktop, mobile, worst-case localization/type/color conditions, and consequential interaction states?
+- **Evidence:** Pinned `axe-core@4.12.1`; 24 default desktop/mobile territory-view scans; 12 Arabic RTL + 200% text + forced-color scans at 320 x 568; 18 interactive-state scans; manual inspection of every axe incomplete result; computed forced-color badge styles; and corrected Signal drawer visual evidence.
+- **Decision:** Keep all territories eligible and Daylight provisionally recommended. Add a query-gated, viewport-signed, animation-stabilized axe harness to the isolated lab; preserve violations and incompletes separately; require explicit manual disposition rather than hiding uncertain results.
+- **Defects corrected:** Invalid Signal button-row roles, labels on unnamed generic containers, invalid dialog role ownership, translucent Signal mobile drawer bleed-through, an untranslated audit suffix, and non-deterministic audit timing/signatures.
+- **Artifacts:** `docs/redesign/territory-semantic-validation.md`, `src/app/design-lab/territories/_components/territory-axe-harness.tsx`, semantic corrections in territory components/CSS, and updated evaluation/accessibility/acceptance/master-plan evidence.
+- **Verification:** All 24 default surfaces have zero violations and zero incomplete results. All 12 worst-case surfaces have zero violations; one single-character forced-color badge remains an axe incomplete with computed black-on-white manual evidence. All 18 interactive states have zero violations; modal bypass and sticky-overlay incompletes are manually dispositioned. Focused ESLint, full TypeScript, both territory source reporters, two successful production builds, focused built-app axe checks, corrected production drawer inspection, empty production browser logs, and diff checks pass.
+- **Parity:** The harness is isolated behind `?audit=axe`; normal routes do not request axe. No production UI, database behavior, permission, legacy alias, export, or native contract changed.
+- **Next action:** Build and smoke the production bundle, then present the complete territory decision packet at the irreversible selection gate.
+- **Progress earned:** 0 percentage points. This closes prototype semantic debt without claiming the selected brand constitution required for the remaining Phase 3 weight; total remains 46%.
+
 ## Work Log Template
 
 Use this format for every autonomous work session:
