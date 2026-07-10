@@ -469,6 +469,7 @@ Record completion, time, wrong turns, hesitation, recovery, confidence, and subj
 ## 14. Performance and Quality Budgets
 
 - `docs/redesign/performance-runtime-audit.md` is the authoritative delivery baseline and target architecture. It separates field Core Web Vitals, controlled traces, authenticated route readiness, build artifacts, and source triage so that no proxy is reported as another metric.
+- `docs/redesign/data-delivery-contract.md` governs server windows, cursors, working sets, option sources, selection, bulk action, comparison-grid, and export semantics while preserving complete record reach.
 - No layout shift from counters, charts, images, or loading states.
 - Core interactions must acknowledge input immediately.
 - Avoid long blocking spinners; preserve context with skeletons or optimistic updates where safe.
@@ -582,6 +583,7 @@ Commits must be small enough to review but complete enough to run. Do not mix un
 - `docs/redesign/reliability-offline-audit.md`: service-worker, browser-storage, draft, retry, idempotency, transaction, conflict, and cross-device delivery contracts.
 - `docs/redesign/accessibility-runtime-audit.md`: source/runtime keyboard, screen-reader, form, target, contrast, reflow, chart, table, motion, and assistive-technology acceptance baseline.
 - `docs/redesign/performance-runtime-audit.md`: source/build inventory, authenticated route baseline, target delivery architecture, budgets, scale fixtures, and measurement gates.
+- `docs/redesign/data-delivery-contract.md`: dataset classes, query/selection/count contracts, collection primitives, compatibility strategy, scale fixtures, and migration gates.
 - `docs/redesign/brand-strategy.md`: purpose, promise, positioning, audience, narrative, messages, personality, and voice.
 - `docs/redesign/creative-territory-briefs.md`: Daylight, Signal, and Carebook build specifications and comparison gates.
 - `docs/redesign/information-architecture.md`: navigation and sitemap decisions.

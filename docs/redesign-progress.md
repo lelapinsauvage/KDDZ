@@ -2,8 +2,8 @@
 
 **Last updated:** 2026-07-10
 **Plan:** `docs/redesign-master-plan.md`
-**Program state:** Product discovery closed; territory-neutral IA, state, motion, jurisdiction, localization, reliability, accessibility, and performance contracts documented and tested; creative selection gate open
-**Reported progress:** **39% done / 61% left**
+**Program state:** Product discovery closed; territory-neutral IA, state, motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; creative selection gate open
+**Reported progress:** **40% done / 60% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -16,11 +16,11 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | 2. Benchmark research | 10% | In progress | 9% | Pinterest taxonomy, Mobbin flow sheets, benchmark synthesis |
 | 3. Brand strategy and direction | 10% | In progress | 4% | Strategy, three complete territories, selected brand constitution |
 | 4. IA and core UX | 12% | In progress | 4% | Sitemap, navigation model, Today model, tested wireframes |
-| 5. Design system | 13% | In progress | 7% | Tokens, components, motion, responsive, accessibility, and performance docs |
+| 5. Design system | 13% | In progress | 8% | Tokens, components, motion, responsive, accessibility, performance, and data-delivery docs |
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **39%** |  |
+| **Total** | **100%** |  | **40%** |  |
 
 ## Confirmed Baseline
 
@@ -375,6 +375,17 @@ An item is complete only when:
 - **Evidence boundary:** Local warm readiness is not LCP or public-network performance; DOM geometry sampling is not CLS; build-disk totals are not one-route transfer; query candidates need semantic classification. Field RUM, route attribution, server traces, cold network traces, and representative hardware remain pilot gates.
 - **Next action:** Close creative selection, then codify final tokens and implement instrumentation plus bounded server-first data architecture with the first production pilot; meanwhile continue only territory-neutral data-contract evidence.
 - **Progress earned:** 1 percentage point; Phase 5 reaches 7 of 13%; total 39%.
+
+### 2026-07-10 - Phase 5 data delivery and collection contract
+
+- **Question:** How can interactive lists, complete room rosters, form selectors, comparison grids, histories, bulk actions, print, and export stop loading every record into the browser without hiding any authorized record or breaking legacy/native parity?
+- **Evidence:** Reproducible AST/source scan across 755 production files; all `pageSize: "all"` callers and support branches; shared DataTable filtering, pagination, selection, print, and export behavior; Children, Daily Reports, Accounting, Today, Messages, alarms, medical, staff, parent, and Settings export sources; 27 legacy verifier files with 91 `pageSize`/`all` assertions; current TanStack Table, Prisma pagination, and WAI table/grid guidance; existing scope, reliability, accessibility, localization, performance, journey, and parity contracts.
+- **Decision:** Classify every dataset as interactive collection, form option source, operational working set, comparison grid, history/feed, bounded reference set, explicit output, or background sweep. Make server scope/filter/sort/window/count authoritative; use stable IDs and explicit page/ID/all-matching selection; preserve complete reach with compatibility adapters; move large exports to durable authorized jobs.
+- **Artifacts:** `docs/redesign/data-delivery-contract.md`, `src/scripts/report-redesign-data-delivery.ts`, and updated master-plan, design-system, current-state, cross-device, performance, and progress links.
+- **Verification:** Scanner reports 85 explicit full-dataset requests across 49 production files: 54 interactive-collection candidates, 16 form-option sources, ten operational working sets, and five explicit export reads. It also finds 12 client filter/pagination pipelines, ten with all-row modes, 423 `findMany` calls, 395 top-level-`take` triage candidates, and zero cursor calls. Focused lint, scanner rerun, full TypeScript, and diff checks pass.
+- **Evidence boundary:** Scanner categories and literal top-level query properties are triage heuristics. Date/branch/ID-bounded sets and small references can be valid; no `all` call or verifier was changed. Runtime/server scale traces and compatibility implementation remain pilot gates.
+- **Next action:** After creative selection, add canonical query/result/selection types and migrate Daily Reports as the first server-list proof, then Accounting as the comparison-grid proof. Until selection, continue territory-neutral component API and data-state evidence only.
+- **Progress earned:** 1 percentage point; Phase 5 reaches 8 of 13%; total 40%.
 
 ## Work Log Template
 

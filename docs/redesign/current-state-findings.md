@@ -261,7 +261,7 @@ Authenticated production-build navigation is usually sub-second after the first 
 
 **Risk:** Current demo-scale and warm-cache performance can degrade sharply with real nursery history, slower hardware, patchy Wi-Fi, larger organizations, or a cold service-worker state. Browser filtering can also ship protected records outside the visible/needed window.
 
-**Design requirement:** Instrument field CWV and server/query cost, attribute route payloads, bound interactive data on the server, stream secondary evidence, split optional client modules, and test representative scale/cold/warm/offline fixtures. Preserve complete access through pagination, history, and export contracts; never improve a metric by silently dropping records or capability.
+**Design requirement:** Apply `performance-runtime-audit.md` and `data-delivery-contract.md`: instrument field CWV and server/query cost, attribute route payloads, bound interactive data on the server, stream secondary evidence, split optional client modules, and test representative scale/cold/warm/offline fixtures. Preserve complete access through pagination, history, and export contracts; never improve a metric by silently dropping records or capability.
 
 ## Existing Strengths to Preserve
 

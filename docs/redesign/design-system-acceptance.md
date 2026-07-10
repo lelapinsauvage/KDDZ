@@ -19,6 +19,7 @@ The system is not a component gallery. Components are accepted only when they su
 - `reliability-offline-audit.md`;
 - `accessibility-runtime-audit.md`;
 - `performance-runtime-audit.md`;
+- `data-delivery-contract.md`;
 - `territory-evaluation.md`.
 
 ## Standards and Evidence
@@ -295,6 +296,8 @@ Kiddz generally requires both checked input and a visible result preview for fin
 - Horizontal scrolling is bounded to the table, not the page.
 - Mobile converts to a summary list or one-record workspace; it does not squeeze every desktop column.
 - Lists above roughly 50 visible items use pagination, progressive rendering, or carefully tested virtualization. Accessibility and selection behavior determine the mechanism.
+- Interactive collections follow `data-delivery-contract.md`: the server owns scope/filter/sort/window/count, rows have stable IDs, and selection names visible-page, explicit-record, or all-matching semantics.
+- Print and export name whether they apply to the current page, selected records, or all matching records. Large/all-matching output is a durable authorized job, not serialization of loaded client rows.
 
 ### Cards
 

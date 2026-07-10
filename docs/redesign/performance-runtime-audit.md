@@ -45,6 +45,7 @@ Product evidence:
 - `cross-device-synthesis.md` for route responsibility by surface.
 - `journey-state-audit.md` for server-owned completion and recovery.
 - `authorization-scope-audit.md` for data-scope requirements that pagination and caching must preserve.
+- `data-delivery-contract.md` for dataset classes, query/selection/count semantics, complete reach, and export compatibility.
 - Authenticated Agent Browser checks on Dashboard, Today, Children, Accounting, Daily Reports, New Child, Calls, and Settings.
 - Manual source inspection of dashboard loaders, Daily Reports, Accounting, Today, Child enrollment, and the parent portal.
 
@@ -316,6 +317,7 @@ Exact byte limits are calibrated after route attribution exists. Until then, the
 
 ### Data budgets
 
+- `data-delivery-contract.md` is authoritative for collection, working-set, selector, grid, history, selection, and output semantics.
 - Interactive list reads are bounded by a named page/window/group size; `all` is reserved for proven small reference data or explicit server-side export/background work.
 - Default interactive window: at most 50 records on comparison-heavy desktop and at most 25 on compact/touch projections, unless a measured workflow fixture proves another number.
 - Database reads select only fields required by the projection.
