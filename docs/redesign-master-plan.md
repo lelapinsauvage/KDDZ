@@ -589,6 +589,7 @@ Commits must be small enough to review but complete enough to run. Do not mix un
 - `docs/redesign/data-delivery-contract.md`: dataset classes, query/selection/count contracts, collection primitives, compatibility strategy, scale fixtures, and migration gates.
 - `docs/redesign/brand-strategy.md`: purpose, promise, positioning, audience, narrative, messages, personality, and voice.
 - `docs/redesign/creative-territory-briefs.md`: Daylight, Signal, and Carebook build specifications and comparison gates.
+- `docs/redesign/creative-selection-gate.md`: phone-friendly review surface, recommendation, scores, tradeoffs, and explicit irreversible selection boundary.
 - `docs/redesign/territory-evaluation.md`: scored territory comparison, recommendation, and selection boundary.
 - `docs/redesign/territory-accessibility-validation.md`: computed contrast, target, reflow, focus, motion, and evidence-limit record for the territory gate.
 - `docs/redesign/territory-localization-validation.md`: expanded-copy, Arabic/RTL, type-scale, logical-direction, and forced-color stress evidence for the territory gate.

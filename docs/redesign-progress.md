@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-07-10
 **Plan:** `docs/redesign-master-plan.md`
-**Program state:** Product discovery and benchmark research closed; territory-neutral staff IA, capability-derived navigation, Calls-under-Messages placement, route compatibility, native/parent convergence, state, motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; creative selection gate open
+**Program state:** Product discovery and benchmark research closed; territory-neutral staff IA, capability-derived navigation, Calls-under-Messages placement, route compatibility, native/parent convergence, state, motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; creative selection packet ready and explicit production choice open
 **Reported progress:** **50% done / 50% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
@@ -108,7 +108,7 @@ The Mobbin MCP is registered, authenticated, and available in this task. Two flo
 
 ## Next Work Queue
 
-1. Present the three scored territories and provisional Daylight recommendation at the creative-selection gate.
+1. Receive the explicit Daylight, Signal, or Carebook production selection from the completed creative-selection packet.
 2. After selection, codify the final brand constitution, visual tokens, themes, component APIs, and motion tokens.
 3. Build the desktop-first production pilot across shell, Today, live attendance/ratios, and child profile with parity evidence.
 4. Validate the pilot with role, branch, permission, database, responsive, accessibility, and performance fixtures before rollout.
@@ -514,6 +514,19 @@ An item is complete only when:
 - **Evidence boundary:** Operator terminology/card sorting, production call capability enforcement, assigned-scope tests, audited voiding, authenticated real-record route/history tests, and runtime database aggregates remain open. The local database was unavailable during this source audit.
 - **Next action:** Present the creative-territory decision packet. After selection, codify the brand constitution and begin the first selected-direction pilot on safe current routes with production capability integration.
 - **Progress earned:** 1 percentage point; Phase 4 reaches 8 of 12%; total 50%.
+
+### 2026-07-10 - Phase 3 creative-selection decision packet
+
+- **Question:** Can the completed territory evidence be reviewed as one honest desktop and phone decision instead of requiring the user to reconstruct the recommendation from prototypes and long documents?
+- **Evidence:** All three implemented territory Today captures and routes; the seven-criterion evaluation; accessibility, localization, semantic, responsive, motion, and state-continuity evidence; the explicit production-selection boundary; Agent Browser at default desktop, 390 x 844, and 320 x 568.
+- **Decision:** Replace the generic territory index with a decision surface using real product captures, exact scores, one strongest use and one implementation cost per direction, the provisional Daylight recommendation, the full scorecard, and a clear list of what selection can and cannot change. Keep selection explicit; do not set production tokens or migrate UI.
+- **Correction:** The executable score check found that Daylight's displayed criteria total `89.9`, not the previously published `90.0`; the source evaluation, packet, and decision artifact now use the exact value. Ranking is unchanged.
+- **Artifacts:** `docs/redesign/creative-selection-gate.md`, the redesigned `/design-lab/territories` packet, shared typed score evidence, and `src/scripts/verify-redesign-territory-selection.ts`.
+- **Verification:** Three directions, seven criteria totaling 100%, exact weighted totals, one Daylight recommendation, three real captures, all prototype links, and no persisted selection pass the verifier. TypeScript, focused ESLint, territory accessibility/localization contracts, and the production build pass; the build retains its documented legacy dynamic-prerender messages and print CSS warning. Browser checks find one H1, no page overflow, no clipped critical copy, no unnamed button, no sub-44px visible target, and a named keyboard-scrollable scorecard at 320px. All three territory routes and Back navigation pass. A lazy-image LCP warning was corrected by eagerly loading the three decision-critical captures.
+- **Parity:** No production route, visual component, data, permission, mutation, legacy alias, native contract, or restored capability changed.
+- **Evidence boundary:** The user has not selected a production direction. Actual zoom, assistive technology, OS/device settings, nursery operators, and field performance remain later gates for the selected system.
+- **Next action:** Receive the explicit Daylight, Signal, or Carebook selection; then write the brand/design constitution and begin final token and production pilot work.
+- **Progress earned:** 0 percentage points; Phase 3 remains 6 of 10% and total remains 50% because the irreversible selection gate is still open.
 
 ## Work Log Template
 

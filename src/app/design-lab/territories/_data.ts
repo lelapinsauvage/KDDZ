@@ -1,5 +1,22 @@
 export type TerritoryId = "daylight" | "signal" | "carebook"
 
+export type TerritoryScoreCriterion = {
+  id: string
+  label: string
+  weight: number
+  scores: Record<TerritoryId, number>
+}
+
+export type TerritoryDecisionEvidence = {
+  rank: number
+  total: number
+  scoreNote?: string
+  recommended: boolean
+  verdict: string
+  bestAt: string
+  watchout: string
+}
+
 export type PrototypeView = "today" | "children" | "care" | "review"
 
 export type RoomState = "safe" | "forecast" | "unknown"
@@ -64,6 +81,79 @@ export const territoryMeta: Record<
     name: "Carebook",
     short: "Editorial care",
     concept: "A living record of handovers, decisions, and evidence made humane and readable.",
+  },
+}
+
+export const territoryScoreCriteria: readonly TerritoryScoreCriterion[] = [
+  {
+    id: "operational-clarity",
+    label: "Operational clarity",
+    weight: 25,
+    scores: { daylight: 4.5, signal: 4.8, carebook: 4.2 },
+  },
+  {
+    id: "brand-ownership",
+    label: "Distinctive brand ownership",
+    weight: 20,
+    scores: { daylight: 4.7, signal: 3.8, carebook: 4.7 },
+  },
+  {
+    id: "emotional-fit",
+    label: "Emotional fit",
+    weight: 15,
+    scores: { daylight: 4.8, signal: 3.8, carebook: 4.7 },
+  },
+  {
+    id: "dense-surfaces",
+    label: "Dense-surface survival",
+    weight: 15,
+    scores: { daylight: 4.1, signal: 4.8, carebook: 4.3 },
+  },
+  {
+    id: "motion-coherence",
+    label: "Motion coherence",
+    weight: 10,
+    scores: { daylight: 4.4, signal: 4.1, carebook: 4.3 },
+  },
+  {
+    id: "accessibility",
+    label: "Accessibility",
+    weight: 10,
+    scores: { daylight: 4.3, signal: 4.5, carebook: 3.8 },
+  },
+  {
+    id: "cross-device",
+    label: "Cross-device continuity",
+    weight: 5,
+    scores: { daylight: 4.5, signal: 4.6, carebook: 4.0 },
+  },
+] as const
+
+export const territoryDecisionEvidence: Record<TerritoryId, TerritoryDecisionEvidence> = {
+  daylight: {
+    rank: 1,
+    total: 89.9,
+    recommended: true,
+    verdict: "The strongest balance of recognizable Kiddz warmth and operational authority.",
+    bestAt: "Fast readiness comprehension, emotional fit, and a distinct market identity.",
+    watchout: "Dense finance, audit, and medical views need Signal-level alignment discipline.",
+  },
+  signal: {
+    rank: 3,
+    total: 86.8,
+    recommended: false,
+    verdict: "The strongest operating instrument, but not yet a distinctive enough Kiddz world.",
+    bestAt: "Room comparison, source and timing grammar, and information-dense workflows.",
+    watchout: "The master language feels emotionally cool and too close to generic operations software.",
+  },
+  carebook: {
+    rank: 2,
+    total: 87,
+    scoreNote: "Original score retained after accessibility remediation",
+    recommended: false,
+    verdict: "The most humane record system, with a meaningful speed and typography cost.",
+    bestAt: "Handovers, incident history, acknowledgment, and parent-facing narrative evidence.",
+    watchout: "Editorial scale and serif treatment slow repeated work and carry the highest localization risk.",
   },
 }
 

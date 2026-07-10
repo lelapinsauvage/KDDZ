@@ -15,6 +15,7 @@ The prototypes are isolated under `/design-lab/territories`. They do not alter t
 ### Implemented surfaces
 
 - Territory selector with Daylight, Signal, and Carebook.
+- Decision packet with real territory captures, weighted evidence, recommendation, tradeoffs, and explicit production-selection boundary.
 - A distinct Today composition for every territory.
 - Shared Children record surface with search, saved views, selection, and desktop/mobile projections.
 - Shared Daily care flow with factual fields unset by default, explicit child scope, validation, draft language, and confirmed submission.
@@ -37,6 +38,8 @@ The prototypes are isolated under `/design-lab/territories`. They do not alter t
 - The real and deterministic forced-color contracts preserve geometry, targets, hierarchy, and state borders; Windows high-contrast testing remains open.
 - A fresh production-route tab produced no territory-specific console errors.
 - Production build completed successfully and emitted static routes for the selector and all three territories.
+- The decision packet renders at desktop, 390px, and 320px with one H1, no page overflow, no clipped critical copy, and no visible target below 44px; the scorecard owns its named horizontal scroll region at 320px.
+- All three interactive territory routes resolve from the packet, and browser Back returns to the comparison. Agent Browser identified one LCP warning from lazy comparison media; the three decision-critical captures now load eagerly by contract.
 
 ### State-continuity verification
 
@@ -78,7 +81,7 @@ Scores are out of 5. Weighted totals are out of 100. Operational clarity or acce
 | Motion coherence | 10% | 4.4 | 4.1 | 4.3 |
 | Accessibility | 10% | 4.3 | 4.5 | 3.8 pre-fix |
 | Cross-device continuity | 5% | 4.5 | 4.6 | 4.0 |
-| **Weighted total** | **100%** | **90.0** | **86.8** | **87.0 pre-fix** |
+| **Weighted total** | **100%** | **89.9** | **86.8** | **87.0 pre-fix** |
 
 Carebook's original score was not accessibility-gate-valid: post-score measurement found muted and accent text below 4.5:1. The prototype was corrected and now passes the same computed/runtime floor as Daylight and Signal, but the score is not retroactively inflated. Its serif/editorial system still carries greater large-text, localization, and dense-work risk.
 
