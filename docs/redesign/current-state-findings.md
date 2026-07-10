@@ -215,6 +215,14 @@ Settings export cards promise parent contacts, detailed care, medical categories
 
 **Design requirement:** Make export labels exact and introduce versioned inspection packages with completeness checks, provenance, redaction, progress, and an audit trail. Keep database backup separate from regulator evidence.
 
+### 22. Breakpoints change geometry but not the job
+
+Authenticated measurements across six routes show that the current product mostly collapses navigation and stacks desktop content. At 390 pixels, Dashboard reaches 3,602 CSS pixels, Today reaches 9,085 pixels with 192 interactive elements, and Accounting reaches 3,886 pixels. Children retains page-level overflow and 77 partially out-of-bounds interactive elements on mobile. At 1024, chart labels clip and wide tables still overflow.
+
+**Risk:** Smaller screens preserve nearly the full desktop decision burden while losing comparison space, touch comfort, and visible priority.
+
+**Design requirement:** Keep the product desktop first, then intentionally compose a tablet room workspace and mobile daily companion from the same domain objects. Define responsive behavior per chart, table, form, toolbar, card family, and fixed shell region.
+
 ## Existing Strengths to Preserve
 
 1. **Functional breadth:** The modern app exposes a large restored legacy surface.
@@ -305,8 +313,8 @@ The complete mutation and recovery evidence for J01-J07 is recorded in `docs/red
 
 ## Next Validation
 
-- Test compact desktop, tablet, and mobile behavior.
 - Connect findings to specific parity rows and existing verification scripts.
 - Validate priority and terminology with real nursery operators or owner-provided operational policy.
 - Use `docs/redesign/role-runtime-audit.md` as the current role-home evidence and preserve its privacy boundary.
 - Use `docs/redesign/journey-state-audit.md` as the critical mutation/recovery baseline and validate its open legal and operator questions.
+- Use `docs/redesign/responsive-runtime-audit.md` and `responsive-baseline-metrics.json` as the current cross-device evidence baseline.

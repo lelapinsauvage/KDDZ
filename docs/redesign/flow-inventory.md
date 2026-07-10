@@ -209,8 +209,8 @@ Initial high-priority flows:
 | Teacher navigation | Authenticated runtime captured; Dashboard redirects to Today | Mutation, interruption, and permission variants |
 | Nurse/doctor navigation | Authenticated runtime captured; home and nav are currently identical | Responsibility split, clinical queues, and permission variants |
 | Parent web/native | Route/API inventory and authenticated web runtime complete | Native analogues, performance, and communication mutations |
-| Dashboard and Today | Desktop baseline complete | Compact desktop, tablet, mobile, and interaction traces |
-| Lists and tables | Representative children, staff, medical, reports captured | Keyboard, selection, export, delete, and empty/error behavior |
+| Dashboard and Today | Desktop plus compact desktop, tablet, and mobile structure captured | Task-sequence prototypes and operator validation |
+| Lists and tables | Children, accounting, daily-report, and settings responsive structure captured | Keyboard, selection, export, delete, and empty/error behavior |
 | Child workspace | Details baseline complete | Edit, attendance, health, finance, and report subflows |
 | Finance | Overview baseline complete | Record-payment and invoice flows |
 | Messaging | Empty inbox baseline complete | Compose, target selection, sent, thread, and error states |

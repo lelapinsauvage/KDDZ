@@ -3,7 +3,7 @@
 **Last updated:** 2026-07-10
 **Plan:** `docs/redesign-master-plan.md`
 **Program state:** Current-state discovery and benchmark synthesis active
-**Reported progress:** **14% done / 86% left**
+**Reported progress:** **15% done / 85% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -12,7 +12,7 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | Phase | Weight | Status | Earned | Evidence required to close |
 | --- | ---: | --- | ---: | --- |
 | 0. Safety and baseline | 3% | Complete | 3% | Clean branch, approved asset preservation, baseline screenshots and checks |
-| 1. Product discovery | 12% | In progress | 7% | Flow inventory, role/task matrix, current journeys, friction/risk register |
+| 1. Product discovery | 12% | In progress | 8% | Flow inventory, role/task matrix, current journeys, friction/risk register |
 | 2. Benchmark research | 10% | In progress | 4% | Pinterest taxonomy, Mobbin flow sheets, benchmark synthesis |
 | 3. Brand strategy and direction | 10% | Not started | 0% | Strategy, three complete territories, selected brand constitution |
 | 4. IA and core UX | 12% | Not started | 0% | Sitemap, navigation model, Today model, tested wireframes |
@@ -20,7 +20,7 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **14%** |  |
+| **Total** | **100%** |  | **15%** |  |
 
 ## Confirmed Baseline
 
@@ -51,6 +51,8 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 - Role runtime confirms an admin-clone manager home, identical nurse/doctor homes, teacher redirection to Today with 14 children selected by default, and a 213-report parent history rendered eagerly.
 - `docs/redesign/journey-state-audit.md` traces J01-J07 through source of truth, mutation, validation, completion, recovery, audit, downstream effects, and parity constraints.
 - The state audit confirms that present child attendance is not persisted, factual care defaults can be submitted, drafts can appear done, medical transitions are not server-owned, live ratio resolution is absent, payment and balance stores are disconnected, and export descriptions overstate package content.
+- `docs/redesign/responsive-runtime-audit.md` and its metrics cover Dashboard, Today, Children, Accounting, Daily Reports, and Settings at 1280 x 800, 1024 x 768, and 390 x 844 without committing personal-record screenshots.
+- Responsive runtime confirms clipped chart meaning at 1024, page-level table overflow, a 9,085-pixel mobile Today flow, and desktop decision load carried almost unchanged into mobile.
 
 ## Locked Decisions
 
@@ -91,15 +93,14 @@ The Mobbin MCP is registered and enabled at `https://api.mobbin.com/mcp` with OA
 
 ## Next Work Queue
 
-1. Capture compact desktop, tablet, and mobile current-state evidence.
-2. Inspect migrated permission variants without exposing identities.
-3. Complete Mobbin flow sheets for Revolut, Notion, Cosmos, Duolingo, Duolingo ABC, Genie, and Anything.
-4. Inspect direct competitor flows in live products or Mobbin; official-source capability research is complete.
-5. Expand the Pinterest taxonomy when the board changes.
-6. Build the operational, brand-expression, and cross-device synthesis maps.
-7. Draft the brand strategy and personality spectrum.
-8. Build three complete creative territories using realistic product content.
-9. Review the territories against the award and usability scorecards.
+1. Inspect migrated permission variants without exposing identities.
+2. Complete Mobbin flow sheets for Revolut, Notion, Cosmos, Duolingo, Duolingo ABC, Genie, and Anything.
+3. Inspect direct competitor flows in live products or Mobbin; official-source capability research is complete.
+4. Expand the Pinterest taxonomy when the board changes.
+5. Build the operational, brand-expression, and cross-device synthesis maps.
+6. Draft the brand strategy and personality spectrum.
+7. Build three complete creative territories using realistic product content.
+8. Review the territories against the award and usability scorecards.
 
 ## Definition of a Completed Tracker Item
 
@@ -197,6 +198,17 @@ An item is complete only when:
 - **Open items:** Operator validation, jurisdiction rules, real permission variants, offline conflict policy, responsive runtime, and final canonical object schemas.
 - **Next action:** Capture responsive current-state behavior, then finish benchmark flow evidence and synthesis.
 - **Progress earned:** 2 additional percentage points; total 14%.
+
+### 2026-07-10 - Phase 1 responsive runtime audit
+
+- **Question:** Does the current product intentionally adapt its hierarchy and interaction model for compact desktop, tablet, and mobile?
+- **Evidence:** Authenticated in-app-browser measurements of six routes at 1280 x 800, 1024 x 768, and 390 x 844; four privacy-safe screenshots; geometry and interaction metrics.
+- **Decision:** Preserve desktop as the primary manager workspace while designing a distinct tablet room workspace and mobile daily companion. Every chart, table, form, toolbar, card family, and fixed shell region must define responsive behavior.
+- **Artifacts:** `docs/redesign/responsive-runtime-audit.md`, `docs/redesign/responsive-baseline-metrics.json`, and four baseline JPG captures.
+- **Verification:** Temporary same-origin harness removed; `X-Frame-Options: DENY` restored; short-lived audit user signed out and deleted; zero audit users remained.
+- **Open items:** Browser interaction/error states, 200% zoom, real device safe areas/keyboards, permission variants, and target prototype testing.
+- **Next action:** Finish permission discovery and benchmark flow synthesis.
+- **Progress earned:** 1 additional percentage point; total 15%.
 
 ## Work Log Template
 

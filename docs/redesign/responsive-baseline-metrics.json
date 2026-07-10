@@ -1,0 +1,443 @@
+{
+  "generatedAt": "2026-07-10",
+  "method": "Authenticated same-origin iframe in the in-app browser; structural metrics only for pages containing personal records.",
+  "viewports": [
+    "1280x800",
+    "1024x768",
+    "390x844"
+  ],
+  "measurements": [
+    {
+      "route": "/dashboard",
+      "size": "1280x800",
+      "document": {
+        "h": 1581,
+        "w": 1274
+      },
+      "firstViewportInteractive": 28,
+      "fixedElements": 3,
+      "horizontalOverflow": 0,
+      "interactiveCount": 41,
+      "interactiveOutOfBounds": 0,
+      "main": {
+        "h": 1529,
+        "w": 1004,
+        "x": 270,
+        "y": 52
+      },
+      "smallTouchTargets": 24,
+      "viewport": {
+        "h": 800,
+        "w": 1274
+      }
+    },
+    {
+      "route": "/dashboard",
+      "size": "1024x768",
+      "document": {
+        "h": 1581,
+        "w": 1018
+      },
+      "firstViewportInteractive": 24,
+      "fixedElements": 3,
+      "horizontalOverflow": 0,
+      "interactiveCount": 37,
+      "interactiveOutOfBounds": 0,
+      "main": {
+        "h": 1529,
+        "w": 970,
+        "x": 48,
+        "y": 52
+      },
+      "smallTouchTargets": 21,
+      "viewport": {
+        "h": 768,
+        "w": 1018
+      }
+    },
+    {
+      "route": "/dashboard",
+      "size": "390x844",
+      "document": {
+        "h": 3602,
+        "w": 384
+      },
+      "firstViewportInteractive": 16,
+      "fixedElements": 2,
+      "horizontalOverflow": 0,
+      "interactiveCount": 29,
+      "interactiveOutOfBounds": 0,
+      "main": {
+        "h": 3550,
+        "w": 384,
+        "x": 0,
+        "y": 52
+      },
+      "smallTouchTargets": 8,
+      "viewport": {
+        "h": 844,
+        "w": 384
+      }
+    },
+    {
+      "route": "/today",
+      "size": "1280x800",
+      "document": {
+        "h": 5420,
+        "w": 1274
+      },
+      "firstViewportInteractive": 50,
+      "fixedElements": 3,
+      "horizontalOverflow": 0,
+      "interactiveCount": 204,
+      "interactiveOutOfBounds": 0,
+      "main": {
+        "h": 5368,
+        "w": 1004,
+        "x": 270,
+        "y": 52
+      },
+      "smallTouchTargets": 203,
+      "viewport": {
+        "h": 800,
+        "w": 1274
+      }
+    },
+    {
+      "route": "/today",
+      "size": "1024x768",
+      "document": {
+        "h": 5420,
+        "w": 1018
+      },
+      "firstViewportInteractive": 46,
+      "fixedElements": 3,
+      "horizontalOverflow": 0,
+      "interactiveCount": 200,
+      "interactiveOutOfBounds": 0,
+      "main": {
+        "h": 5368,
+        "w": 970,
+        "x": 48,
+        "y": 52
+      },
+      "smallTouchTargets": 200,
+      "viewport": {
+        "h": 768,
+        "w": 1018
+      }
+    },
+    {
+      "route": "/today",
+      "size": "390x844",
+      "document": {
+        "h": 9085,
+        "w": 384
+      },
+      "firstViewportInteractive": 27,
+      "fixedElements": 2,
+      "horizontalOverflow": 0,
+      "interactiveCount": 192,
+      "interactiveOutOfBounds": 0,
+      "main": {
+        "h": 9033,
+        "w": 384,
+        "x": 0,
+        "y": 52
+      },
+      "smallTouchTargets": 183,
+      "viewport": {
+        "h": 844,
+        "w": 384
+      }
+    },
+    {
+      "route": "/children",
+      "size": "1280x800",
+      "document": {
+        "h": 1308,
+        "w": 1544
+      },
+      "firstViewportInteractive": 117,
+      "fixedElements": 3,
+      "horizontalOverflow": 270,
+      "interactiveCount": 163,
+      "interactiveOutOfBounds": 53,
+      "main": {
+        "h": 1256,
+        "w": 1274,
+        "x": 270,
+        "y": 52
+      },
+      "smallTouchTargets": 152,
+      "viewport": {
+        "h": 794,
+        "w": 1274
+      }
+    },
+    {
+      "route": "/children",
+      "size": "1024x768",
+      "document": {
+        "h": 1312,
+        "w": 1066
+      },
+      "firstViewportInteractive": 98,
+      "fixedElements": 3,
+      "horizontalOverflow": 48,
+      "interactiveCount": 153,
+      "interactiveOutOfBounds": 45,
+      "main": {
+        "h": 1260,
+        "w": 1018,
+        "x": 48,
+        "y": 52
+      },
+      "smallTouchTargets": 143,
+      "viewport": {
+        "h": 762,
+        "w": 1018
+      }
+    },
+    {
+      "route": "/children",
+      "size": "390x844",
+      "document": {
+        "h": 1827,
+        "w": 413
+      },
+      "firstViewportInteractive": 40,
+      "fixedElements": 2,
+      "horizontalOverflow": 29,
+      "interactiveCount": 145,
+      "interactiveOutOfBounds": 77,
+      "main": {
+        "h": 1775,
+        "w": 384,
+        "x": 0,
+        "y": 52
+      },
+      "smallTouchTargets": 130,
+      "viewport": {
+        "h": 838,
+        "w": 384
+      }
+    },
+    {
+      "route": "/accounting",
+      "size": "1280x800",
+      "document": {
+        "h": 3409,
+        "w": 1544
+      },
+      "firstViewportInteractive": 52,
+      "fixedElements": 3,
+      "horizontalOverflow": 270,
+      "interactiveCount": 154,
+      "interactiveOutOfBounds": 6,
+      "main": {
+        "h": 3357,
+        "w": 1274,
+        "x": 270,
+        "y": 52
+      },
+      "smallTouchTargets": 153,
+      "viewport": {
+        "h": 794,
+        "w": 1274
+      }
+    },
+    {
+      "route": "/accounting",
+      "size": "1024x768",
+      "document": {
+        "h": 3409,
+        "w": 1066
+      },
+      "firstViewportInteractive": 43,
+      "fixedElements": 3,
+      "horizontalOverflow": 48,
+      "interactiveCount": 146,
+      "interactiveOutOfBounds": 3,
+      "main": {
+        "h": 3357,
+        "w": 1018,
+        "x": 48,
+        "y": 52
+      },
+      "smallTouchTargets": 146,
+      "viewport": {
+        "h": 762,
+        "w": 1018
+      }
+    },
+    {
+      "route": "/accounting",
+      "size": "390x844",
+      "document": {
+        "h": 3886,
+        "w": 384
+      },
+      "firstViewportInteractive": 24,
+      "fixedElements": 2,
+      "horizontalOverflow": 0,
+      "interactiveCount": 138,
+      "interactiveOutOfBounds": 2,
+      "main": {
+        "h": 3834,
+        "w": 384,
+        "x": 0,
+        "y": 52
+      },
+      "smallTouchTargets": 133,
+      "viewport": {
+        "h": 844,
+        "w": 384
+      }
+    },
+    {
+      "route": "/daily-reports",
+      "size": "1280x800",
+      "document": {
+        "h": 800,
+        "w": 1280
+      },
+      "firstViewportInteractive": 33,
+      "fixedElements": 3,
+      "horizontalOverflow": 0,
+      "interactiveCount": 33,
+      "interactiveOutOfBounds": 0,
+      "main": {
+        "h": 748,
+        "w": 1010,
+        "x": 270,
+        "y": 52
+      },
+      "smallTouchTargets": 32,
+      "viewport": {
+        "h": 800,
+        "w": 1280
+      }
+    },
+    {
+      "route": "/daily-reports",
+      "size": "1024x768",
+      "document": {
+        "h": 784,
+        "w": 1018
+      },
+      "firstViewportInteractive": 19,
+      "fixedElements": 3,
+      "horizontalOverflow": 0,
+      "interactiveCount": 19,
+      "interactiveOutOfBounds": 0,
+      "main": {
+        "h": 732,
+        "w": 970,
+        "x": 48,
+        "y": 52
+      },
+      "smallTouchTargets": 19,
+      "viewport": {
+        "h": 768,
+        "w": 1018
+      }
+    },
+    {
+      "route": "/daily-reports",
+      "size": "390x844",
+      "document": {
+        "h": 901,
+        "w": 384
+      },
+      "firstViewportInteractive": 11,
+      "fixedElements": 2,
+      "horizontalOverflow": 0,
+      "interactiveCount": 11,
+      "interactiveOutOfBounds": 0,
+      "main": {
+        "h": 849,
+        "w": 384,
+        "x": 0,
+        "y": 52
+      },
+      "smallTouchTargets": 6,
+      "viewport": {
+        "h": 844,
+        "w": 384
+      }
+    },
+    {
+      "route": "/settings",
+      "size": "1280x800",
+      "document": {
+        "h": 800,
+        "w": 1280
+      },
+      "firstViewportInteractive": 40,
+      "fixedElements": 3,
+      "horizontalOverflow": 0,
+      "interactiveCount": 40,
+      "interactiveOutOfBounds": 0,
+      "main": {
+        "h": 748,
+        "w": 1010,
+        "x": 270,
+        "y": 52
+      },
+      "smallTouchTargets": 23,
+      "viewport": {
+        "h": 800,
+        "w": 1280
+      }
+    },
+    {
+      "route": "/settings",
+      "size": "1024x768",
+      "document": {
+        "h": 792,
+        "w": 1018
+      },
+      "firstViewportInteractive": 36,
+      "fixedElements": 3,
+      "horizontalOverflow": 0,
+      "interactiveCount": 36,
+      "interactiveOutOfBounds": 0,
+      "main": {
+        "h": 740,
+        "w": 970,
+        "x": 48,
+        "y": 52
+      },
+      "smallTouchTargets": 20,
+      "viewport": {
+        "h": 768,
+        "w": 1018
+      }
+    },
+    {
+      "route": "/settings",
+      "size": "390x844",
+      "document": {
+        "h": 1601,
+        "w": 384
+      },
+      "firstViewportInteractive": 20,
+      "fixedElements": 2,
+      "horizontalOverflow": 0,
+      "interactiveCount": 28,
+      "interactiveOutOfBounds": 0,
+      "main": {
+        "h": 1549,
+        "w": 384,
+        "x": 0,
+        "y": 52
+      },
+      "smallTouchTargets": 7,
+      "viewport": {
+        "h": 844,
+        "w": 384
+      }
+    }
+  ]
+}
