@@ -571,6 +571,9 @@ Commits must be small enough to review but complete enough to run. Do not mix un
 - `docs/brand-design-constitution.md`: selected brand and product design rules.
 - `docs/redesign/benchmark-matrix.md`: product-by-product findings.
 - `docs/redesign/flow-inventory.md`: canonical current and target flows.
+- `docs/redesign/operational-architecture-synthesis.md`: live operating model, canonical objects, work lifecycle, and UX integrity rules.
+- `docs/redesign/brand-expression-synthesis.md`: brand/product expression layers and creative-territory acceptance rules.
+- `docs/redesign/cross-device-synthesis.md`: desktop, tablet, mobile, parent, native, handoff, sync, and responsive behavior.
 - `docs/redesign/information-architecture.md`: navigation and sitemap decisions.
 - `docs/redesign/motion-system.md`: motion tokens and behavior.
 - `docs/redesign/accessibility-checklist.md`: component and flow acceptance.
@@ -594,4 +597,4 @@ Commits must be small enough to review but complete enough to run. Do not mix un
 
 ## 21. Immediate Next Action
 
-Begin Phase 0 and Phase 1 together: establish the clean branch and baseline, then build the canonical flow inventory from the current app and parity matrix. In parallel, complete the Pinterest taxonomy and Mobbin benchmark sheets. No new dashboard visual direction should be coded before the brand and IA evidence is ready.
+Complete the targeted live-reference gaps for motion, recovery, accessibility, and dense work. Then convert the three synthesis maps into a final brand strategy and three complete creative territories demonstrated on realistic Today, table, form, urgent-state, tablet, and mobile surfaces. Score and select one territory before production UI implementation; do not return to isolated dashboard styling.

@@ -2,8 +2,8 @@
 
 **Last updated:** 2026-07-10
 **Plan:** `docs/redesign-master-plan.md`
-**Program state:** Current-state discovery and benchmark synthesis active
-**Reported progress:** **18% done / 82% left**
+**Program state:** Research synthesis complete; brand strategy and territory development active
+**Reported progress:** **20% done / 80% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -13,14 +13,14 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | --- | ---: | --- | ---: | --- |
 | 0. Safety and baseline | 3% | Complete | 3% | Clean branch, approved asset preservation, baseline screenshots and checks |
 | 1. Product discovery | 12% | In progress | 9% | Flow inventory, role/task matrix, current journeys, friction/risk register |
-| 2. Benchmark research | 10% | In progress | 6% | Pinterest taxonomy, Mobbin flow sheets, benchmark synthesis |
+| 2. Benchmark research | 10% | In progress | 8% | Pinterest taxonomy, Mobbin flow sheets, benchmark synthesis |
 | 3. Brand strategy and direction | 10% | Not started | 0% | Strategy, three complete territories, selected brand constitution |
 | 4. IA and core UX | 12% | Not started | 0% | Sitemap, navigation model, Today model, tested wireframes |
 | 5. Design system | 13% | Not started | 0% | Tokens, components, motion, responsive and accessibility docs |
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **18%** |  |
+| **Total** | **100%** |  | **20%** |  |
 
 ## Confirmed Baseline
 
@@ -55,6 +55,9 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 - Responsive runtime confirms clipped chart meaning at 1024, page-level table overflow, a 9,085-pixel mobile Today flow, and desktop decision load carried almost unchanged into mobile.
 - `docs/redesign/authorization-scope-audit.md` traces modern roles, legacy page/action grants, tenant/record checks, direct-route behavior, and the target capability/scope contract without preserving personal data.
 - Permission runtime confirms that a branch-bound teacher can directly open several hidden organization-wide medical, staff, parent, export, alarm, and reporting surfaces; unconfigured legacy controls currently default allow.
+- `docs/redesign/operational-architecture-synthesis.md` defines the live operating model, Today hierarchy, canonical objects, work-item lifecycle, role projections, and integrity gates.
+- `docs/redesign/brand-expression-synthesis.md` translates the approved identity seed and research into governed color, typography, shape, illustration, voice, motion, and territory criteria.
+- `docs/redesign/cross-device-synthesis.md` assigns desktop, tablet, mobile, parent, and native surfaces distinct jobs while preserving shared state, drafts, permissions, and compatibility contracts.
 
 ## Locked Decisions
 
@@ -75,19 +78,19 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 
 | Reference | Web | Mobile/Mobbin | Flow notes | Synthesis |
 | --- | --- | --- | --- | --- |
-| Pinterest board | Initial visible set reviewed | N/A | Started | Started |
-| Revolut | Official product/design process reviewed | Sending-money flows inspected | Complete first pass | Started |
-| Notion | Current spacing/adjacency system reviewed | Web creation/filter flows inspected | Complete first pass | Started |
-| Cursor | Current public product and state model reviewed | Agent task/review flows inspected | Complete first pass | Started |
-| Cosmos | Official web/App Store reviewed | Save/library flows inspected | Complete first pass | Started |
-| Vercel / Geist | Official system reviewed | Project/deployment flows inspected | Complete first pass | Started |
-| Duolingo | Official brand guidelines and saved motion reference identified | Lesson/completion flows inspected | Complete first pass | Started |
-| Duolingo ABC | Official context reviewed | Alphabet/story flows inspected | Complete first pass | Started |
-| Genie iOS | Exact App Store product identified | Text/image chat flows inspected | Complete first pass | Started |
-| Anything web/iOS | Official product/docs reviewed | Exact Mobbin match unavailable | Started | Started |
-| Apple first-party apps | Guidance reviewed | Pending | Started | Started |
-| Headspace | Two saved references cataloged | Pending | Started | Started |
-| Direct nursery competitors | Ten-product official-source capability pass complete | Pending live/Mobbin flows | Started | Started |
+| Pinterest board | Initial visible set reviewed | N/A | Complete first pass | Integrated in expression map |
+| Revolut | Official product/design process reviewed | Sending-money flows inspected | Complete first pass | Integrated in three maps |
+| Notion | Current spacing/adjacency system reviewed | Web creation/filter flows inspected | Complete first pass | Integrated in three maps |
+| Cursor | Current public product and state model reviewed | Agent task/review flows inspected | Complete first pass | Integrated in three maps |
+| Cosmos | Official web/App Store reviewed | Save/library flows inspected | Complete first pass | Integrated in three maps |
+| Vercel / Geist | Official system reviewed | Project/deployment flows inspected | Complete first pass | Integrated in three maps |
+| Duolingo | Official brand guidelines and saved motion reference identified | Lesson/completion flows inspected | Complete first pass | Integrated in expression/behavior maps |
+| Duolingo ABC | Official context reviewed | Alphabet/story flows inspected | Complete first pass | Integrated in behavior map |
+| Genie iOS | Exact App Store product identified | Text/image chat flows inspected | Complete first pass | Integrated with explicit rejection rules |
+| Anything web/iOS | Official product/docs reviewed | Exact Mobbin match unavailable | Partial | Integrated provisionally; live flow open |
+| Apple first-party apps | Guidance reviewed | Live flow inspection pending | Partial | Integrated as principle, not copied surface |
+| Headspace | Two saved references cataloged | Live flow inspection pending | Partial | Integrated as emotional/illustration principle |
+| Direct nursery competitors | Ten-product official-source capability pass complete | Live/Mobbin flows pending | Complete capability pass | Integrated in operational map |
 
 ## Current Tooling Note
 
@@ -95,12 +98,12 @@ The Mobbin MCP is registered, authenticated, and available in this task. The fir
 
 ## Next Work Queue
 
-1. Inspect Anything and direct competitor flows in live products or exact future Mobbin results; official-source capability research is complete.
+1. Inspect live Apple, Things 3, Headspace, Flighty, Stripe, Airbnb, Anything, and exact available nursery flows for motion, recovery, accessibility, and dense-work behavior.
 2. Expand the Pinterest taxonomy when the board changes.
-3. Build the operational, brand-expression, and cross-device synthesis maps.
-4. Draft the brand strategy and personality spectrum.
-5. Build three complete creative territories using realistic product content.
-6. Review the territories against the award and usability scorecards.
+3. Convert the brand-expression synthesis into the final strategy, message hierarchy, and territory briefs.
+4. Build three complete creative territories using realistic Today, table, form, high-risk, and cross-device content.
+5. Review the territories against operational clarity, accessibility, award, and usability scorecards.
+6. Select one direction before production UI implementation.
 
 ## Definition of a Completed Tracker Item
 
@@ -125,6 +128,9 @@ An item is complete only when:
 | 2026-07-10 | Keep functional parity as a parallel acceptance track | A beautiful redesign cannot remove restored legacy behavior | No for removal; mapping is revisable |
 | 2026-07-10 | Create `ux-redesign-awards` directly from verified `main` | All local and remote restoration/design refs shared the same base, and the new name separates accepted work from rejected experiments | Yes |
 | 2026-07-10 | Preserve the approved Remotion identity work and exclude the dashboard card lab | The user approved the logo direction and explicitly rejected the dashboard experiment | Yes |
+| 2026-07-10 | Organize the product around a live, explainable operating model and owned resolution | Current modules expose facts but force managers to assemble readiness and responsibility mentally | Yes, pending prototype and operator validation |
+| 2026-07-10 | Separate brand, guidance, operational, and evidence expression levels | Kiddz needs warmth and recognition without weakening dense or high-risk work | Yes, through territory testing |
+| 2026-07-10 | Design desktop, tablet, mobile, parent, and native projections around distinct jobs | Runtime measurements show that stacked desktop hierarchy preserves too much decision load | Yes, while shared object contracts remain fixed |
 
 ## Work Log
 
@@ -230,6 +236,17 @@ An item is complete only when:
 - **Open items:** Production meaning of branchless staff, multi-branch assignment, clinical qualification/approval, emergency override, and modern/legacy conflict rules.
 - **Next action:** Build the three research synthesis maps, then begin brand strategy.
 - **Progress earned:** 1 additional percentage point; total 18%.
+
+### 2026-07-10 - Phase 2 research synthesis maps
+
+- **Question:** What product, expression, and cross-device rules survive when current-state evidence, competitor gaps, benchmark flows, the Pinterest board, approved identity, authorization, and parity are considered together?
+- **Evidence:** All discovery artifacts; nine Mobbin benchmark families; ten direct-competitor capability sets; approved Remotion identity source; responsive measurements at three additional viewports; user-locked visual and product constraints.
+- **Decision:** Position Kiddz as a live, explainable, resolution-oriented nursery operating system; separate brand expression from operational and evidence layers; use shared canonical objects with task-specific desktop, tablet, mobile, parent, and native projections.
+- **Artifacts:** `docs/redesign/operational-architecture-synthesis.md`, `docs/redesign/brand-expression-synthesis.md`, and `docs/redesign/cross-device-synthesis.md`.
+- **Verification:** Each map names evidence, transfer rules, rejected patterns, parity boundaries, acceptance gates, and unresolved validation debt; repository diff checks passed and each artifact was committed independently.
+- **Open items:** Live Apple/Headspace/Things/Flighty behavior; exact Anything and nursery product flows; operator policy; jurisdiction rules; production native-device matrix.
+- **Next action:** Complete the targeted live reference pass, then produce three realistic creative territories and score them before selection.
+- **Progress earned:** 2 additional percentage points; total 20%.
 
 ## Work Log Template
 
