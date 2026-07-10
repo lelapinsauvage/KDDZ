@@ -2,8 +2,8 @@
 
 **Last updated:** 2026-07-10
 **Plan:** `docs/redesign-master-plan.md`
-**Program state:** Clean redesign branch established; discovery and research active
-**Reported progress:** **3% done / 97% left**
+**Program state:** Clean redesign branch established; current-state discovery active
+**Reported progress:** **6% done / 94% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -12,7 +12,7 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | Phase | Weight | Status | Earned | Evidence required to close |
 | --- | ---: | --- | ---: | --- |
 | 0. Safety and baseline | 3% | In progress | 2% | Clean branch, approved asset preservation, baseline screenshots and checks |
-| 1. Product discovery | 12% | Started | 0% | Flow inventory, role/task matrix, current journeys, friction/risk register |
+| 1. Product discovery | 12% | In progress | 3% | Flow inventory, role/task matrix, current journeys, friction/risk register |
 | 2. Benchmark research | 10% | Started | 1% | Pinterest taxonomy, Mobbin flow sheets, benchmark synthesis |
 | 3. Brand strategy and direction | 10% | Not started | 0% | Strategy, three complete territories, selected brand constitution |
 | 4. IA and core UX | 12% | Not started | 0% | Sitemap, navigation model, Today model, tested wireframes |
@@ -20,7 +20,7 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **3%** |  |
+| **Total** | **100%** |  | **6%** |  |
 
 ## Confirmed Baseline
 
@@ -30,7 +30,7 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 - `main`, `legacy-parity-runbook`, `ux-redesign`, and their corresponding remote refs currently point to commit `0359e26`.
 - The approved Remotion logo work and planning documents are preserved on the redesign branch.
 - The rejected `src/app/design-lab/dashboard-cards/page.tsx` experiment was excluded from the redesign branch.
-- Current product census: 245 page files, 83 route handlers, 113 React component files.
+- Current product census: 244 page files, 83 route handlers, 113 React component files.
 - The functional restoration parity matrix contains 1,713 rows and remains the preservation source.
 
 ### Foundation verification
@@ -39,6 +39,14 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 - `pnpm exec next typegen`: passed.
 - `pnpm exec tsc --noEmit --pretty false`: passed after removing the stale generated `.next/dev` cache.
 - Remotion composition `KiddzOnlineLogoIntro` rendered successfully at frame 115.
+
+### Discovery evidence
+
+- Eleven authenticated 1440 x 900 browser baselines are stored in `docs/redesign/baseline/`.
+- `docs/redesign/flow-inventory.md` maps 244 page files into 22 canonical domains and seven critical end-to-end journeys.
+- `docs/redesign/current-state-findings.md` records current strengths, risks, problem statements, and research questions.
+- `src/scripts/report-redesign-parity-domains.ts` assigns all 1,713 parity rows to canonical redesign or platform domains with zero unmapped rows.
+- The first confirmed runtime defects include dashboard horizontal overflow, colliding chart labels, unsafe all-present attendance defaults, ambiguous time context, and missing live ratio state.
 
 ## Locked Decisions
 
@@ -79,9 +87,9 @@ The Mobbin MCP is registered and enabled at `https://api.mobbin.com/mcp` with OA
 
 ## Next Work Queue
 
-1. Capture baseline screenshots of every canonical current module and critical state.
-2. Generate the canonical flow inventory from routes, components, permissions, and parity rows.
-3. Build the role-to-task and frequency/risk matrix.
+1. Capture authenticated teacher, manager, nurse, doctor, and parent runtime baselines.
+2. Trace the seven critical journeys through mutations, errors, and recovery.
+3. Capture compact desktop, tablet, and mobile current-state evidence.
 4. Tag the Pinterest board using the master-plan taxonomy.
 5. Complete Mobbin flow sheets for Revolut, Notion, Cosmos, Duolingo, Duolingo ABC, Genie, and Anything.
 6. Refresh direct competitor flow research.
@@ -125,6 +133,16 @@ An item is complete only when:
 - **Open item:** Baseline screenshots and runtime flow capture are still required to close Phase 0.
 - **Next action:** Start the current-product canonical flow inventory and browser baseline.
 - **Progress earned:** 1 additional percentage point; total 3%.
+
+### 2026-07-10 - Phase 1 current-state discovery
+
+- **Question:** What are the real user workflows beneath the legacy route count, and where does the current experience create operational risk?
+- **Evidence:** Authenticated browser runs at 1440 x 900 across dashboard, Today, branches, children, child dossier, daily reports, staff, medical, accounting, messaging, and settings; role navigation source; Prisma roles; route and parity inventories.
+- **Decision:** Treat 22 domains as canonical redesign surfaces and prioritize seven cross-domain journeys instead of redesigning 244 pages independently.
+- **Artifacts:** `docs/redesign/flow-inventory.md`, `docs/redesign/current-state-findings.md`, eleven baseline PNGs, and the generated parity-domain ledger.
+- **Open items:** Role-specific sessions, mutation/error traces, responsive baselines, and parity-row linking.
+- **Next action:** Build the reproducible domain-to-parity ledger, then continue role and responsive runtime discovery.
+- **Progress earned:** 3 additional percentage points; total 6%.
 
 ## Work Log Template
 

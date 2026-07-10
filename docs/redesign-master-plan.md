@@ -41,7 +41,7 @@ The ambition is award-level craft, but awards are a quality framework rather tha
 
 The modern repository currently contains:
 
-- 245 `page.tsx` files, including modern pages and legacy compatibility aliases.
+- 244 `page.tsx` files, including modern pages and legacy compatibility aliases.
 - 83 `route.ts` handlers.
 - 113 React component files.
 - A 1,713-row legacy parity matrix covering web, data, native, and production expectations.
