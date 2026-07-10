@@ -289,6 +289,12 @@ Record only:
 
 Never record names, IDs exposed to support staff without need, note text, medical detail, message content, attachment URLs, payment references, or form values.
 
+### Foundation implementation
+
+`src/lib/performance-metrics.ts` now defines a provider-neutral field-metric payload and validator. It accepts TTFB, FCP, LCP, CLS, and INP; discards raw metric IDs and arbitrary attribution; reduces the URL to an allowlisted top-level route family; buckets viewport, connection, role, and active-child scale; normalizes navigation type and build; and rejects malformed values. Unknown path families become `/other`, so a slug or record identifier cannot become an analytics dimension.
+
+`src/scripts/verify-performance-metrics.ts` proves route/query/legacy-alias canonicalization, device/connection/role/scale buckets, valid metric normalization, malformed metric rejection, and removal of arbitrary child/note fields. No root client component, endpoint, storage table, external provider, or network transmission is wired yet. The final transport must follow current [Next.js analytics guidance](https://nextjs.org/docs/app/guides/analytics), keep its client boundary isolated, sample deliberately, enforce retention/access policy, and pass a privacy review before pilot use.
+
 ## Budgets And Gates
 
 ### Field budgets

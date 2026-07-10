@@ -512,6 +512,8 @@ The current delivery baseline is recorded in `performance-runtime-audit.md`: 192
 
 Every selected-system component must therefore expose enough composition control to support server windows, progressive rendering, geometry-stable loading, route-local optional dependencies, and privacy-safe instrumentation. Shared primitives may not force charts, PDF, maps, rich editors, motion, or complete datasets into unrelated routes.
 
+Field instrumentation uses the provider-neutral allowlisted payload in `src/lib/performance-metrics.ts`; raw URLs, metric IDs, record/user/organization IDs, form values, notes, and arbitrary attribution are prohibited.
+
 ## Component Release Gate
 
 A component cannot enter the shared production library until it has:

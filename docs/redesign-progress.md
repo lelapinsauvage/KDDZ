@@ -3,7 +3,7 @@
 **Last updated:** 2026-07-10
 **Plan:** `docs/redesign-master-plan.md`
 **Program state:** Product discovery and benchmark research closed; territory-neutral IA, state, motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; creative selection gate open
-**Reported progress:** **43% done / 57% left**
+**Reported progress:** **44% done / 56% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -16,11 +16,11 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | 2. Benchmark research | 10% | Complete | 10% | Pinterest taxonomy, Mobbin flow sheets, direct-competitor operations, benchmark synthesis |
 | 3. Brand strategy and direction | 10% | In progress | 4% | Strategy, three complete territories, selected brand constitution |
 | 4. IA and core UX | 12% | In progress | 4% | Sitemap, navigation model, Today model, tested wireframes |
-| 5. Design system | 13% | In progress | 10% | Tokens, components, motion, responsive, accessibility, performance, and data-delivery foundations |
+| 5. Design system | 13% | In progress | 11% | Tokens, components, motion, responsive, accessibility, performance, and data-delivery foundations |
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **43%** |  |
+| **Total** | **100%** |  | **44%** |  |
 
 ## Confirmed Baseline
 
@@ -417,6 +417,17 @@ An item is complete only when:
 - **Verification:** Source links, named paths, cross-product state chain, Kiddz transfers, rejects, remaining debt, and Mobbin boundaries are recorded; diff checks pass. No product code, route, database, or visual UI changed.
 - **Next action:** Close creative selection; then codify the brand/design constitution and use the confirmed operating chain in the first production pilot.
 - **Progress earned:** Final 1 percentage point for Phase 2; benchmark research closes at 10%; total 43%.
+
+### 2026-07-10 - Phase 5 privacy-safe field metric foundation
+
+- **Question:** Can future field Core Web Vitals be aggregated by useful product context without transmitting child, staff, parent, medical, financial, message, query, route-ID, or organization identity?
+- **Evidence:** Current Next.js analytics/`useReportWebVitals` guidance; web.dev field-measurement and 75th-percentile guidance; performance, scope, reliability, and privacy contracts; real legacy/dynamic route shapes.
+- **Decision:** Define a provider-neutral allowlisted payload for TTFB, FCP, LCP, CLS, and INP. Reduce pathname to a top-level route family, bucket device/connection/role/organization scale, validate navigation/build/value/rating, discard raw metric IDs and arbitrary attribution, and map unknown routes to `/other`.
+- **Artifacts:** `src/lib/performance-metrics.ts`, `src/scripts/verify-performance-metrics.ts`, and updated implementation evidence in `performance-runtime-audit.md` and `design-system-acceptance.md`.
+- **Verification:** Focused verifier proves private query/ID stripping, legacy alias mapping, unknown-route suppression, bucket boundaries, valid payload shape, arbitrary-field removal, and malformed metric rejection. Focused ESLint, full TypeScript, and diff checks pass.
+- **Privacy boundary:** No metric component, endpoint, persistence, vendor, or network transmission is wired. Sampling, consent/legal basis where applicable, retention, access, aggregation, deletion, and provider review remain pilot gates.
+- **Next action:** After creative selection, wire the isolated reporter and approved transport alongside route-aware bundle/server traces, then validate field and lab data separately.
+- **Progress earned:** 1 percentage point; Phase 5 reaches 11 of 13%; total 44%.
 
 ## Work Log Template
 
