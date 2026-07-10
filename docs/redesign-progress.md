@@ -2,8 +2,8 @@
 
 **Last updated:** 2026-07-10
 **Plan:** `docs/redesign-master-plan.md`
-**Program state:** Territory-neutral IA and state-system contracts browser-tested; creative selection gate open
-**Reported progress:** **32% done / 68% left**
+**Program state:** Territory-neutral IA, state, and purposeful-motion contracts browser-tested; creative selection gate open
+**Reported progress:** **34% done / 66% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -16,11 +16,11 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | 2. Benchmark research | 10% | In progress | 9% | Pinterest taxonomy, Mobbin flow sheets, benchmark synthesis |
 | 3. Brand strategy and direction | 10% | In progress | 4% | Strategy, three complete territories, selected brand constitution |
 | 4. IA and core UX | 12% | In progress | 4% | Sitemap, navigation model, Today model, tested wireframes |
-| 5. Design system | 13% | In progress | 3% | Tokens, components, motion, responsive and accessibility docs |
+| 5. Design system | 13% | In progress | 5% | Tokens, components, motion, responsive and accessibility docs |
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **32%** |  |
+| **Total** | **100%** |  | **34%** |  |
 
 ## Confirmed Baseline
 
@@ -105,12 +105,11 @@ The Mobbin MCP is registered, authenticated, and available in this task. Two flo
 
 ## Next Work Queue
 
-1. Build the shared synthetic scenario and neutral information anatomy for the territory lab.
-2. Implement Daylight, Signal, and Carebook independently across realistic Today, table, form, high-risk, and cross-device content.
-3. Verify all required viewports, interactions, contrast, keyboard, zoom, and reduced motion in Agent Browser.
-4. Score the territories against operational clarity, accessibility, award, and usability criteria.
-5. Recommend one direction and wait for selection before production UI implementation.
-6. Keep direct-nursery, operator, jurisdiction, and real-device questions open at their implementation gates.
+1. Present the three scored territories and provisional Daylight recommendation at the creative-selection gate.
+2. After selection, codify the final brand constitution, visual tokens, themes, component APIs, and motion tokens.
+3. Build the desktop-first production pilot across shell, Today, live attendance/ratios, and child profile with parity evidence.
+4. Validate the pilot with role, branch, permission, database, responsive, accessibility, and performance fixtures before rollout.
+5. Continue operator, jurisdiction, real-device, and direct-nursery questions at their implementation gates.
 
 ## Definition of a Completed Tracker Item
 
@@ -307,6 +306,18 @@ An item is complete only when:
 - **Evidence boundary:** Final brand tokens, light/dark/high-contrast themes, shared production components, real server state machines, automated accessibility, 320 reflow, 200% zoom, screen readers, reduced motion, real-device performance, and offline security remain open.
 - **Next action:** Build territory-neutral component anatomy fixtures and motion prototypes only for validated workflow transitions; continue to avoid production visual migration until territory selection.
 - **Progress earned:** 3 percentage points; total 32%.
+
+### 2026-07-10 - Phase 5 purposeful-motion contracts
+
+- **Question:** Can spring motion make source continuity, authoritative completion, and contextual control clearer without decoration, blocked input, or motion-only state?
+- **Evidence:** Official Motion React layout, presence, configuration, and accessibility guidance; three synthetic operational prototypes; dev and production browser runs; 1280, 768, and 390 viewport measurements; forced reduced-motion inspection; focus and interruption checks.
+- **Decision:** Accept shared source continuity, server-confirmed settle, and interruptible panel motion as territory-neutral contracts. Limit these patterns to transform and opacity, preserve durable evidence, and remove geometry motion under reduced motion.
+- **Artifacts:** `src/app/design-lab/motion`, `docs/redesign/motion`, and `docs/redesign/motion-pattern-validation.md`; `motion` `12.42.2` added as the lab/runtime dependency.
+- **Verification:** Focused lint, repository TypeScript, performance-pattern scan, production build, empty production browser logs, handoff focus return, pending-to-confirmed source update, 60ms panel retarget, reduced-motion zero-transform check, responsive overflow, mobile target, and bottom-sheet checks passed.
+- **Defects resolved:** Shared-source removal no longer shifts queue anatomy; mobile header wraps instead of ellipsizing; pointer scrim no longer creates a duplicate accessible close control.
+- **Evidence boundary:** Final visual tokens, real operator testing, automated accessibility, 200% zoom, 320 reflow, screen readers, real-device frame timing, and production state-machine integration remain open.
+- **Next action:** Close the creative-territory selection gate, then codify final tokens and shared components before beginning the production pilot.
+- **Progress earned:** 2 percentage points; total 34%.
 
 ## Work Log Template
 
