@@ -10,6 +10,7 @@ import {
   UserRoundCheck,
 } from "lucide-react"
 import { rooms, workItems, type PrototypeView, type Room, type TerritoryId, type WorkItem } from "../_data"
+import { territoryStressCopy, type TerritoryStressMode } from "../_stress"
 
 type TodayViewProps = {
   territory: TerritoryId
@@ -18,6 +19,7 @@ type TodayViewProps = {
   coverAssigned: boolean
   onAssignCover: () => void
   onOpenView: (view: PrototypeView) => void
+  stressMode: TerritoryStressMode
 }
 
 export function TodayView(props: TodayViewProps) {
@@ -27,13 +29,14 @@ export function TodayView(props: TodayViewProps) {
 }
 
 function DaylightToday(props: TodayViewProps) {
+  const copy = territoryStressCopy[props.stressMode].today.daylight
   return (
     <div className="today-view today-view--daylight territory-view-enter">
       <header className="daylight-readiness">
         <div>
           <span className="territory-eyebrow">Riverside · live at 09:18</span>
-          <h1>Safe now. Two things need handling before lunch.</h1>
-          <p>All four rooms are open. Meadow needs qualified cover at 12:30 and one Orchard arrival is still unknown.</p>
+          <h1>{copy.heading}</h1>
+          <p>{copy.summary}</p>
         </div>
         <div className="daylight-readiness__mark" aria-hidden="true">
           <ShieldCheck />
@@ -71,13 +74,14 @@ function DaylightToday(props: TodayViewProps) {
 }
 
 function SignalToday(props: TodayViewProps) {
+  const copy = territoryStressCopy[props.stressMode].today.signal
   return (
     <div className="today-view today-view--signal territory-view-enter">
       <header className="signal-heading">
         <div>
           <span className="territory-eyebrow">Live operation · refreshed 22 sec ago</span>
-          <h1>Riverside is safe now</h1>
-          <p>Meadow requires cover before 12:30. Orchard remains unconfirmed.</p>
+          <h1>{copy.heading}</h1>
+          <p>{copy.summary}</p>
         </div>
         <div className="signal-heading__facts" aria-label="Current totals">
           <span><strong>41</strong> present</span>
@@ -110,12 +114,13 @@ function SignalToday(props: TodayViewProps) {
 }
 
 function CarebookToday(props: TodayViewProps) {
+  const copy = territoryStressCopy[props.stressMode].today.carebook
   return (
     <div className="today-view today-view--carebook territory-view-enter">
       <header className="carebook-brief">
         <span className="territory-eyebrow">Tuesday&apos;s opening brief · 09:18</span>
-        <h1>Riverside is safe now.<br />Meadow needs cover before 12:30.</h1>
-        <p>Forty-one children have arrived, eleven staff are present, and one expected arrival in Orchard still needs confirming.</p>
+        <h1>{props.stressMode === "default" ? <>Riverside is safe now.<br />Meadow needs cover before 12:30.</> : copy.heading}</h1>
+        <p>{copy.summary}</p>
         <button onClick={() => props.onSelectRoom("meadow")} type="button">Read Meadow&apos;s source record <ArrowRight aria-hidden="true" /></button>
       </header>
 

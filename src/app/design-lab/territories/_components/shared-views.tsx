@@ -20,8 +20,10 @@ import {
 } from "lucide-react"
 import { useMemo, useState } from "react"
 import { children, type TerritoryId } from "../_data"
+import { territoryStressCopy, type TerritoryStressMode } from "../_stress"
 
-export function ChildrenView({ territory }: { territory: TerritoryId }) {
+export function ChildrenView({ territory, stressMode }: { territory: TerritoryId; stressMode: TerritoryStressMode }) {
+  const copy = territoryStressCopy[stressMode].children
   const [query, setQuery] = useState("")
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [activeFilter, setActiveFilter] = useState<"all" | "unknown" | "incomplete">("all")
@@ -52,18 +54,18 @@ export function ChildrenView({ territory }: { territory: TerritoryId }) {
   return (
     <div className="territory-record-view territory-view-enter" data-view-territory={territory}>
       <header className="record-view-heading">
-        <div><span className="territory-eyebrow">Riverside · 47 active records</span><h1>Children</h1><p>Attendance, care completion, and current child context.</p></div>
-        <button className="territory-primary-button" type="button"><Plus aria-hidden="true" /> Add child</button>
+        <div><span className="territory-eyebrow">Riverside · 47 active records</span><h1>{copy.heading}</h1><p>{copy.description}</p></div>
+        <button className="territory-primary-button" type="button"><Plus aria-hidden="true" /> {copy.add}</button>
       </header>
 
       <section className="record-toolbar" aria-label="Children controls">
-        <label className="record-search"><Search aria-hidden="true" /><span className="territory-visually-hidden">Search children</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search child or room" /></label>
+        <label className="record-search"><Search aria-hidden="true" /><span className="territory-visually-hidden">{copy.search}</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={copy.search} /></label>
         <div className="record-filter-group" aria-label="Saved views">
-          <button className={activeFilter === "all" ? "is-active" : undefined} onClick={() => setActiveFilter("all")} type="button">All children <span>47</span></button>
-          <button className={activeFilter === "unknown" ? "is-active" : undefined} onClick={() => setActiveFilter("unknown")} type="button">Attendance unknown <span>1</span></button>
-          <button className={activeFilter === "incomplete" ? "is-active" : undefined} onClick={() => setActiveFilter("incomplete")} type="button">Care incomplete <span>4</span></button>
+          <button className={activeFilter === "all" ? "is-active" : undefined} onClick={() => setActiveFilter("all")} type="button">{copy.all} <span>47</span></button>
+          <button className={activeFilter === "unknown" ? "is-active" : undefined} onClick={() => setActiveFilter("unknown")} type="button">{copy.unknown} <span>1</span></button>
+          <button className={activeFilter === "incomplete" ? "is-active" : undefined} onClick={() => setActiveFilter("incomplete")} type="button">{copy.incomplete} <span>4</span></button>
         </div>
-        <button className="territory-secondary-button record-filter-button" type="button"><SlidersHorizontal aria-hidden="true" /> Filters <span>2</span></button>
+        <button className="territory-secondary-button record-filter-button" type="button"><SlidersHorizontal aria-hidden="true" /> {copy.filters} <span>2</span></button>
       </section>
 
       {selectedIds.length > 0 && (
@@ -123,7 +125,8 @@ export function ChildrenView({ territory }: { territory: TerritoryId }) {
   )
 }
 
-export function CareView({ territory }: { territory: TerritoryId }) {
+export function CareView({ territory, stressMode }: { territory: TerritoryId; stressMode: TerritoryStressMode }) {
+  const copy = territoryStressCopy[stressMode].care
   const cohort = children.filter((child) => child.room === "Meadow")
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [meal, setMeal] = useState("")
@@ -145,13 +148,13 @@ export function CareView({ territory }: { territory: TerritoryId }) {
   return (
     <div className="care-entry-view territory-view-enter" data-view-territory={territory}>
       <header className="record-view-heading care-view-heading">
-        <div><span className="territory-eyebrow">Meadow · lunch observation</span><h1>Record room care</h1><p>Apply one observed value, then review each child exception.</p></div>
+        <div><span className="territory-eyebrow">Meadow · lunch observation</span><h1>{copy.heading}</h1><p>{copy.description}</p></div>
         <div className="care-draft-state"><span className={status === "draft" || status === "submitted" ? "is-saved" : undefined} /><strong>{status === "draft" ? "Draft saved just now" : status === "submitted" ? "Submitted to 2 children" : "Not yet saved"}</strong></div>
       </header>
 
       <div className="care-entry-layout">
         <section className="care-roster territory-panel" aria-labelledby="care-roster-title">
-          <div className="care-section-heading"><div><span className="territory-eyebrow">Step 1</span><h2 id="care-roster-title">Choose observed children</h2></div><span>{selectedIds.length} selected</span></div>
+          <div className="care-section-heading"><div><span className="territory-eyebrow">Step 1</span><h2 id="care-roster-title">{copy.choose}</h2></div><span>{selectedIds.length} selected</span></div>
           <div className="care-child-list">
             {cohort.map((child) => (
               <label className={selectedIds.includes(child.id) ? "is-selected" : undefined} key={child.id}>
@@ -166,7 +169,7 @@ export function CareView({ territory }: { territory: TerritoryId }) {
         </section>
 
         <form className="care-form territory-panel" onSubmit={(event) => { event.preventDefault(); submit() }}>
-          <div className="care-section-heading"><div><span className="territory-eyebrow">Step 2</span><h2>Record the shared observation</h2></div><span>Fields start unset</span></div>
+          <div className="care-section-heading"><div><span className="territory-eyebrow">Step 2</span><h2>{copy.record}</h2></div><span>Fields start unset</span></div>
 
           <div className="care-form-grid">
             <label><span>Meal</span><select value={meal} onChange={(event) => { setMeal(event.target.value); setStatus("idle") }}><option value="">Choose observed portion</option><option>All eaten</option><option>Most eaten</option><option>Some eaten</option><option>Not eaten</option></select><ChevronDown aria-hidden="true" /></label>
@@ -180,7 +183,7 @@ export function CareView({ territory }: { territory: TerritoryId }) {
           {status === "submitted" && <div className="care-form-message care-form-message--success" role="status"><CheckCircle2 aria-hidden="true" /><span><strong>Lunch observation submitted</strong><small>{selectedIds.length} child records updated from the server-confirmed result.</small></span></div>}
           {status === "draft" && <div className="care-form-message" role="status"><Clock3 aria-hidden="true" /><span><strong>Draft saved</strong><small>Revision 3 can be resumed on the Meadow tablet.</small></span></div>}
 
-          <div className="care-form-actions"><button className="territory-secondary-button" onClick={saveDraft} type="button">Save draft</button><button className="territory-primary-button" type="submit">Review and submit <ArrowRight aria-hidden="true" /></button></div>
+          <div className="care-form-actions"><button className="territory-secondary-button" onClick={saveDraft} type="button">{copy.save}</button><button className="territory-primary-button" type="submit">{copy.submit} <ArrowRight aria-hidden="true" /></button></div>
         </form>
       </div>
 
@@ -189,14 +192,15 @@ export function CareView({ territory }: { territory: TerritoryId }) {
   )
 }
 
-export function ReviewView({ territory }: { territory: TerritoryId }) {
+export function ReviewView({ territory, stressMode }: { territory: TerritoryId; stressMode: TerritoryStressMode }) {
+  const copy = territoryStressCopy[stressMode].review
   const [reviewed, setReviewed] = useState(false)
   const [allocated, setAllocated] = useState(false)
 
   return (
     <div className="review-view territory-view-enter" data-view-territory={territory}>
       <header className="record-view-heading">
-        <div><span className="territory-eyebrow">Safety and financial review</span><h1>Two consequential changes</h1><p>Review source evidence and result before commitment.</p></div>
+        <div><span className="territory-eyebrow">Safety and financial review</span><h1>{copy.heading}</h1><p>{copy.description}</p></div>
       </header>
 
       <div className="review-layout">
@@ -222,7 +226,7 @@ export function ReviewView({ territory }: { territory: TerritoryId }) {
 
           <div className="review-consequence">
             <div><strong>{reviewed ? "Parent acknowledgment remains pending" : "Confirming review will notify Leo's parent"}</strong><span>{reviewed ? "Message sent at 09:22. The report stays open until acknowledgment." : "The report will remain open and visible until the parent acknowledges it."}</span></div>
-            {reviewed ? <button className="territory-secondary-button" type="button"><MessageCircle aria-hidden="true" /> Open message</button> : <button className="territory-primary-button" onClick={() => setReviewed(true)} type="button"><UserRoundCheck aria-hidden="true" /> Confirm manager review</button>}
+            {reviewed ? <button className="territory-secondary-button" type="button"><MessageCircle aria-hidden="true" /> Open message</button> : <button className="territory-primary-button" onClick={() => setReviewed(true)} type="button"><UserRoundCheck aria-hidden="true" /> {copy.confirm}</button>}
           </div>
         </section>
 
@@ -231,7 +235,7 @@ export function ReviewView({ territory }: { territory: TerritoryId }) {
           <div className="payment-balance"><span>Family balance before</span><strong>EUR 480</strong><span>Payment to allocate</span><strong>- EUR 240</strong><span>Balance after</span><strong>EUR 240</strong></div>
           <div className="payment-target"><span>Allocate to</span><button type="button"><span><strong>July nursery fees</strong><small>Invoice INV-2048 · EUR 480 remaining</small></span><ChevronDown aria-hidden="true" /></button></div>
           <div className="payment-history"><span>09 Jul · Payment imported from bank feed</span>{allocated && <span className="territory-detail-enter">14 Jul · EUR 240 allocated by Karim S.</span>}</div>
-          {allocated ? <div className="care-form-message care-form-message--success" role="status"><CheckCircle2 aria-hidden="true" /><span><strong>Payment allocated</strong><small>Family balance is now EUR 240. Receipt is ready to send.</small></span></div> : <button className="territory-primary-button review-object__full-action" onClick={() => setAllocated(true)} type="button">Allocate EUR 240 <ArrowRight aria-hidden="true" /></button>}
+          {allocated ? <div className="care-form-message care-form-message--success" role="status"><CheckCircle2 aria-hidden="true" /><span><strong>Payment allocated</strong><small>Family balance is now EUR 240. Receipt is ready to send.</small></span></div> : <button className="territory-primary-button review-object__full-action" onClick={() => setAllocated(true)} type="button">{copy.allocate} <ArrowRight aria-hidden="true" /></button>}
         </aside>
       </div>
     </div>

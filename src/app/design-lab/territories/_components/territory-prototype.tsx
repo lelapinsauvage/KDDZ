@@ -18,10 +18,10 @@ import { CareView, ChildrenView, ReviewView } from "./shared-views"
 import { TodayView } from "./today-views"
 import {
   territoryMeta,
-  viewLabels,
   type PrototypeView,
   type TerritoryId,
 } from "../_data"
+import { territoryStressCopy, type TerritoryStressMode } from "../_stress"
 
 const primaryNavigation: Array<{
   id: PrototypeView
@@ -36,6 +36,15 @@ const primaryNavigation: Array<{
 const subscribeToStaticLocation = () => () => undefined
 const readForcedMotionPreference = () => new URLSearchParams(window.location.search).get("motion") === "reduce"
 const readServerMotionPreference = () => false
+const readStressSnapshot = () => {
+  const params = new URLSearchParams(window.location.search)
+  const stress = params.get("stress")
+  const stressMode: TerritoryStressMode = stress === "long" || stress === "rtl" ? stress : "default"
+  const textSize = params.get("text") === "200" ? "200" : "default"
+  const contrastMode = params.get("contrast") === "forced" ? "forced" : "default"
+  return `${stressMode}:${textSize}:${contrastMode}`
+}
+const readServerStressSnapshot = () => "default:default:default"
 
 export function TerritoryPrototype({ territory }: { territory: TerritoryId }) {
   const [activeView, setActiveView] = useState<PrototypeView>("today")
@@ -47,6 +56,17 @@ export function TerritoryPrototype({ territory }: { territory: TerritoryId }) {
     readForcedMotionPreference,
     readServerMotionPreference,
   )
+  const stressSnapshot = useSyncExternalStore(
+    subscribeToStaticLocation,
+    readStressSnapshot,
+    readServerStressSnapshot,
+  )
+  const [stressMode, textSize, contrastMode] = stressSnapshot.split(":") as [
+    TerritoryStressMode,
+    "default" | "200",
+    "default" | "forced",
+  ]
+  const stressCopy = territoryStressCopy[stressMode]
   const menuTriggerRef = useRef<HTMLButtonElement>(null)
   const menuCloseRef = useRef<HTMLButtonElement>(null)
   const sidebarRef = useRef<HTMLElement>(null)
@@ -99,8 +119,13 @@ export function TerritoryPrototype({ territory }: { territory: TerritoryId }) {
   return (
     <div
       className="territory-lab"
+      data-content-stress={stressMode}
+      data-forced-colors={contrastMode === "forced" ? "true" : undefined}
       data-reduced-motion={forceReducedMotion ? "true" : undefined}
       data-territory={territory}
+      data-text-size={textSize}
+      dir={stressMode === "rtl" ? "rtl" : "ltr"}
+      lang={stressMode === "rtl" ? "ar" : "en"}
     >
       <aside
         aria-label={mobileMenuOpen ? "Main navigation" : undefined}
@@ -138,7 +163,7 @@ export function TerritoryPrototype({ territory }: { territory: TerritoryId }) {
               type="button"
             >
               <Icon aria-hidden="true" />
-              <span>{viewLabels[id]}</span>
+              <span>{stressCopy.views[id]}</span>
               {id === "review" && <span className="territory-nav-count">1</span>}
             </button>
           ))}
@@ -182,7 +207,7 @@ export function TerritoryPrototype({ territory }: { territory: TerritoryId }) {
 
           <div className="territory-page-identity">
             <span>{meta.name}</span>
-            <strong>{viewLabels[activeView]}</strong>
+            <strong>{stressCopy.views[activeView]}</strong>
           </div>
 
           <div className="territory-context">
@@ -215,11 +240,12 @@ export function TerritoryPrototype({ territory }: { territory: TerritoryId }) {
               coverAssigned={coverAssigned}
               onAssignCover={() => setCoverAssigned(true)}
               onOpenView={openView}
+              stressMode={stressMode}
             />
           )}
-          {activeView === "children" && <ChildrenView territory={territory} />}
-          {activeView === "care" && <CareView territory={territory} />}
-          {activeView === "review" && <ReviewView territory={territory} />}
+          {activeView === "children" && <ChildrenView stressMode={stressMode} territory={territory} />}
+          {activeView === "care" && <CareView stressMode={stressMode} territory={territory} />}
+          {activeView === "review" && <ReviewView stressMode={stressMode} territory={territory} />}
         </main>
 
         <nav className="territory-mobile-nav" aria-label="Prototype views">
@@ -232,7 +258,7 @@ export function TerritoryPrototype({ territory }: { territory: TerritoryId }) {
               type="button"
             >
               <Icon aria-hidden="true" />
-              <span>{viewLabels[id]}</span>
+              <span>{stressCopy.views[id]}</span>
             </button>
           ))}
         </nav>

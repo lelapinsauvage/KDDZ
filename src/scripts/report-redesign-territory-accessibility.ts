@@ -87,8 +87,13 @@ function checkSource(label: string, expression: RegExp, source = stylesheet) {
   if (!passed) failures.push(label);
 }
 
+const baseCanvasIndex = stylesheet.indexOf("--canvas: #fffcf7;");
+const baseTerritoryIndex = stylesheet.lastIndexOf(".territory-lab {", baseCanvasIndex);
+if (baseCanvasIndex < 0 || baseTerritoryIndex < 0) {
+  throw new Error("Missing base territory token block");
+}
 const baseTokens = customProperties(
-  cssBlock(stylesheet, ".territory-lab {\n  --canvas: #fffcf7;"),
+  cssBlock(stylesheet.slice(baseTerritoryIndex), ".territory-lab {"),
 );
 const territoryTokens: Record<string, TerritoryTokens> = {
   daylight: baseTokens,
@@ -178,10 +183,10 @@ checkSource(
   /\.territory-lab\[data-reduced-motion="true"\][\s\S]*?\.territory-view-enter,[\s\S]*?animation:\s*none;/,
 );
 
-const smallFontDeclarations = Array.from(
-  stylesheet.matchAll(/font-size:\s*(\d+(?:\.\d+)?)px/g),
-).map((match) => Number(match[1])).filter((size) => size < 12);
-console.log(`\nREVIEW typography declarations below 12px: ${smallFontDeclarations.length}`);
+const rawPixelFontDeclarations = Array.from(
+  stylesheet.matchAll(/font-size:\s*\d+(?:\.\d+)?px/g),
+);
+console.log(`\nREVIEW raw pixel font-size declarations: ${rawPixelFontDeclarations.length}`);
 console.log("       Runtime zoom, localization, and large-text checks remain mandatory.");
 
 if (failures.length > 0) {
