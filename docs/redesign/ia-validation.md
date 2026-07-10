@@ -79,16 +79,19 @@ The role control exists only to test projections. A shipping user does not casua
 - Manager exposed seven work domains plus separated Settings and seven available tasks.
 - Teacher collapsed to Today, Children, and Messages with three relevant tasks.
 - Nurse collapsed to Today, Children, and Messages with two relevant tasks.
+- Doctor collapsed to Today, Children, and Messages with clinical-review work and no Settings access.
 - Returning to Manager restored the complete manager projection.
 - A role change automatically returned to Today when the previous domain was not authorized in the new projection.
+- The lab now derives all five projections from effective capability decisions rather than a role-to-destination lookup.
 
 ### Branch context
 
-- Administrator exposed `All branches`, `Riverside`, and `Hamra`.
+- Administrator exposed `All branches (read-only)`, `Riverside`, and `Hamra`; write targets remained concrete branches.
+- Manager exposed assigned Hamra and Riverside contexts without an all-branch option.
 - Teacher exposed only `Riverside` in the synthetic assignment.
-- Switching from administrator `All branches` to teacher automatically returned context to `Riverside`.
+- Switching from administrator `All branches (read-only)` to teacher automatically returned context to `Riverside`.
 
-This is prototype evidence for the interaction rule, not a production authorization policy. Production options must come from effective capability and record scope, not hard-coded role labels.
+The executable projector and seven role/scope fixtures are documented in `navigation-capability-fixtures.md`. This remains prototype evidence for the interaction rule, not production authorization. Production options must come from a server-owned effective capability and record-scope decision.
 
 ### Global search
 
@@ -121,6 +124,7 @@ This is prototype evidence for the interaction rule, not a production authorizat
 - `git diff --check`: passed.
 - `pnpm build`: passed and emitted `/design-lab/ia` as a static route.
 - `pnpm exec tsx src/scripts/verify-redesign-route-compatibility.ts`: passed against 332 App Router routes and 28 critical aliases.
+- `pnpm exec tsx src/scripts/verify-redesign-navigation-contracts.ts`: passed against seven fixtures and all five staff roles, including missing/conflicting policy and unknown-branch defenses.
 
 The build continues to log known dynamic-route prerender messages from unrelated legacy pages that call request-scoped APIs. The build exits successfully; the IA route itself is static and clean.
 
@@ -150,7 +154,7 @@ Payment and coverage tasks became useful only when they opened Finance and Rooms
 
 ### 4. Branch context is part of authorization UX
 
-The prototype initially exposed `All branches` to every role. Browser testing caught and corrected this. Production must derive every context option from effective scope, and direct routes/search must reach the same decision.
+The prototype initially exposed `All branches` to every role. Browser testing caught and corrected this. The lab now derives every option from effective decisions and scope, labels all-branch oversight read-only, and keeps writes on concrete branches. Production direct routes, queries, mutations, search, queue, exports, aliases, and APIs must still reach the same server decision.
 
 ### 5. Mobile should preserve task order, not desktop concurrency
 
@@ -183,7 +187,7 @@ The following evidence is still required before production navigation changes:
 - First-click testing for attendance, cover, incident, care, call, payment, and inspection tasks.
 - Validation of `Rooms`, `Team`, and `Reports` labels in the first-market language.
 - Validation of calls under Messages.
-- Capability-derived branch and destination fixtures for all roles.
+- Production capability integration and allowed/denied direct-route evidence across reads, writes, exports, aliases, APIs, and native contracts; the territory-neutral shell fixtures are complete.
 - Screen-reader and 200% zoom testing.
 - Native staff and parent navigation comparison.
 - Pilot browser-history, deep-link, and authorization evidence against the accepted `route-compatibility-plan.md`; the territory-neutral route/analytics plan and executable registry are complete.

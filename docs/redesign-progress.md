@@ -2,8 +2,8 @@
 
 **Last updated:** 2026-07-10
 **Plan:** `docs/redesign-master-plan.md`
-**Program state:** Product discovery and benchmark research closed; territory-neutral IA, route compatibility, state, motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; creative selection gate open
-**Reported progress:** **47% done / 53% left**
+**Program state:** Product discovery and benchmark research closed; territory-neutral IA, capability-derived navigation fixtures, route compatibility, state, motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; creative selection gate open
+**Reported progress:** **48% done / 52% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -15,12 +15,12 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | 1. Product discovery | 12% | Complete | 12% | Flow inventory, role/task matrix, current journeys, friction/risk register |
 | 2. Benchmark research | 10% | Complete | 10% | Pinterest taxonomy, Mobbin flow sheets, direct-competitor operations, benchmark synthesis |
 | 3. Brand strategy and direction | 10% | In progress | 6% | Strategy, three complete territories, selected brand constitution |
-| 4. IA and core UX | 12% | In progress | 5% | Sitemap, navigation model, Today model, tested wireframes |
+| 4. IA and core UX | 12% | In progress | 6% | Sitemap, navigation model, Today model, tested wireframes |
 | 5. Design system | 13% | In progress | 11% | Tokens, components, motion, responsive, accessibility, performance, and data-delivery foundations |
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **47%** |  |
+| **Total** | **100%** |  | **48%** |  |
 
 ## Confirmed Baseline
 
@@ -55,6 +55,7 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 - Responsive runtime confirms clipped chart meaning at 1024, page-level table overflow, a 9,085-pixel mobile Today flow, and desktop decision load carried almost unchanged into mobile.
 - `docs/redesign/authorization-scope-audit.md` traces modern roles, legacy page/action grants, tenant/record checks, direct-route behavior, and the target capability/scope contract without preserving personal data.
 - Permission runtime confirms that a branch-bound teacher can directly open several hidden organization-wide medical, staff, parent, export, alarm, and reporting surfaces; unconfigured legacy controls currently default allow.
+- `docs/redesign/navigation-capability-fixtures.md` and its verifier close the territory-neutral shell projection for seven role/scope fixtures, while keeping production route/query/mutation authorization explicitly open.
 - `docs/redesign/operational-architecture-synthesis.md` defines the live operating model, Today hierarchy, canonical objects, work-item lifecycle, role projections, and integrity gates.
 - `docs/redesign/brand-expression-synthesis.md` translates the approved identity seed and research into governed color, typography, shape, illustration, voice, motion, and territory criteria.
 - `docs/redesign/cross-device-synthesis.md` assigns desktop, tablet, mobile, parent, and native surfaces distinct jobs while preserving shared state, drafts, permissions, and compatibility contracts.
@@ -471,9 +472,21 @@ An item is complete only when:
 - **Artifacts:** `docs/redesign/route-compatibility-plan.md`, `src/lib/redesign-route-compatibility.ts`, `src/scripts/verify-redesign-route-compatibility.ts`, and updated IA, validation, master-plan, and progress artifacts.
 - **Verification:** The focused verifier passes against 332 routes and 28 critical aliases; it proves live/current route existence, planned-root absence, alias/destination integrity, design-lab exclusion, context declarations, privacy-safe observations, and native separation. A signed-out production browser smoke confirms same-origin legacy callback preservation plus Back/Forward restoration with an empty warning/error log. Focused ESLint, full TypeScript, and diff checks pass.
 - **Parity:** No production route imports the registry. No navigation, redirect, database behavior, permission, output, legacy alias, native response, or product UI changed.
-- **Evidence boundary:** The registry is the critical migration baseline, not an exhaustive replacement for 1,713 parity rows. Operator label/first-click evidence, capability fixtures, real-record browser history/deep-link testing, native-client comparison, analytics governance, and rollout-by-rollout alias linkage remain open.
+- **Evidence boundary:** The registry is the critical migration baseline, not an exhaustive replacement for 1,713 parity rows. Operator label/first-click evidence, production capability enforcement, real-record browser history/deep-link testing, native-client comparison, analytics governance, and rollout-by-rollout alias linkage remain open.
 - **Next action:** Close creative selection, codify the selected constitution, then run the first vertical pilot on safe current routes and execute the route-entry/browser-history matrix before promoting any planned root.
 - **Progress earned:** 1 percentage point; Phase 4 reaches 5 of 12%; total 47%.
+
+### 2026-07-10 - Phase 4 capability-derived navigation fixtures
+
+- **Question:** Can staff destinations and branch context be derived from effective capability decisions and assignment scope without treating the role label or hidden navigation as authorization?
+- **Evidence:** Current role-filtered production sidebar; organization-wide shell branch/class loading; direct-route and server-action gaps from the authorization audit; working seven-domain IA; safe current landings from the route registry; branchless staff evidence; browser checks across administrator, manager, teacher, nurse, and doctor projections.
+- **Decision:** Add a territory-neutral projector whose input is one effective decision per shell capability plus organization/assignment scope. Missing or conflicting decisions default deny; imported explicit denial removes a destination; all-branch oversight requires explicit organization read-all authority and remains read-only; writes always use concrete branches; unknown branch IDs are dropped without disclosure.
+- **Artifacts:** `docs/redesign/navigation-capability-fixtures.md`, `src/lib/redesign-navigation-contracts.ts`, `src/scripts/verify-redesign-navigation-contracts.ts`, and the IA lab integration plus authorization/route/acceptance documentation updates.
+- **Verification:** Seven fixtures across all five staff roles pass; adversarial missing/conflicting/read-all/unknown-branch/role-provenance checks pass; the IA lab no longer contains hard-coded role navigation or branch tables; browser role projections and branch options pass; focused ESLint, full TypeScript, route compatibility, and diff checks pass.
+- **Parity:** Production navigation, authorization, routes, queries, mutations, database behavior, exports, aliases, and native contracts are unchanged. The lab uses synthetic records only.
+- **Evidence boundary:** This closes shell projection fixtures, not production authorization. First-organization fallback, direct-route gaps, assignment-aware reads/writes, transition capabilities, denial UX, and non-disclosure tests remain open release blockers.
+- **Next action:** Present the creative-territory decision packet. After selection, codify the brand constitution and begin the first vertical pilot on safe current routes with server authorization integration.
+- **Progress earned:** 1 percentage point; Phase 4 reaches 6 of 12%; total 48%.
 
 ## Work Log Template
 

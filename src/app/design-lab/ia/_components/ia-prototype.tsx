@@ -19,9 +19,14 @@ import {
   X,
 } from "lucide-react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import {
+  defaultRedesignNavigationFixture,
+  projectRedesignNavigation,
+  type RedesignStaffRole,
+} from "@/lib/redesign-navigation-contracts"
+import type { RedesignDomainId as DomainId } from "@/lib/redesign-route-compatibility"
 
 type RoleId = "admin" | "manager" | "teacher" | "nurse" | "doctor"
-type DomainId = "today" | "children" | "rooms" | "team" | "messages" | "finance" | "reports" | "settings"
 
 type DomainDefinition = {
   label: string
@@ -119,20 +124,16 @@ const domains: Record<DomainId, DomainDefinition> = {
   },
 }
 
-const roleNavigation: Record<RoleId, DomainId[]> = {
-  admin: ["today", "children", "rooms", "team", "messages", "finance", "reports", "settings"],
-  manager: ["today", "children", "rooms", "team", "messages", "finance", "reports", "settings"],
-  teacher: ["today", "children", "messages"],
-  nurse: ["today", "children", "messages"],
-  doctor: ["today", "children", "messages"],
+const fixtureRole: Record<RoleId, RedesignStaffRole> = {
+  admin: "ADMIN",
+  manager: "MANAGER",
+  teacher: "TEACHER",
+  nurse: "NURSE",
+  doctor: "DOCTOR",
 }
 
-const roleBranches: Record<RoleId, string[]> = {
-  admin: ["All branches", "Riverside", "Hamra"],
-  manager: ["Riverside", "Hamra"],
-  teacher: ["Riverside"],
-  nurse: ["Riverside"],
-  doctor: ["Riverside"],
+function projectionForRole(role: RoleId) {
+  return projectRedesignNavigation(defaultRedesignNavigationFixture(fixtureRole[role]).snapshot)
 }
 
 const tasks: TaskDefinition[] = [
@@ -222,7 +223,7 @@ function isRoleAllowed(task: TaskDefinition, role: RoleId) {
 export function IaPrototype() {
   const [activeRole, setActiveRole] = useState<RoleId>("manager")
   const [activeDomain, setActiveDomain] = useState<DomainId>("today")
-  const [activeBranch, setActiveBranch] = useState("Riverside")
+  const [activeBranch, setActiveBranch] = useState("branch-riverside")
   const [selectedTaskId, setSelectedTaskId] = useState("meadow-cover")
   const [query, setQuery] = useState("")
   const [searchOpen, setSearchOpen] = useState(false)
@@ -235,18 +236,24 @@ export function IaPrototype() {
   const queueTriggerRef = useRef<HTMLButtonElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
-  const availableDomains = roleNavigation[activeRole]
-  const availableTasks = useMemo(() => tasks.filter((task) => isRoleAllowed(task, activeRole)), [activeRole])
+  const navigationProjection = useMemo(() => projectionForRole(activeRole), [activeRole])
+  const availableDomains = navigationProjection.destinations.map((destination) => destination.id)
+  const availableTasks = tasks.filter(
+    (task) => isRoleAllowed(task, activeRole) && availableDomains.includes(task.domain),
+  )
   const selectedTask = availableTasks.find((task) => task.id === selectedTaskId) ?? availableTasks[0]
   const currentDomain = domains[activeDomain]
+  const activeBranchLabel = navigationProjection.branchContext.readOptions.find(
+    (option) => option.id === activeBranch,
+  )?.label ?? "Scope unavailable"
 
-  const searchResults = useMemo(() => {
+  const searchResults = (() => {
     const normalizedQuery = query.trim().toLowerCase()
     if (!normalizedQuery) return availableTasks.slice(0, 5)
     return availableTasks.filter((task) =>
       [task.label, task.context, task.path, domains[task.domain].label].some((value) => value.toLowerCase().includes(normalizedQuery)),
     )
-  }, [availableTasks, query])
+  })()
 
   const closeMobileNavigation = useCallback(() => {
     setMobileOpen(false)
@@ -299,9 +306,12 @@ export function IaPrototype() {
 
   const switchRole = (role: RoleId) => {
     setActiveRole(role)
-    const nextDomains = roleNavigation[role]
+    const nextProjection = projectionForRole(role)
+    const nextDomains = nextProjection.destinations.map((destination) => destination.id)
     if (!nextDomains.includes(activeDomain)) setActiveDomain("today")
-    if (!roleBranches[role].includes(activeBranch)) setActiveBranch(roleBranches[role][0])
+    if (!nextProjection.branchContext.readOptions.some((option) => option.id === activeBranch)) {
+      setActiveBranch(nextProjection.branchContext.defaultReadContextId ?? "")
+    }
     const nextTask = tasks.find((task) => isRoleAllowed(task, role))
     if (nextTask) setSelectedTaskId(nextTask.id)
     setAnnouncement(`${roleLabels[role]} projection loaded`)
@@ -310,7 +320,11 @@ export function IaPrototype() {
   const DomainIcon = currentDomain.icon
 
   return (
-    <div className="ia-lab">
+    <div
+      className="ia-lab"
+      data-policy-role={navigationProjection.role}
+      data-scope-status={navigationProjection.branchContext.status}
+    >
       <aside className={`ia-sidebar${mobileOpen ? " is-open" : ""}`} aria-label="Architecture navigation">
         <div className="ia-wordmark-row">
           <span className="ia-wordmark">Kiddz <span>Online</span></span>
@@ -326,7 +340,7 @@ export function IaPrototype() {
             const definition = domains[domain]
             const Icon = definition.icon
             return (
-              <button className={activeDomain === domain ? "is-active" : undefined} aria-current={activeDomain === domain ? "page" : undefined} key={domain} onClick={() => navigateToDomain(domain)} type="button">
+              <button className={activeDomain === domain ? "is-active" : undefined} aria-current={activeDomain === domain ? "page" : undefined} data-domain={domain} key={domain} onClick={() => navigateToDomain(domain)} type="button">
                 <Icon aria-hidden="true" />
                 <span>{definition.label}</span>
                 {domain === "today" && <span className="ia-nav-count">{availableTasks.length}</span>}
@@ -337,7 +351,7 @@ export function IaPrototype() {
 
         <div className="ia-sidebar-spacer" />
         {availableDomains.includes("settings") && (
-          <button className={`ia-settings-button${activeDomain === "settings" ? " is-active" : ""}`} onClick={() => navigateToDomain("settings")} type="button">
+          <button className={`ia-settings-button${activeDomain === "settings" ? " is-active" : ""}`} data-domain="settings" onClick={() => navigateToDomain("settings")} type="button">
             <Settings aria-hidden="true" /><span>Settings</span>
           </button>
         )}
@@ -354,8 +368,14 @@ export function IaPrototype() {
           <label className="ia-context-select">
             <Building2 aria-hidden="true" />
             <span className="ia-visually-hidden">Active branch</span>
-            <select value={activeBranch} onChange={(event) => setActiveBranch(event.target.value)}>
-              {roleBranches[activeRole].map((branch) => <option key={branch}>{branch}</option>)}
+            <select
+              data-scope-status={navigationProjection.branchContext.status}
+              value={activeBranch}
+              onChange={(event) => setActiveBranch(event.target.value)}
+            >
+              {navigationProjection.branchContext.readOptions.map((branch) => (
+                <option key={branch.id} value={branch.id}>{branch.label}</option>
+              ))}
             </select>
           </label>
           <span className="ia-live-state"><span />Live · Tue 14 Jul · 09:18</span>
@@ -380,7 +400,7 @@ export function IaPrototype() {
         <main className="ia-main">
           <section className="ia-heading">
             <div className="ia-heading-icon"><DomainIcon aria-hidden="true" /></div>
-            <div><span>{roleLabels[activeRole]} projection · {activeBranch}</span><h1>{currentDomain.label}</h1><p>{currentDomain.purpose}</p></div>
+            <div><span>{roleLabels[activeRole]} projection · {activeBranchLabel}</span><h1>{currentDomain.label}</h1><p>{currentDomain.purpose}</p></div>
           </section>
 
           {activeDomain === "today" && (

@@ -550,6 +550,8 @@ A redesigned screen cannot replace production presentation until:
 - correction/retry/waiting semantics exist for high-risk work;
 - no unrelated production capability or visual surface regresses.
 
+The territory-neutral shell fixture baseline is executable in `navigation-capability-fixtures.md`. It verifies navigation visibility and branch-context projection only; a production screen still needs server-enforced allowed and denied coverage for every read, transition, export, alias, API, and native entry listed in this gate.
+
 ## Prohibited System Patterns
 
 - Generic shadcn-style assembly presented as a brand.
@@ -580,6 +582,7 @@ A redesigned screen cannot replace production presentation until:
 - Preserve the territory axe harness as pre-merge evidence and extend the same violation/incomplete/manual-disposition protocol to selected pilot routes and visual-regression infrastructure.
 - Add field Web Vitals instrumentation and budgets.
 - Build component fixtures for the complete state matrix.
+- Integrate the navigation projector with a server-owned production authorization service, then add non-disclosing forbidden, pending-setup, revoked-assignment, and request-access fixtures.
 - Validate touch, screen reader, reduced motion, offline, and CPU performance on real devices.
 
 This contract is sufficient to start territory-neutral component-state fixtures and workflow wireflows. It is not permission to style or migrate production screens before selection and parity gates close.

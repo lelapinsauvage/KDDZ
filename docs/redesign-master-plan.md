@@ -593,6 +593,7 @@ Commits must be small enough to review but complete enough to run. Do not mix un
 - `docs/redesign/territory-semantic-validation.md`: axe-core steady-state, worst-case, interactive-state, defect-remediation, and manual-disposition evidence for the territory gate.
 - `docs/redesign/information-architecture.md`: navigation and sitemap decisions.
 - `docs/redesign/route-compatibility-plan.md`: desired/current route map, legacy identity/query rules, native separation, analytics privacy, history behavior, and staged migration gate.
+- `docs/redesign/navigation-capability-fixtures.md`: executable capability-derived staff destinations, branch context, default-deny behavior, and production authorization boundary.
 - `docs/redesign/motion-system.md`: motion tokens and behavior.
 - `docs/redesign/accessibility-checklist.md`: component and flow acceptance.
 - `docs/redesign/decision-log.md`: dated decisions with evidence and reversibility.

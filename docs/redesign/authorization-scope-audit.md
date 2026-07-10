@@ -273,6 +273,23 @@ These are hypotheses for validation, not final policy.
 | Doctor | Assigned review scope | Clinical review and authorized medical transitions | Routine attendance, finance, broad administration |
 | Parent | Own linked child(ren) | Read permitted child state, message, absence/request input, own finance | Staff/internal notes, other children, operational administration |
 
+## Executable Navigation Fixture Addendum
+
+`navigation-capability-fixtures.md` now defines and verifies the territory-neutral shell projection for all five staff roles, multi-branch and read-all context, an imported explicit deny, assignment-derived clinical/practitioner scope, pending setup, missing policy, conflicting policy, and unknown-branch non-disclosure.
+
+The IA lab consumes this projector instead of hard-coded role destination and branch tables. This closes the architecture fixture requirement only. It does not repair the confirmed production gaps above: current routes, queries, actions, exports, aliases, and APIs still need one server-enforced decision, and the first-organization fallback still needs to fail closed.
+
+The executable boundary is deliberate:
+
+- the server owns effective decisions and record scope;
+- the client projects destinations and safe read context from a serialized subset;
+- missing or conflicting shell decisions default deny;
+- role is decision provenance, not client authority;
+- `All branches` requires organization scope plus an explicit read-all decision and is never writable;
+- unknown branch identifiers are dropped without being echoed into output.
+
+Run `pnpm exec tsx src/scripts/verify-redesign-navigation-contracts.ts` for the fixture contract. Production authorization remains governed by the acceptance gate in this document.
+
 ## Migration Strategy
 
 1. Inventory every modern route, action, API, export, and transition into named capabilities.
