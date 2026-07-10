@@ -2,8 +2,8 @@
 
 **Last updated:** 2026-07-10
 **Plan:** `docs/redesign-master-plan.md`
-**Program state:** Territory-neutral IA and critical workflow model browser-tested; creative selection gate open
-**Reported progress:** **29% done / 71% left**
+**Program state:** Territory-neutral IA and state-system contracts browser-tested; creative selection gate open
+**Reported progress:** **32% done / 68% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -16,11 +16,11 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | 2. Benchmark research | 10% | In progress | 9% | Pinterest taxonomy, Mobbin flow sheets, benchmark synthesis |
 | 3. Brand strategy and direction | 10% | In progress | 4% | Strategy, three complete territories, selected brand constitution |
 | 4. IA and core UX | 12% | In progress | 4% | Sitemap, navigation model, Today model, tested wireframes |
-| 5. Design system | 13% | Not started | 0% | Tokens, components, motion, responsive and accessibility docs |
+| 5. Design system | 13% | In progress | 3% | Tokens, components, motion, responsive and accessibility docs |
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **29%** |  |
+| **Total** | **100%** |  | **32%** |  |
 
 ## Confirmed Baseline
 
@@ -296,6 +296,17 @@ An item is complete only when:
 - **Evidence boundary:** Operator card sorting/first-click tests, first-market terminology, capability fixtures, 200% zoom, screen readers, native comparison, and route compatibility analytics remain open.
 - **Next action:** Define territory-neutral design-system acceptance criteria and build workflow wireflows that exercise loading, empty, validation, failure, waiting, success, correction, and offline states without selecting production visuals.
 - **Progress earned:** 4 percentage points; total 29%.
+
+### 2026-07-10 - Phase 5 acceptance contract and state-pattern fixtures
+
+- **Question:** Can future components and screens share one strict accessibility, motion, performance, responsive, and workflow-state contract before final visual tokens are selected?
+- **Evidence:** Current WCAG 2.2, Apple motion guidance, Vercel interface checks, current Web Vitals thresholds, motion-performance constraints, workflow contracts, and a 15-state interactive Meadow care fixture.
+- **Decision:** Set semantic-token-only component rules, 44px operational touch targets, compositor-only interruptible motion, complete high-risk review/correction, stable source context, and mandatory initial/loading/empty/partial/unknown/draft/validation/denial/failure/offline/conflict/waiting/success/corrected/closed fixtures.
+- **Artifacts:** `docs/redesign/design-system-acceptance.md`, `docs/redesign/state-pattern-validation.md`, `src/app/design-lab/states`, and `docs/redesign/states`.
+- **Verification:** State-lab lint, repository TypeScript, diff checks, production build, clean route console, inline validation/focus, source-updating success, conflict-to-correction history, 390 reflow/targets, mobile drawer focus, and production captures passed.
+- **Evidence boundary:** Final brand tokens, light/dark/high-contrast themes, shared production components, real server state machines, automated accessibility, 320 reflow, 200% zoom, screen readers, reduced motion, real-device performance, and offline security remain open.
+- **Next action:** Build territory-neutral component anatomy fixtures and motion prototypes only for validated workflow transitions; continue to avoid production visual migration until territory selection.
+- **Progress earned:** 3 percentage points; total 32%.
 
 ## Work Log Template
 
