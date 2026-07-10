@@ -595,6 +595,7 @@ Commits must be small enough to review but complete enough to run. Do not mix un
 - `docs/redesign/territory-localization-validation.md`: expanded-copy, Arabic/RTL, type-scale, logical-direction, and forced-color stress evidence for the territory gate.
 - `docs/redesign/territory-semantic-validation.md`: axe-core steady-state, worst-case, interactive-state, defect-remediation, and manual-disposition evidence for the territory gate.
 - `docs/redesign/state-pattern-validation.md`: executable initial/loading/empty/partial/input/system/result contract and full desktop/mobile semantic evidence.
+- `docs/redesign/live-operations-contract.md`: executable explicit attendance, staff eligibility, policy-supplied ratio, forecast work, and additive compatibility migration contract.
 - `docs/redesign/information-architecture.md`: navigation and sitemap decisions.
 - `docs/redesign/route-compatibility-plan.md`: desired/current route map, legacy identity/query rules, native separation, analytics privacy, history behavior, and staged migration gate.
 - `docs/redesign/navigation-capability-fixtures.md`: executable capability-derived staff destinations, branch context, default-deny behavior, and production authorization boundary.

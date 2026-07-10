@@ -432,6 +432,8 @@ Names are provisional; their responsibilities are not.
 | FamilyLedger and Allocation | Charges, payments, credits, reversals, allocation, and one balance | J06 |
 | InspectionPackage and ManifestEntry | Preflighted, versioned, attributable evidence bundle | J07 |
 
+The first executable territory-neutral implementation of the J01/J02/J05 presence and ratio responsibilities lives in `src/lib/redesign-live-operations.ts`, with deterministic fixtures, browser interaction, and additive migration gates documented in `live-operations-contract.md`. No production source has switched to it.
+
 ## Implementation Order Implied By The Audit
 
 1. Establish operational context, authorization policy, audit events, and idempotent mutation conventions.

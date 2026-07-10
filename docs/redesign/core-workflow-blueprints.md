@@ -477,6 +477,8 @@ Preflight, view sensitive evidence, accept exception, generate, download, and au
 
 The visual redesign may prototype later stages, but production implementation cannot reverse this dependency order without inventing data or weakening trust.
 
+The territory-neutral behavior foundation for steps 2-4 is now executable in `src/lib/redesign-live-operations.ts` and `/design-lab/operations`, with evidence in `live-operations-contract.md`. It proves explicit unknown attendance, idempotent accepted events, append-only correction, policy-supplied ratio decisions, explainable staff inclusion, forecast work, and time-bounded floating cover. It remains synthetic and additive; production persistence, policy activation, authorization, and compatibility migration are still open.
+
 ## Open Validation
 
 - Operator sequencing at opening, lunch cover, handover, and closing.

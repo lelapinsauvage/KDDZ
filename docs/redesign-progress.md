@@ -2,8 +2,8 @@
 
 **Last updated:** 2026-07-10
 **Plan:** `docs/redesign-master-plan.md`
-**Program state:** Product discovery and benchmark research closed; territory-neutral staff IA, capability-derived navigation, Calls-under-Messages placement, route compatibility, native/parent convergence, executable state matrix, motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; creative selection packet ready and explicit production choice open
-**Reported progress:** **51% done / 49% left**
+**Program state:** Product discovery and benchmark research closed; territory-neutral staff IA, capability-derived navigation, Calls-under-Messages placement, route compatibility, native/parent convergence, executable state matrix and live-operations flow, motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; creative selection packet ready and explicit production choice open
+**Reported progress:** **52% done / 48% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -15,12 +15,12 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | 1. Product discovery | 12% | Complete | 12% | Flow inventory, role/task matrix, current journeys, friction/risk register |
 | 2. Benchmark research | 10% | Complete | 10% | Pinterest taxonomy, Mobbin flow sheets, direct-competitor operations, benchmark synthesis |
 | 3. Brand strategy and direction | 10% | In progress | 6% | Strategy, three complete territories, selected brand constitution |
-| 4. IA and core UX | 12% | In progress | 8% | Sitemap, navigation model, Today model, tested wireframes |
+| 4. IA and core UX | 12% | In progress | 9% | Sitemap, navigation model, Today model, tested wireframes |
 | 5. Design system | 13% | In progress | 12% | Tokens, components, motion, responsive, accessibility, performance, and data-delivery foundations |
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **51%** |  |
+| **Total** | **100%** |  | **52%** |  |
 
 ## Confirmed Baseline
 
@@ -539,6 +539,18 @@ An item is complete only when:
 - **Evidence boundary:** Automated semantics and responsive geometry do not replace actual 200% zoom, VoiceOver/NVDA, reduced-motion, offline/privacy policy, real-device, final-theme, or server-state integration tests. Creative selection remains open.
 - **Next action:** Receive the explicit creative direction, then codify final tokens and consume this contract in the first complete production pilot with server-owned state and audit history.
 - **Progress earned:** 1 percentage point; Phase 5 reaches 12 of 13% and total reaches 51%.
+
+### 2026-07-10 - Phase 4 executable live-operations flow
+
+- **Question:** Can one accepted attendance observation update current room state, ratio evidence, forecast work, and append-only history without treating absence, daily-report completion, or a browser flag as proof of presence?
+- **Evidence:** Current `AttendanceMarker`, `markBulkAttendance`, Today local-storage completion, `DailyReport`/`AbsenceReport` presence inference, `TeacherAttendance`, `EmployeeEvent`, class membership, jurisdiction policy baseline, J01/J02/J05 blueprints, and the failed authenticated `/today` attempt using the stale credentials printed on the local login page.
+- **Decision:** Add an executable territory-neutral contract for operational context, expected roster, explicit child presence events, optimistic revision and idempotency, append-only correction, staff countability, policy-supplied ratio decisions, current/forecast room readiness, source-derived work, and time-bounded floating cover. Do not calculate law or activate production state from the prototype.
+- **Artifacts:** `src/lib/redesign-live-operations.ts`, `src/lib/redesign-live-operations-fixtures.ts`, `src/scripts/verify-redesign-live-operations.ts`, `/design-lab/operations`, and `docs/redesign/live-operations-contract.md` with blueprint, audit, and master-plan links.
+- **Verification:** Deterministic checks pass explicit unknowns, attendance transitions, stale-revision defenses, idempotent replay, contradictory-state rejection, session submission, append-only correction, missing/stale policy, policy-condition failure, current risk, branch precedence, and cover-candidate conflict. Agent Browser replays attendance -> forecast cover -> handled at `1440 x 900`, `390 x 844`, and `320 x 568`; all nine states produce `Unknown -> Safe with exceptions -> Safe`, one H1, no overflow, unnamed controls, clipped critical text, or undersized targets, and zero axe violations/incomplete findings. Visual review removed a duplicate derivative forecast task. Focused ESLint, TypeScript, route/navigation/state/selection regressions, diff checks, and the production build pass; `/design-lab/operations` emits statically with only the documented legacy dynamic-prerender messages and print CSS warning.
+- **Parity:** No production route, query, mutation, Prisma model, database row, permission, export, legacy alias, native payload, or product visual changed. The migration plan is additive and requires dual-read compatibility evidence.
+- **Evidence boundary:** Printed demo credentials are stale, so authenticated current-Today runtime reproduction remains open. The fixture uses synthetic data and a supplied policy decision; production persistence, legal approval, authorization, cross-room transactions, operator validation, offline/privacy, native adapters, assistive technology, and real devices remain release gates.
+- **Next action:** Receive the explicit creative direction, codify final tokens, then consume this contract in the first complete server-owned Today/attendance/ratio pilot with parity adapters and database evidence.
+- **Progress earned:** 1 percentage point; Phase 4 reaches 9 of 12% and total reaches 52%.
 
 ## Work Log Template
 
