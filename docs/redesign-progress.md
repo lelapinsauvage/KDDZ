@@ -3,7 +3,7 @@
 **Last updated:** 2026-07-10
 **Plan:** `docs/redesign-master-plan.md`
 **Program state:** Current-state discovery and benchmark synthesis active
-**Reported progress:** **8% done / 92% left**
+**Reported progress:** **10% done / 90% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -11,16 +11,16 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 
 | Phase | Weight | Status | Earned | Evidence required to close |
 | --- | ---: | --- | ---: | --- |
-| 0. Safety and baseline | 3% | In progress | 2% | Clean branch, approved asset preservation, baseline screenshots and checks |
+| 0. Safety and baseline | 3% | Complete | 3% | Clean branch, approved asset preservation, baseline screenshots and checks |
 | 1. Product discovery | 12% | In progress | 3% | Flow inventory, role/task matrix, current journeys, friction/risk register |
-| 2. Benchmark research | 10% | In progress | 3% | Pinterest taxonomy, Mobbin flow sheets, benchmark synthesis |
+| 2. Benchmark research | 10% | In progress | 4% | Pinterest taxonomy, Mobbin flow sheets, benchmark synthesis |
 | 3. Brand strategy and direction | 10% | Not started | 0% | Strategy, three complete territories, selected brand constitution |
 | 4. IA and core UX | 12% | Not started | 0% | Sitemap, navigation model, Today model, tested wireframes |
 | 5. Design system | 13% | Not started | 0% | Tokens, components, motion, responsive and accessibility docs |
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **8%** |  |
+| **Total** | **100%** |  | **10%** |  |
 
 ## Confirmed Baseline
 
@@ -79,7 +79,7 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | Anything web/iOS | Official product/docs reviewed | Pending | Started | Started |
 | Apple first-party apps | Guidance reviewed | Pending | Started | Started |
 | Headspace | Two saved references cataloged | Pending | Started | Started |
-| Direct nursery competitors | Existing secondary research | Pending refresh | Pending | Pending |
+| Direct nursery competitors | Ten-product official-source capability pass complete | Pending live/Mobbin flows | Started | Started |
 
 ## Current Tooling Note
 
@@ -91,7 +91,7 @@ The Mobbin MCP is registered and enabled at `https://api.mobbin.com/mcp` with OA
 2. Trace the seven critical journeys through mutations, errors, and recovery.
 3. Capture compact desktop, tablet, and mobile current-state evidence.
 4. Complete Mobbin flow sheets for Revolut, Notion, Cosmos, Duolingo, Duolingo ABC, Genie, and Anything.
-5. Refresh direct competitor flow research.
+5. Inspect direct competitor flows in live products or Mobbin; official-source capability research is complete.
 6. Expand the Pinterest taxonomy when the board changes.
 7. Build the operational, brand-expression, and cross-device synthesis maps.
 8. Draft the brand strategy and personality spectrum.
@@ -130,7 +130,7 @@ An item is complete only when:
 - **Evidence:** Local/remote branch refs, worktree diff, Remotion source, rejected design-lab route, TypeScript and ESLint output, rendered frame 115.
 - **Decision:** Create `ux-redesign-awards` from `main`, preserve Remotion and plan files, exclude the rejected dashboard lab.
 - **Verification:** Remotion ESLint passed; Next route types regenerated; TypeScript passed; Remotion still rendered successfully.
-- **Open item:** Baseline screenshots and runtime flow capture are still required to close Phase 0.
+- **Closure:** The authenticated eleven-screen browser baseline and runtime findings now close the remaining Phase 0 evidence requirement.
 - **Next action:** Start the current-product canonical flow inventory and browser baseline.
 - **Progress earned:** 1 additional percentage point; total 3%.
 
@@ -153,6 +153,25 @@ An item is complete only when:
 - **Open items:** Mobbin screen-by-screen mobile flows, Duolingo ABC, direct nursery competitor refresh, and complete cross-device synthesis.
 - **Next action:** Continue discovery responsive baselines while expanding direct competitor and mobile-flow research.
 - **Progress earned:** 2 additional percentage points; total 8%.
+
+### 2026-07-10 - Phase 2 direct competitor capability pass
+
+- **Question:** Which nursery-management capabilities are category expectations, and where can Kiddz create a defensible manager experience without inventing unsupported competitor weaknesses?
+- **Evidence:** Current official product and support sources for Famly, Brightwheel, Blossom, Connect Childcare, Tapestry, Cheqdin, Lillio, Procare, Illumine, and Nursery Story, compared with the current Kiddz flow inventory and runtime findings.
+- **Decision:** Treat feature breadth as table stakes. Advance a reversible product thesis around a live, explainable, resolution-oriented desktop operating model, with role-specific companion surfaces and full restored parity.
+- **Artifact:** `docs/redesign/competitor-gap-analysis.md`; direct-competitor synthesis added to `docs/redesign/benchmark-matrix.md`.
+- **Evidence boundary:** Capability claims are supported; comparative usability, motion, accessibility, and flow quality remain pending live or Mobbin inspection.
+- **Next action:** Continue role and journey discovery, then turn benchmark evidence into operational, brand-expression, and cross-device synthesis maps.
+- **Progress earned:** 1 additional percentage point; total 9%.
+
+### 2026-07-10 - Phase 0 closure
+
+- **Question:** Does the redesign now have a clean, reproducible, browser-verified starting point?
+- **Evidence:** Dedicated branch history, excluded rejected prototype, approved Remotion source and render, route/component census, TypeScript and ESLint checks, eleven authenticated desktop baselines, and a clean tracked worktree before this documentation increment.
+- **Decision:** Close Phase 0. Future baseline expansion belongs to product discovery and cross-device validation, not repository safety.
+- **Open item:** None for the Phase 0 gate.
+- **Next action:** Continue Phase 1 role and end-to-end journey discovery.
+- **Progress earned:** 1 additional percentage point; total 10%.
 
 ## Work Log Template
 

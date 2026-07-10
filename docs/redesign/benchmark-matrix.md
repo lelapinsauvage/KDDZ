@@ -138,6 +138,14 @@ Anything presents cross-device creation: projects appear on mobile, voice can re
 | Monzo | How can financial status and difficult messages feel plain, friendly, and trustworthy? | Billing, overdue payments, parent communication | Friendly does not mean casual about debt or privacy |
 | IKEA | How does a broad system stay understandable for nonexperts across cultures? | Plain language, hierarchy, accessibility, internationalization | Avoid retail navigation metaphors |
 
+## Direct Nursery Competitor Synthesis
+
+The current official-source capability pass covers Famly, Brightwheel, Blossom, Connect Childcare, Tapestry, Cheqdin, Lillio, Procare, Illumine, and Nursery Story. The detailed evidence, category baseline, white-space hypotheses, and research boundary live in `docs/redesign/competitor-gap-analysis.md`.
+
+The category already expects attendance, ratios, occupancy, staffing, billing, communication, records, reporting, role separation, and multi-site oversight. Kiddz cannot differentiate through a cleaner feature directory. The emerging product opportunity is to join those domains into a live, explainable, resolution-oriented operating model for the desktop manager, with focused cross-device companion flows.
+
+No comparative ease-of-use or visual-quality claims are made from marketing pages. Those require current flow inspection.
+
 ## Cross-Benchmark Principles Emerging
 
 1. **State is an object.** Strong products make work status visible and actionable, not implicit in counts.
@@ -164,7 +172,7 @@ Anything presents cross-device creation: projects appear on mobile, voice can re
 
 ## Evidence Boundary
 
-This pass establishes principles from current official sources and the public Pinterest references. It does not claim complete mobile-flow analysis. Mobbin remains required for screen-by-screen flow evidence as soon as its tools are available to a fresh Codex task.
+This pass establishes principles from current official sources, the public Pinterest references, and the direct nursery competitor capability pass. It does not claim complete mobile-flow analysis or comparative competitor usability. Mobbin and live-product inspection remain required for screen-by-screen evidence as soon as those tools or authenticated products are available.
 
 ## Next Research Output
 
