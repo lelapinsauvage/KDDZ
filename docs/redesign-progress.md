@@ -3,7 +3,7 @@
 **Last updated:** 2026-07-10
 **Plan:** `docs/redesign-master-plan.md`
 **Program state:** Research synthesis complete; brand strategy and territory development active
-**Reported progress:** **20% done / 80% left**
+**Reported progress:** **21% done / 79% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -13,14 +13,14 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | --- | ---: | --- | ---: | --- |
 | 0. Safety and baseline | 3% | Complete | 3% | Clean branch, approved asset preservation, baseline screenshots and checks |
 | 1. Product discovery | 12% | In progress | 9% | Flow inventory, role/task matrix, current journeys, friction/risk register |
-| 2. Benchmark research | 10% | In progress | 8% | Pinterest taxonomy, Mobbin flow sheets, benchmark synthesis |
-| 3. Brand strategy and direction | 10% | Not started | 0% | Strategy, three complete territories, selected brand constitution |
+| 2. Benchmark research | 10% | In progress | 9% | Pinterest taxonomy, Mobbin flow sheets, benchmark synthesis |
+| 3. Brand strategy and direction | 10% | In progress | 0% | Strategy, three complete territories, selected brand constitution |
 | 4. IA and core UX | 12% | Not started | 0% | Sitemap, navigation model, Today model, tested wireframes |
 | 5. Design system | 13% | Not started | 0% | Tokens, components, motion, responsive and accessibility docs |
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **20%** |  |
+| **Total** | **100%** |  | **21%** |  |
 
 ## Confirmed Baseline
 
@@ -58,6 +58,7 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 - `docs/redesign/operational-architecture-synthesis.md` defines the live operating model, Today hierarchy, canonical objects, work-item lifecycle, role projections, and integrity gates.
 - `docs/redesign/brand-expression-synthesis.md` translates the approved identity seed and research into governed color, typography, shape, illustration, voice, motion, and territory criteria.
 - `docs/redesign/cross-device-synthesis.md` assigns desktop, tablet, mobile, parent, and native surfaces distinct jobs while preserving shared state, drafts, permissions, and compatibility contracts.
+- `docs/redesign/targeted-reference-flow-study.md` adds source-linked Apple, Things, Headspace, Flighty, Airbnb, Stripe, and Anything evidence for motion purpose, consequence, recovery, live state, and handoff.
 
 ## Locked Decisions
 
@@ -87,23 +88,27 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | Duolingo | Official brand guidelines and saved motion reference identified | Lesson/completion flows inspected | Complete first pass | Integrated in expression/behavior maps |
 | Duolingo ABC | Official context reviewed | Alphabet/story flows inspected | Complete first pass | Integrated in behavior map |
 | Genie iOS | Exact App Store product identified | Text/image chat flows inspected | Complete first pass | Integrated with explicit rejection rules |
-| Anything web/iOS | Official product/docs reviewed | Exact Mobbin match unavailable | Partial | Integrated provisionally; live flow open |
-| Apple first-party apps | Guidance reviewed | Live flow inspection pending | Partial | Integrated as principle, not copied surface |
-| Headspace | Two saved references cataloged | Live flow inspection pending | Partial | Integrated as emotional/illustration principle |
+| Anything web/iOS | Official product/App Store reviewed | One exact Mobbin screen; multi-step flow unavailable | Partial | Cross-device promise retained; weak evidence labeled |
+| Apple first-party apps | Current HIG motion/feedback/undo/alert guidance reviewed | Reminders creation flow inspected | Complete first pass | Consequence budget integrated |
+| Things 3 | Official interaction, scheduling, and device guidance reviewed | Create/edit/delete flows inspected | Complete first pass | Progressive power and return integrated |
+| Headspace | Saved references and current product context reviewed | Session/reflection/completion flows inspected | Complete first pass | Emotional moment and source return integrated |
+| Flighty | Official live-state/Live Activities guidance reviewed | Detail/en-route/history flows inspected | Complete first pass | Live explainability integrated |
+| Airbnb | Official booking requirements reviewed | Booking/pending/trip-detail flows inspected | Complete first pass | Consequence review integrated |
+| Stripe | Official dashboard/refund state docs reviewed | Transaction/refund/cancel/history flows inspected | Complete first pass | Durable financial state integrated |
 | Direct nursery competitors | Ten-product official-source capability pass complete | Live/Mobbin flows pending | Complete capability pass | Integrated in operational map |
 
 ## Current Tooling Note
 
-The Mobbin MCP is registered, authenticated, and available in this task. The first flow study covers Revolut, Notion, Cursor, Cosmos, Vercel, Duolingo, Duolingo ABC, Genie, and 7shifts. Exact Anything, Brightwheel, and Famly results were not available; unrelated search matches were excluded.
+The Mobbin MCP is registered, authenticated, and available in this task. Two flow studies now cover Revolut, Notion, Cursor, Cosmos, Vercel, Duolingo, Duolingo ABC, Genie, 7shifts, Headspace, Things, Flighty, Airbnb, Stripe, and Apple Reminders. One exact Anything screen was retained; exact multi-step Anything, Brightwheel, and Famly results were unavailable, and unrelated matches were excluded.
 
 ## Next Work Queue
 
-1. Inspect live Apple, Things 3, Headspace, Flighty, Stripe, Airbnb, Anything, and exact available nursery flows for motion, recovery, accessibility, and dense-work behavior.
-2. Expand the Pinterest taxonomy when the board changes.
-3. Convert the brand-expression synthesis into the final strategy, message hierarchy, and territory briefs.
-4. Build three complete creative territories using realistic Today, table, form, high-risk, and cross-device content.
-5. Review the territories against operational clarity, accessibility, award, and usability scorecards.
-6. Select one direction before production UI implementation.
+1. Expand the Pinterest taxonomy when the board changes and retain exact direct-nursery flows as open research debt.
+2. Convert the brand-expression synthesis into the final strategy, message hierarchy, and three territory briefs.
+3. Build three complete creative territories using realistic Today, table, form, high-risk, and cross-device content.
+4. Review the territories against operational clarity, accessibility, award, and usability scorecards.
+5. Select one direction before production UI implementation.
+6. Validate remaining operator, jurisdiction, real-device, and direct-competitor questions at the relevant implementation gate.
 
 ## Definition of a Completed Tracker Item
 
@@ -247,6 +252,16 @@ An item is complete only when:
 - **Open items:** Live Apple/Headspace/Things/Flighty behavior; exact Anything and nursery product flows; operator policy; jurisdiction rules; production native-device matrix.
 - **Next action:** Complete the targeted live reference pass, then produce three realistic creative territories and score them before selection.
 - **Progress earned:** 2 additional percentage points; total 20%.
+
+### 2026-07-10 - Phase 2 targeted motion, recovery, and live-state pass
+
+- **Question:** Which visible behaviors make completion, pending work, reversal, live state, and cross-device boundaries trustworthy in the remaining high-value references?
+- **Evidence:** Current Apple HIG; official Things, Flighty, Airbnb, Stripe, and Anything sources; 18 canonical Mobbin flows plus one exact Anything screen across Apple Reminders, Things, Headspace, Flighty, Airbnb, and Stripe.
+- **Decision:** Match feedback to consequence; modify the source object after completion; preserve pending/failed/reversed states; use rich visuals only for rich truth; keep advanced power adjacent; disclose cross-device capability limits before handoff.
+- **Artifact:** `docs/redesign/targeted-reference-flow-study.md`; `benchmark-matrix.md` flow coverage updated.
+- **Evidence boundary:** Static captures do not prove timing, haptics, accessibility, network recovery, or performance. Exact direct-nursery and Anything multi-step flows remain unavailable.
+- **Next action:** Write the final brand strategy and territory briefs, then build three complete territories on realistic product content.
+- **Progress earned:** 1 additional percentage point; total 21%.
 
 ## Work Log Template
 

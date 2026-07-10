@@ -171,18 +171,23 @@ No comparative ease-of-use or visual-quality claims are made from marketing page
 | Duolingo | Brand system identified | Lesson, error, completion, and return inspected | Onboarding, subscription, live motion/accessibility |
 | Duolingo ABC | Official context reviewed | Alphabet and story lessons inspected | Guardian flow and accessibility behavior |
 | Genie | App Store identified | Text/image chat flows inspected | History, upgrade, live progress behavior |
-| Anything | Current web/mobile positioning reviewed | Exact Mobbin match unavailable | Start project, voice, progress, preview, publish, cross-device resume |
+| Apple first-party | Current HIG motion, feedback, alert, and undo guidance | Reminders creation and return inspected | Real-device reduced motion, VoiceOver, haptics, and failure behavior |
+| Things 3 | Official interaction and scheduling principles reviewed | Project creation, inline editing, and deletion inspected | Current Mac/iPad dense keyboard relationship and sync failure |
+| Headspace | Official product context and saved brand references reviewed | Session, reflection, completion, and source return inspected | Real-device motion, reduced motion, and accessibility |
+| Flighty | Official live-state and Live Activities behavior reviewed | Flight detail, en-route state, history, and forecast inspected | Real-device notification timing, offline/stale behavior, and accessibility |
+| Airbnb | Official booking requirements reviewed | Booking, policy review, pending result, and trip detail inspected | Failure, cancellation, localization, and accessibility |
+| Stripe | Official dashboard and refund state documentation reviewed | Transaction, refund, cancel, failure, and event history inspected | Permission, bulk, localization, and accessibility behavior |
+| Anything | Current web/mobile/App Store positioning reviewed | One exact conversational-build result inspected | Complete start, progress, failure, preview, publish, and cross-device resume flow |
 
 ## Evidence Boundary
 
-This pass combines current official sources, the public Pinterest references, the direct nursery competitor capability pass, and the first Mobbin flow study. It does not claim complete live motion/accessibility analysis or comparative nursery-competitor usability. Exact Mobbin searches did not surface Anything, Brightwheel, or Famly, and unrelated matches were excluded.
+This research combines current official sources, the public Pinterest references, the direct nursery competitor capability pass, and two Mobbin flow studies. It does not claim complete live motion/accessibility analysis or comparative nursery-competitor usability. Exact multi-step Mobbin flows did not surface Anything, Brightwheel, or Famly; one exact Anything screen was retained and unrelated matches were excluded.
 
-## Next Research Output
+## Synthesis Outputs
 
-Turn this matrix into three synthesis maps:
+- `operational-architecture-synthesis.md`: state, queue, context, navigation, search, and record depth.
+- `brand-expression-synthesis.md`: typography, color, illustration, voice, motion, and emotional range.
+- `cross-device-synthesis.md`: desktop manager, tablet practitioner, mobile/parent, offline, and handoff.
+- `targeted-reference-flow-study.md`: consequence-weighted feedback, recovery, live state, dense work, and cross-device evidence from Apple, Things, Headspace, Flighty, Airbnb, Stripe, and Anything.
 
-1. **Operational architecture:** state, queue, context, navigation, search, and record depth.
-2. **Brand expression:** typography, color, illustration, voice, motion, and emotional range.
-3. **Cross-device behavior:** desktop manager, tablet practitioner, mobile/parent, offline, and handoff.
-
-Those maps become the evidence base for three complete creative territories and the target information architecture.
+These artifacts are the evidence base for three complete creative territories and the target information architecture. Exact direct-competitor flows and real-device accessibility remain research debt, not permission to delay reversible territory prototypes.
