@@ -574,6 +574,8 @@ Commits must be small enough to review but complete enough to run. Do not mix un
 - `docs/redesign/operational-architecture-synthesis.md`: live operating model, canonical objects, work lifecycle, and UX integrity rules.
 - `docs/redesign/brand-expression-synthesis.md`: brand/product expression layers and creative-territory acceptance rules.
 - `docs/redesign/cross-device-synthesis.md`: desktop, tablet, mobile, parent, native, handoff, sync, and responsive behavior.
+- `docs/redesign/brand-strategy.md`: purpose, promise, positioning, audience, narrative, messages, personality, and voice.
+- `docs/redesign/creative-territory-briefs.md`: Daylight, Signal, and Carebook build specifications and comparison gates.
 - `docs/redesign/information-architecture.md`: navigation and sitemap decisions.
 - `docs/redesign/motion-system.md`: motion tokens and behavior.
 - `docs/redesign/accessibility-checklist.md`: component and flow acceptance.
@@ -597,4 +599,4 @@ Commits must be small enough to review but complete enough to run. Do not mix un
 
 ## 21. Immediate Next Action
 
-Complete the targeted live-reference gaps for motion, recovery, accessibility, and dense work. Then convert the three synthesis maps into a final brand strategy and three complete creative territories demonstrated on realistic Today, table, form, urgent-state, tablet, and mobile surfaces. Score and select one territory before production UI implementation; do not return to isolated dashboard styling.
+Build Daylight, Signal, and Carebook as complete, isolated territory prototypes using one realistic nursery scenario and the shared operational anatomy. Demonstrate Today, room state, work queue, table, form, urgent state, completion, tablet, and mobile; verify in Agent Browser and score the results before recommending a direction. Do not modify production UI before selection.

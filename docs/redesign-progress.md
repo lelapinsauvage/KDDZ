@@ -2,8 +2,8 @@
 
 **Last updated:** 2026-07-10
 **Plan:** `docs/redesign-master-plan.md`
-**Program state:** Research synthesis complete; brand strategy and territory development active
-**Reported progress:** **21% done / 79% left**
+**Program state:** Brand strategy and three build-ready creative territories active
+**Reported progress:** **22% done / 78% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -14,13 +14,13 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | 0. Safety and baseline | 3% | Complete | 3% | Clean branch, approved asset preservation, baseline screenshots and checks |
 | 1. Product discovery | 12% | In progress | 9% | Flow inventory, role/task matrix, current journeys, friction/risk register |
 | 2. Benchmark research | 10% | In progress | 9% | Pinterest taxonomy, Mobbin flow sheets, benchmark synthesis |
-| 3. Brand strategy and direction | 10% | In progress | 0% | Strategy, three complete territories, selected brand constitution |
+| 3. Brand strategy and direction | 10% | In progress | 1% | Strategy, three complete territories, selected brand constitution |
 | 4. IA and core UX | 12% | Not started | 0% | Sitemap, navigation model, Today model, tested wireframes |
 | 5. Design system | 13% | Not started | 0% | Tokens, components, motion, responsive and accessibility docs |
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **21%** |  |
+| **Total** | **100%** |  | **22%** |  |
 
 ## Confirmed Baseline
 
@@ -59,6 +59,8 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 - `docs/redesign/brand-expression-synthesis.md` translates the approved identity seed and research into governed color, typography, shape, illustration, voice, motion, and territory criteria.
 - `docs/redesign/cross-device-synthesis.md` assigns desktop, tablet, mobile, parent, and native surfaces distinct jobs while preserving shared state, drafts, permissions, and compatibility contracts.
 - `docs/redesign/targeted-reference-flow-study.md` adds source-linked Apple, Things, Headspace, Flighty, Airbnb, Stripe, and Anything evidence for motion purpose, consequence, recovery, live state, and handoff.
+- `docs/redesign/brand-strategy.md` defines purpose, promise, positioning, audience tensions, narrative, value pillars, message hierarchy, personality, voice, terminology, and trust requirements around `Care, visibly handled.`
+- `docs/redesign/creative-territory-briefs.md` defines Daylight, Signal, and Carebook as distinct build systems with shared realistic content, palette/type/motion hypotheses, screen requirements, risks, and kill criteria.
 
 ## Locked Decisions
 
@@ -103,12 +105,12 @@ The Mobbin MCP is registered, authenticated, and available in this task. Two flo
 
 ## Next Work Queue
 
-1. Expand the Pinterest taxonomy when the board changes and retain exact direct-nursery flows as open research debt.
-2. Convert the brand-expression synthesis into the final strategy, message hierarchy, and three territory briefs.
-3. Build three complete creative territories using realistic Today, table, form, high-risk, and cross-device content.
-4. Review the territories against operational clarity, accessibility, award, and usability scorecards.
-5. Select one direction before production UI implementation.
-6. Validate remaining operator, jurisdiction, real-device, and direct-competitor questions at the relevant implementation gate.
+1. Build the shared synthetic scenario and neutral information anatomy for the territory lab.
+2. Implement Daylight, Signal, and Carebook independently across realistic Today, table, form, high-risk, and cross-device content.
+3. Verify all required viewports, interactions, contrast, keyboard, zoom, and reduced motion in Agent Browser.
+4. Score the territories against operational clarity, accessibility, award, and usability criteria.
+5. Recommend one direction and wait for selection before production UI implementation.
+6. Keep direct-nursery, operator, jurisdiction, and real-device questions open at their implementation gates.
 
 ## Definition of a Completed Tracker Item
 
@@ -262,6 +264,16 @@ An item is complete only when:
 - **Evidence boundary:** Static captures do not prove timing, haptics, accessibility, network recovery, or performance. Exact direct-nursery and Anything multi-step flows remain unavailable.
 - **Next action:** Write the final brand strategy and territory briefs, then build three complete territories on realistic product content.
 - **Progress earned:** 1 additional percentage point; total 21%.
+
+### 2026-07-10 - Phase 3 brand strategy and territory briefs
+
+- **Question:** What can Kiddz own strategically, and which three expressive mechanisms can test that strategy without changing product truth or production UI?
+- **Evidence:** Three synthesis maps, two benchmark flow studies, approved Remotion identity, current product risks, parity obligations, and locked user constraints.
+- **Decision:** Use `Care, visibly handled.` as the strategic idea. Build Daylight, Signal, and Carebook from one shared synthetic manager scenario so visual difference cannot hide missing UX.
+- **Artifacts:** `docs/redesign/brand-strategy.md` and `docs/redesign/creative-territory-briefs.md`.
+- **Verification:** All required strategy outputs and territory screen/state requirements are explicit; each territory defines palette, type, geometry, motion, illustration, cross-device behavior, strengths, risks, and kill criteria.
+- **Next action:** Build the shared territory lab and implement all three directions before scoring or recommendation.
+- **Progress earned:** 1 percentage point; total 22%.
 
 ## Work Log Template
 
