@@ -3,7 +3,7 @@
 **Last updated:** 2026-07-10
 **Plan:** `docs/redesign-master-plan.md`
 **Program state:** Product discovery and benchmark research closed; territory-neutral IA, state, motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; creative selection gate open
-**Reported progress:** **45% done / 55% left**
+**Reported progress:** **46% done / 54% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -14,13 +14,13 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | 0. Safety and baseline | 3% | Complete | 3% | Clean branch, approved asset preservation, baseline screenshots and checks |
 | 1. Product discovery | 12% | Complete | 12% | Flow inventory, role/task matrix, current journeys, friction/risk register |
 | 2. Benchmark research | 10% | Complete | 10% | Pinterest taxonomy, Mobbin flow sheets, direct-competitor operations, benchmark synthesis |
-| 3. Brand strategy and direction | 10% | In progress | 5% | Strategy, three complete territories, selected brand constitution |
+| 3. Brand strategy and direction | 10% | In progress | 6% | Strategy, three complete territories, selected brand constitution |
 | 4. IA and core UX | 12% | In progress | 4% | Sitemap, navigation model, Today model, tested wireframes |
 | 5. Design system | 13% | In progress | 11% | Tokens, components, motion, responsive, accessibility, performance, and data-delivery foundations |
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **45%** |  |
+| **Total** | **100%** |  | **46%** |  |
 
 ## Confirmed Baseline
 
@@ -436,9 +436,20 @@ An item is complete only when:
 - **Decision:** Keep all directions eligible after remediation, retain Daylight as the recommendation, and record Carebook's original accessibility score as pre-fix invalid rather than retroactively inflating it. Separate accent display/action color from text-safe accent, require 32px dense-pointer and 44px mobile targets, and keep mobile navigation outside the main scroll region.
 - **Artifacts:** `docs/redesign/territory-accessibility-validation.md`, `src/scripts/report-redesign-territory-accessibility.ts`, hardened territory lab CSS/components, and updated evaluation/acceptance/master-plan evidence.
 - **Verification:** All 36 desktop/mobile/narrow territory/view combinations pass their target, overflow, H1, and unnamed-button checks; all 12 desktop combinations pass computed visible-text contrast; sticky actions clear navigation; drawer focus is contained and restored; deterministic reduced motion passes; source reporter and dev console pass.
-- **Evidence boundary:** This is prototype-level evidence, not product WCAG conformance. Actual 200/400% zoom, axe/full semantics, VoiceOver/NVDA, forced colors, real OS reduced motion, real devices/native wrappers, localization/large text, color-vision simulation, operator observation, and field frame timing remain open.
+- **Evidence boundary:** This is prototype-level evidence, not product WCAG conformance. Actual 200/400% zoom, axe/full semantics, VoiceOver/NVDA, real Windows forced colors, real OS reduced motion, real devices/native wrappers, production localization, color-vision simulation, operator observation, and field frame timing remain open.
 - **Next action:** Present the hardened scored territories at the irreversible selection gate. After selection, write the brand/design constitution and codify final tokens before production pilot implementation.
 - **Progress earned:** 1 percentage point; Phase 3 reaches 5 of 10%; total 45%.
+
+### 2026-07-10 - Phase 3 territory localization and typography stress validation
+
+- **Question:** Which territory preserves hierarchy, state, action, and dense-work comprehension when governed labels expand, writing direction becomes Arabic RTL, type reaches a deterministic 200% scale, and color is reduced to system roles?
+- **Evidence:** 36 desktop combinations at 1440 x 900; 72 mobile/narrow combinations at 390 x 844 and 320 x 568; 24 worst-case combined-mode combinations at 320; 12 deterministic forced-color workflow combinations; computed cascade samples; visual captures; empty browser warning/error log; a reproducible source reporter; and focused `next start` proof against the fresh production build at 1440 x 900 and the 320 x 568 RTL/200%/forced-color worst case.
+- **Decision:** Keep Daylight as the recommendation, preserve Signal's semantic-column grammar, and retain Carebook's higher typography/localization implementation cost in selection judgment. Convert the lab to 23 paired type tokens, logical inline CSS, nested Arabic language/direction, writing-system font fallback, and real/deterministic forced-color contracts.
+- **Artifacts:** `docs/redesign/territory-localization-validation.md`, `src/app/design-lab/territories/_stress.ts`, `src/scripts/report-redesign-territory-localization.ts`, hardened territory components/CSS, and updated evaluation/accessibility/localization/acceptance/master-plan evidence.
+- **Verification:** All 144 measured combinations pass required target, clipping, horizontal overflow, H1, and mobile nav-separation checks. Both territory source reporters, focused ESLint, full TypeScript, `pnpm build`, production route smoke, focused built-app browser checks, and development/production browser logs pass.
+- **Evidence boundary:** Deterministic 200% text and forced-color hooks are not actual browser zoom or Windows high contrast. Full translation, time/money formatting, platform Arabic rendering, screen readers, PDFs, email/export, parent/native, and operator testing remain open.
+- **Next action:** Present the now-hardened territories at the irreversible selection gate. After selection, write the brand/design constitution and codify final production tokens before pilot implementation.
+- **Progress earned:** 1 percentage point; Phase 3 reaches 6 of 10%; total 46%.
 
 ## Work Log Template
 

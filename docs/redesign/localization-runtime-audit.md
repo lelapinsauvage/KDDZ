@@ -5,6 +5,8 @@
 **Visual direction:** Territory-neutral  
 **Production behavior changed:** No
 
+> **Prototype addendum:** `territory-localization-validation.md` now records expanded-English, Arabic/RTL, deterministic 200% type, logical-direction, and forced-color evidence for all three creative territories. The isolated fixture does not close any production locale, schema, time, money, PDF, native, or translation finding in this audit.
+
 ## Question
 
 Can the redesigned product support England, Ireland, the existing Lebanese legacy model, Arabic content, and preserved native clients without letting the browser, server host, or a hard-coded currency decide what a date, time, amount, name, or address means?

@@ -107,7 +107,7 @@ Run:
 pnpm exec tsx src/scripts/report-redesign-territory-accessibility.ts
 ```
 
-The reporter fails when a required contrast pair or source contract falls below the prototype gate. It also reports, without claiming failure, the number of typography declarations below 12px because zoom, localization, and large-text behavior require runtime inspection.
+The reporter fails when a required contrast pair or source contract falls below the prototype gate. It also reports raw pixel font-size declarations. The paired type scale, long-label, RTL, and deterministic 200% evidence is recorded separately in `territory-localization-validation.md`.
 
 ## Decision Impact
 
@@ -126,10 +126,10 @@ Still open:
 - a full axe or equivalent automated semantic scan;
 - actual browser zoom at 200% and 400%;
 - VoiceOver, NVDA, and other assistive-technology task completion;
-- Windows high-contrast and forced-colors behavior;
+- Windows high-contrast and forced-colors behavior on real hardware; the source and deterministic prototype contracts pass;
 - real OS reduced-motion testing and field motion comfort;
 - real tablet/mobile safe areas, keyboards, touch, and native wrappers;
-- large-text, Arabic/RTL, and long-label territory testing;
+- production translation coverage, platform Arabic font rendering, mixed-script assistive-technology behavior, and actual browser zoom;
 - color-vision simulation beyond contrast ratios;
 - real-user task observation;
 - field performance and animation frame timing.

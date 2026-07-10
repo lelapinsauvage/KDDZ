@@ -32,6 +32,9 @@ The prototypes are isolated under `/design-lab/territories`. They do not alter t
 - `1440 x 900`: all 12 territory/view combinations expose zero detected visible-text contrast failures, zero targets below the 32px dense-pointer floor, one main H1, and no unnamed buttons after hardening.
 - Responsive drawer focus is contained, `Escape` returns focus to its trigger, and the background is inert while the drawer is open.
 - The deterministic reduced-motion hook removes view/detail animation and collapses remaining transitions to `0.01ms` while the real media-query contract remains present.
+- Expanded English, Arabic/RTL, and deterministic 200% text pass across all 36 desktop and 72 mobile/narrow territory/view combinations.
+- The two worst-case 320px combinations, expanded English + 200% text and Arabic/RTL + 200% text + forced colors, pass across all 24 territory/view combinations.
+- The real and deterministic forced-color contracts preserve geometry, targets, hierarchy, and state borders; Windows high-contrast testing remains open.
 - A fresh production-route tab produced no territory-specific console errors.
 - Production build completed successfully and emitted static routes for the selector and all three territories.
 
@@ -57,6 +60,10 @@ The prototypes are isolated under `/design-lab/territories`. They do not alter t
 | Dense records | `territories/daylight-children-desktop.png` |
 | Long form | `territories/daylight-daily-care-desktop.png` |
 | High-risk review | `territories/daylight-safety-review-desktop.png` |
+| Expanded English desktop | `territories/daylight-long-copy-desktop.png` |
+| Arabic RTL mobile | `territories/daylight-rtl-mobile.png` |
+| 200% type Safety review | `territories/carebook-text-200-mobile.png` |
+| Deterministic forced colors | `territories/daylight-forced-colors-mobile.png` |
 
 ## Provisional Scorecard
 
@@ -75,7 +82,7 @@ Scores are out of 5. Weighted totals are out of 100. Operational clarity or acce
 
 Carebook's original score was not accessibility-gate-valid: post-score measurement found muted and accent text below 4.5:1. The prototype was corrected and now passes the same computed/runtime floor as Daylight and Signal, but the score is not retroactively inflated. Its serif/editorial system still carries greater large-text, localization, and dense-work risk.
 
-The scorecard remains provisional because real-user observation, full automated semantic scanning, actual browser zoom, screen-reader verification, real OS reduced motion, color-vision simulation, and native-device validation remain open. Detailed evidence and limits are in `territory-accessibility-validation.md`.
+The scorecard remains provisional because real-user observation, full automated semantic scanning, actual browser zoom, screen-reader verification, real OS reduced motion/forced colors, color-vision simulation, and native-device validation remain open. Detailed evidence and limits are in `territory-accessibility-validation.md` and `territory-localization-validation.md`.
 
 ## Territory Findings
 
@@ -95,6 +102,7 @@ The scorecard remains provisional because real-user observation, full automated 
 - The bright field cannot become a repeated dashboard-card gimmick; it should appear only when one state deserves immediate comprehension.
 - The current active-navigation blue is too detached from the territory and should be resolved in the selected token system.
 - Illustration and richer spring motion remain hypotheses until tested against repeat-work speed and reduced motion.
+- The direction survives the complete long-label, RTL, and 200% type matrix without a territory-specific structural exception.
 
 ### Signal
 
@@ -104,6 +112,7 @@ The scorecard remains provisional because real-user observation, full automated 
 - Makes source, ratio, next change, and queue ownership explicit without requiring expansion.
 - Scales naturally to audit, finance, medical, occupancy, and multi-branch surfaces.
 - Maintains excellent cross-device information compression.
+- Its dense plane survives the stress matrix after one semantic-column widening for observed/unknown copy at 200% text.
 
 **What must improve**
 
@@ -125,6 +134,7 @@ The scorecard remains provisional because real-user observation, full automated 
 - Editorial hierarchy consumes more vertical space and slows comparison under operational pressure.
 - Warm paper tonality can overpower the user's requirement for a mostly white operational canvas.
 - The serif layer increases localization, large-text, and dense-form risk.
+- It exposed the most severe long-word and narrow-grid failures in the stress pass and requires a writing-system font override; these are corrected but remain selection-cost evidence.
 - Mobile ordering is clear but less efficient for rapid repeated action than Daylight or Signal.
 
 ## Recommendation
@@ -145,6 +155,7 @@ Those imports must inherit Daylight tokens, typography, geometry, and motion. Si
 - Responsive browser evidence: **complete for prototype gate**.
 - Provisional scoring and recommendation: **complete**.
 - Computed contrast, source-token, 320/390 target/reflow, deterministic reduced-motion, and drawer keyboard evidence: **complete for prototype gate**.
+- Expanded English, Arabic/RTL, 200% type-token, logical-direction, and deterministic forced-color evidence: **complete for prototype gate**.
 - Full automated semantics, actual browser zoom, screen readers, real OS/device motion, color vision, and native-device evidence: **open**.
 - User selection of the production direction: **open and irreversible**.
 - Production UI migration: **not started by design**.
