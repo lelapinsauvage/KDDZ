@@ -223,6 +223,14 @@ Authenticated measurements across six routes show that the current product mostl
 
 **Design requirement:** Keep the product desktop first, then intentionally compose a tablet room workspace and mobile daily companion from the same domain objects. Define responsive behavior per chart, table, form, toolbar, card family, and fixed shell region.
 
+### 23. Role navigation is broader than the authorization boundary
+
+A branch-bound teacher runtime pass confirmed direct access to medical accidents, staff attendance and logs, teacher records, parent users, sensitive exports, alarms, and monthly reports even though those entries were absent from teacher navigation. The local migration contains no legacy access-control rows, so unconfigured legacy page/action decisions default to allowed. Organization record helpers do not intersect access with the user's assigned branch or room.
+
+**Risk:** A cleaner redesign could make already broad access easier to discover, while hidden direct routes and server actions remain callable. An unscoped authenticated user can also fall back to the first organization in the database.
+
+**Design requirement:** Establish one fail-closed capability and scope service for navigation, routes, reads, mutations, transitions, APIs, and exports. Preserve imported grants as policy inputs, not the only boundary.
+
 ## Existing Strengths to Preserve
 
 1. **Functional breadth:** The modern app exposes a large restored legacy surface.
@@ -318,3 +326,4 @@ The complete mutation and recovery evidence for J01-J07 is recorded in `docs/red
 - Use `docs/redesign/role-runtime-audit.md` as the current role-home evidence and preserve its privacy boundary.
 - Use `docs/redesign/journey-state-audit.md` as the critical mutation/recovery baseline and validate its open legal and operator questions.
 - Use `docs/redesign/responsive-runtime-audit.md` and `responsive-baseline-metrics.json` as the current cross-device evidence baseline.
+- Use `docs/redesign/authorization-scope-audit.md` as the role, capability, scope, and denial baseline.

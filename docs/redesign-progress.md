@@ -3,7 +3,7 @@
 **Last updated:** 2026-07-10
 **Plan:** `docs/redesign-master-plan.md`
 **Program state:** Current-state discovery and benchmark synthesis active
-**Reported progress:** **17% done / 83% left**
+**Reported progress:** **18% done / 82% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -12,7 +12,7 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | Phase | Weight | Status | Earned | Evidence required to close |
 | --- | ---: | --- | ---: | --- |
 | 0. Safety and baseline | 3% | Complete | 3% | Clean branch, approved asset preservation, baseline screenshots and checks |
-| 1. Product discovery | 12% | In progress | 8% | Flow inventory, role/task matrix, current journeys, friction/risk register |
+| 1. Product discovery | 12% | In progress | 9% | Flow inventory, role/task matrix, current journeys, friction/risk register |
 | 2. Benchmark research | 10% | In progress | 6% | Pinterest taxonomy, Mobbin flow sheets, benchmark synthesis |
 | 3. Brand strategy and direction | 10% | Not started | 0% | Strategy, three complete territories, selected brand constitution |
 | 4. IA and core UX | 12% | Not started | 0% | Sitemap, navigation model, Today model, tested wireframes |
@@ -20,7 +20,7 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **17%** |  |
+| **Total** | **100%** |  | **18%** |  |
 
 ## Confirmed Baseline
 
@@ -53,6 +53,8 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 - The state audit confirms that present child attendance is not persisted, factual care defaults can be submitted, drafts can appear done, medical transitions are not server-owned, live ratio resolution is absent, payment and balance stores are disconnected, and export descriptions overstate package content.
 - `docs/redesign/responsive-runtime-audit.md` and its metrics cover Dashboard, Today, Children, Accounting, Daily Reports, and Settings at 1280 x 800, 1024 x 768, and 390 x 844 without committing personal-record screenshots.
 - Responsive runtime confirms clipped chart meaning at 1024, page-level table overflow, a 9,085-pixel mobile Today flow, and desktop decision load carried almost unchanged into mobile.
+- `docs/redesign/authorization-scope-audit.md` traces modern roles, legacy page/action grants, tenant/record checks, direct-route behavior, and the target capability/scope contract without preserving personal data.
+- Permission runtime confirms that a branch-bound teacher can directly open several hidden organization-wide medical, staff, parent, export, alarm, and reporting surfaces; unconfigured legacy controls currently default allow.
 
 ## Locked Decisions
 
@@ -93,13 +95,12 @@ The Mobbin MCP is registered, authenticated, and available in this task. The fir
 
 ## Next Work Queue
 
-1. Inspect migrated permission variants without exposing identities.
-2. Inspect Anything and direct competitor flows in live products or exact future Mobbin results; official-source capability research is complete.
-3. Expand the Pinterest taxonomy when the board changes.
-4. Build the operational, brand-expression, and cross-device synthesis maps.
-5. Draft the brand strategy and personality spectrum.
-6. Build three complete creative territories using realistic product content.
-7. Review the territories against the award and usability scorecards.
+1. Inspect Anything and direct competitor flows in live products or exact future Mobbin results; official-source capability research is complete.
+2. Expand the Pinterest taxonomy when the board changes.
+3. Build the operational, brand-expression, and cross-device synthesis maps.
+4. Draft the brand strategy and personality spectrum.
+5. Build three complete creative territories using realistic product content.
+6. Review the territories against the award and usability scorecards.
 
 ## Definition of a Completed Tracker Item
 
@@ -218,6 +219,17 @@ An item is complete only when:
 - **Evidence boundary:** Exact Anything, Brightwheel, and Famly searches returned unrelated apps, which were excluded. Static previews do not prove motion, accessibility, or performance.
 - **Next action:** Complete permission discovery, then build the operational, brand-expression, and cross-device synthesis maps.
 - **Progress earned:** 2 additional percentage points; total 17%.
+
+### 2026-07-10 - Phase 1 authorization and scope audit
+
+- **Question:** Do role navigation, direct routes, reads, mutations, exports, and imported legacy grants enforce one effective permission and data-scope policy?
+- **Evidence:** Auth/layout/permission source; census of 39 action modules; aggregate database counts; authenticated direct-route pass across eleven high-impact routes using a short-lived branch-bound teacher.
+- **Decision:** Introduce a fail-closed domain capability and scope service that intersects tenant, modern role, imported grants, assignments, record relationship, action transition, and policy version. Use the same decision for visibility and server enforcement.
+- **Artifact:** `docs/redesign/authorization-scope-audit.md`; permission findings integrated into current-state findings and flow coverage.
+- **Verification:** No record mutation; no identity or row content captured; audit persona signed out and deleted with sessions/accounts; zero audit users remained.
+- **Open items:** Production meaning of branchless staff, multi-branch assignment, clinical qualification/approval, emergency override, and modern/legacy conflict rules.
+- **Next action:** Build the three research synthesis maps, then begin brand strategy.
+- **Progress earned:** 1 additional percentage point; total 18%.
 
 ## Work Log Template
 

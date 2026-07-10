@@ -205,9 +205,9 @@ Initial high-priority flows:
 
 | Evidence area | Status | Next evidence |
 | --- | --- | --- |
-| Admin/manager navigation | Captured from source and browser | Permission variants and dynamic class behavior |
-| Teacher navigation | Authenticated runtime captured; Dashboard redirects to Today | Mutation, interruption, and permission variants |
-| Nurse/doctor navigation | Authenticated runtime captured; home and nav are currently identical | Responsibility split, clinical queues, and permission variants |
+| Admin/manager navigation | Captured from source and browser | Effective-capability prototypes and dynamic class replacement |
+| Teacher navigation | Role home plus direct-route permission runtime captured | Operator-approved assignment scope and target denial tests |
+| Nurse/doctor navigation | Authenticated home/nav captured; permission source audited | Responsibility split, qualification scope, and target denial tests |
 | Parent web/native | Route/API inventory and authenticated web runtime complete | Native analogues, performance, and communication mutations |
 | Dashboard and Today | Desktop plus compact desktop, tablet, and mobile structure captured | Task-sequence prototypes and operator validation |
 | Lists and tables | Children, accounting, daily-report, and settings responsive structure captured | Keyboard, selection, export, delete, and empty/error behavior |
