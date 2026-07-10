@@ -27,7 +27,11 @@ The prototypes are isolated under `/design-lab/territories`. They do not alter t
 - `1280 x 800`: all three Today views render without horizontal overflow.
 - `1024 x 768`: all three Today views render without horizontal overflow.
 - `768 x 1024`: all three Today views render without horizontal overflow; responsive navigation opens, receives focus, closes, and returns focus to its trigger.
-- `390 x 844`: all three Today views render without horizontal overflow and expose no visible interactive target smaller than 44px.
+- `390 x 844` and `320 x 568`: all four views in all three territories render without horizontal overflow, expose no visible target smaller than 44px, and keep the mobile navigation outside the main scroll region.
+- `720 x 450`: all three Today compositions reflow without page-level horizontal overflow as a 200%-zoom equivalent; this is not actual browser-zoom evidence.
+- `1440 x 900`: all 12 territory/view combinations expose zero detected visible-text contrast failures, zero targets below the 32px dense-pointer floor, one main H1, and no unnamed buttons after hardening.
+- Responsive drawer focus is contained, `Escape` returns focus to its trigger, and the background is inert while the drawer is open.
+- The deterministic reduced-motion hook removes view/detail animation and collapses remaining transitions to `0.01ms` while the real media-query contract remains present.
 - A fresh production-route tab produced no territory-specific console errors.
 - Production build completed successfully and emitted static routes for the selector and all three territories.
 
@@ -65,11 +69,13 @@ Scores are out of 5. Weighted totals are out of 100. Operational clarity or acce
 | Emotional fit | 15% | 4.8 | 3.8 | 4.7 |
 | Dense-surface survival | 15% | 4.1 | 4.8 | 4.3 |
 | Motion coherence | 10% | 4.4 | 4.1 | 4.3 |
-| Accessibility | 10% | 4.3 | 4.5 | 4.1 |
+| Accessibility | 10% | 4.3 | 4.5 | 3.8 pre-fix |
 | Cross-device continuity | 5% | 4.5 | 4.6 | 4.0 |
-| **Weighted total** | **100%** | **90.0** | **86.8** | **87.6** |
+| **Weighted total** | **100%** | **90.0** | **86.8** | **87.0 pre-fix** |
 
-These scores are provisional because real-user observation, automated contrast and accessibility scans, 200% zoom, screen-reader verification, reduced-motion emulation, and native-device validation remain open.
+Carebook's original score was not accessibility-gate-valid: post-score measurement found muted and accent text below 4.5:1. The prototype was corrected and now passes the same computed/runtime floor as Daylight and Signal, but the score is not retroactively inflated. Its serif/editorial system still carries greater large-text, localization, and dense-work risk.
+
+The scorecard remains provisional because real-user observation, full automated semantic scanning, actual browser zoom, screen-reader verification, real OS reduced motion, color-vision simulation, and native-device validation remain open. Detailed evidence and limits are in `territory-accessibility-validation.md`.
 
 ## Territory Findings
 
@@ -138,7 +144,8 @@ Those imports must inherit Daylight tokens, typography, geometry, and motion. Si
 - Shared realistic scenario and workflows: **complete**.
 - Responsive browser evidence: **complete for prototype gate**.
 - Provisional scoring and recommendation: **complete**.
-- Automated accessibility, contrast, zoom, reduced-motion, and native-device evidence: **open**.
+- Computed contrast, source-token, 320/390 target/reflow, deterministic reduced-motion, and drawer keyboard evidence: **complete for prototype gate**.
+- Full automated semantics, actual browser zoom, screen readers, real OS/device motion, color vision, and native-device evidence: **open**.
 - User selection of the production direction: **open and irreversible**.
 - Production UI migration: **not started by design**.
 

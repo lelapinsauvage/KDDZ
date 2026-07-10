@@ -20,7 +20,8 @@ The system is not a component gallery. Components are accepted only when they su
 - `accessibility-runtime-audit.md`;
 - `performance-runtime-audit.md`;
 - `data-delivery-contract.md`;
-- `territory-evaluation.md`.
+- `territory-evaluation.md`;
+- `territory-accessibility-validation.md`.
 
 ## Standards and Evidence
 
@@ -572,8 +573,8 @@ A redesigned screen cannot replace production presentation until:
 - Select the creative territory and create `brand-design-constitution.md`.
 - Test final palette contrast in light, dark, and high-contrast themes.
 - Test product/display typography across Latin, Arabic/RTL, long names, and 200% zoom.
-- Decide whether to add a motion library after prototype evidence; the current repository has no Motion dependency.
-- Add automated accessibility and visual-regression infrastructure.
+- Converge final motion tokens from the accepted prototype evidence; Motion is available, but production use still requires a validated transition.
+- Extend the territory source reporter into production axe/semantic and visual-regression infrastructure.
 - Add field Web Vitals instrumentation and budgets.
 - Build component fixtures for the complete state matrix.
 - Validate touch, screen reader, reduced motion, offline, and CPU performance on real devices.
