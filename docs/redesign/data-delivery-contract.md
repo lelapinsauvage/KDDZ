@@ -267,6 +267,21 @@ type CollectionResult<Row> = {
 
 Client-supplied organization IDs are never trusted as authorization. The server derives effective scope from session/capability/assignment and treats query scope as a requested narrowing only.
 
+### Foundation implementation
+
+`src/lib/collection-contracts.ts` now provides the territory-neutral types and runtime invariants for:
+
+- requested versus resolved scope;
+- offset, cursor, and working-set windows;
+- exact, estimated, and unknown counts;
+- complete, partial, and stale collection results;
+- explicit-ID and all-matching selections;
+- operation result accounting;
+- bounded window normalization with an explicit `wasAdjusted` signal;
+- stable ID normalization and selection/count/receipt validation.
+
+`src/scripts/verify-collection-contracts.ts` covers valid and adjusted windows, mutually exclusive cursors, stable ID handling, invalid/valid selections, count invariants, and accepted/partial operation receipts. No production route consumes the types yet; adoption remains a complete-workflow migration so compatibility behavior cannot change accidentally.
+
 ## Pagination Decision
 
 ### Offset/page-number pagination

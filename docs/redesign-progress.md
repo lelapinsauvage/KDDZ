@@ -3,7 +3,7 @@
 **Last updated:** 2026-07-10
 **Plan:** `docs/redesign-master-plan.md`
 **Program state:** Product discovery closed; territory-neutral IA, state, motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; creative selection gate open
-**Reported progress:** **40% done / 60% left**
+**Reported progress:** **41% done / 59% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -16,11 +16,11 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | 2. Benchmark research | 10% | In progress | 9% | Pinterest taxonomy, Mobbin flow sheets, benchmark synthesis |
 | 3. Brand strategy and direction | 10% | In progress | 4% | Strategy, three complete territories, selected brand constitution |
 | 4. IA and core UX | 12% | In progress | 4% | Sitemap, navigation model, Today model, tested wireframes |
-| 5. Design system | 13% | In progress | 8% | Tokens, components, motion, responsive, accessibility, performance, and data-delivery docs |
+| 5. Design system | 13% | In progress | 9% | Tokens, components, motion, responsive, accessibility, performance, and data-delivery foundations |
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **40%** |  |
+| **Total** | **100%** |  | **41%** |  |
 
 ## Confirmed Baseline
 
@@ -386,6 +386,16 @@ An item is complete only when:
 - **Evidence boundary:** Scanner categories and literal top-level query properties are triage heuristics. Date/branch/ID-bounded sets and small references can be valid; no `all` call or verifier was changed. Runtime/server scale traces and compatibility implementation remain pilot gates.
 - **Next action:** After creative selection, add canonical query/result/selection types and migrate Daily Reports as the first server-list proof, then Accounting as the comparison-grid proof. Until selection, continue territory-neutral component API and data-state evidence only.
 - **Progress earned:** 1 percentage point; Phase 5 reaches 8 of 13%; total 40%.
+
+### 2026-07-10 - Phase 5 canonical collection contract foundation
+
+- **Question:** Can future list, history, picker, grid, bulk-action, and output migrations share one typed protocol without changing any current route before a complete workflow is ready?
+- **Decision:** Add territory-neutral requested/resolved scope, offset/cursor/working-set window, count, completeness, selection, result, and operation-receipt types with runtime normalization/validation. Report adjusted bounds explicitly, prohibit simultaneous forward/back cursors, require stable unique IDs, require query snapshot/token for all-matching selection, and reject receipts whose state contradicts their outcome counts.
+- **Artifacts:** `src/lib/collection-contracts.ts`, `src/scripts/verify-collection-contracts.ts`, and the implementation section in `docs/redesign/data-delivery-contract.md`.
+- **Verification:** Focused verifier covers normal/clamped windows, cursor exclusivity, ID normalization, explicit/all-matching selection, exact/estimated/unknown counts, and accepted/partial receipts. Focused ESLint, full TypeScript, and diff checks pass.
+- **Parity:** No route imports the new foundation yet; no query, action, database behavior, verifier, legacy alias, export, or native contract changed.
+- **Next action:** Close creative selection, then use the foundation in one complete Daily Reports server-list vertical slice with URL state, stable selection, bulk-submit receipts, print/export parity, scale tests, and Agent Browser evidence.
+- **Progress earned:** 1 percentage point; Phase 5 reaches 9 of 13%; total 41%.
 
 ## Work Log Template
 
