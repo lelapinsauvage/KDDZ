@@ -265,6 +265,8 @@ The existing parent surface remains a separate, child-centered projection. Staff
 
 ## Legacy and Deep-Link Resolution
 
+The executable migration baseline is defined in `route-compatibility-plan.md` and `src/lib/redesign-route-compatibility.ts`. It distinguishes desired IA roots from safe current landings, prevents planned roots from appearing before review, classifies native/parent endpoints separately, and provides a privacy-safe domain observation without changing production routing.
+
 1. Every legacy route resolves to one canonical destination with equivalent id/query context.
 2. `.php` aliases may redirect or render the canonical route but never fork the redesigned UI.
 3. `id`, `fid`, `from`, `to`, `year`, branch, room/class, and source parameters remain compatibility contracts.
@@ -289,6 +291,8 @@ The existing parent surface remains a separate, child-centered projection. Staff
 | Nursery, access, users, events, regions | Settings | `/settings` |
 
 New route names such as `/rooms`, `/team`, and `/finance` are hypotheses. They should be introduced only when compatibility redirects, analytics, authorization, and deep-link tests are ready. Existing canonical routes may remain underneath the first IA implementation.
+
+The route compatibility verifier additionally holds `/reports` as a planned root because only its monthly child routes currently exist. The first production pilot should use current safe routes and promote a planned root only through the staged gate in `route-compatibility-plan.md`.
 
 ## Acceptance Tests
 

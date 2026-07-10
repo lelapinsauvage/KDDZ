@@ -2,8 +2,8 @@
 
 **Last updated:** 2026-07-10
 **Plan:** `docs/redesign-master-plan.md`
-**Program state:** Product discovery and benchmark research closed; territory-neutral IA, state, motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; creative selection gate open
-**Reported progress:** **46% done / 54% left**
+**Program state:** Product discovery and benchmark research closed; territory-neutral IA, route compatibility, state, motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; creative selection gate open
+**Reported progress:** **47% done / 53% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -15,12 +15,12 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | 1. Product discovery | 12% | Complete | 12% | Flow inventory, role/task matrix, current journeys, friction/risk register |
 | 2. Benchmark research | 10% | Complete | 10% | Pinterest taxonomy, Mobbin flow sheets, direct-competitor operations, benchmark synthesis |
 | 3. Brand strategy and direction | 10% | In progress | 6% | Strategy, three complete territories, selected brand constitution |
-| 4. IA and core UX | 12% | In progress | 4% | Sitemap, navigation model, Today model, tested wireframes |
+| 4. IA and core UX | 12% | In progress | 5% | Sitemap, navigation model, Today model, tested wireframes |
 | 5. Design system | 13% | In progress | 11% | Tokens, components, motion, responsive, accessibility, performance, and data-delivery foundations |
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **46%** |  |
+| **Total** | **100%** |  | **47%** |  |
 
 ## Confirmed Baseline
 
@@ -462,6 +462,18 @@ An item is complete only when:
 - **Parity:** The harness is isolated behind `?audit=axe`; normal routes do not request axe. No production UI, database behavior, permission, legacy alias, export, or native contract changed.
 - **Next action:** Build and smoke the production bundle, then present the complete territory decision packet at the irreversible selection gate.
 - **Progress earned:** 0 percentage points. This closes prototype semantic debt without claiming the selected brand constitution required for the remaining Phase 3 weight; total remains 46%.
+
+### 2026-07-10 - Phase 4 route compatibility and analytics baseline
+
+- **Question:** Can the working IA acquire new user-facing domain names without breaking restored modern routes, legacy PHP deep links, server-owned identity translation, browser history, authorization, output handlers, or native parent contracts?
+- **Evidence:** The full 332-route App Router census; 244 staff route entries; all eight working IA domains; 28 critical home/child/room/team/message/finance/report/settings aliases; current legacy identity helpers and query mappings; `/ws`, legacy-install `/ws`, `/api/parent`, and `/parent` compatibility surfaces; the 1,713-row parity matrix; existing privacy-safe performance route handling.
+- **Decision:** Separate desired target roots from safe current landings. Keep `/rooms`, `/team`, `/finance`, and the `/reports` root explicitly planned and absent; run the first selected-direction pilot on current routes. Treat `.php` entries as redirect, canonical-render, or request-delegate contracts; keep native/parent routes outside staff navigation; allowlist context; translate legacy identities only on the server; emit only privacy-safe IA domain observations.
+- **Artifacts:** `docs/redesign/route-compatibility-plan.md`, `src/lib/redesign-route-compatibility.ts`, `src/scripts/verify-redesign-route-compatibility.ts`, and updated IA, validation, master-plan, and progress artifacts.
+- **Verification:** The focused verifier passes against 332 routes and 28 critical aliases; it proves live/current route existence, planned-root absence, alias/destination integrity, design-lab exclusion, context declarations, privacy-safe observations, and native separation. A signed-out production browser smoke confirms same-origin legacy callback preservation plus Back/Forward restoration with an empty warning/error log. Focused ESLint, full TypeScript, and diff checks pass.
+- **Parity:** No production route imports the registry. No navigation, redirect, database behavior, permission, output, legacy alias, native response, or product UI changed.
+- **Evidence boundary:** The registry is the critical migration baseline, not an exhaustive replacement for 1,713 parity rows. Operator label/first-click evidence, capability fixtures, real-record browser history/deep-link testing, native-client comparison, analytics governance, and rollout-by-rollout alias linkage remain open.
+- **Next action:** Close creative selection, codify the selected constitution, then run the first vertical pilot on safe current routes and execute the route-entry/browser-history matrix before promoting any planned root.
+- **Progress earned:** 1 percentage point; Phase 4 reaches 5 of 12%; total 47%.
 
 ## Work Log Template
 

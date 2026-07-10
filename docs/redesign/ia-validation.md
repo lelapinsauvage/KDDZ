@@ -120,6 +120,7 @@ This is prototype evidence for the interaction rule, not a production authorizat
 - `pnpm exec tsc --noEmit --pretty false`: passed.
 - `git diff --check`: passed.
 - `pnpm build`: passed and emitted `/design-lab/ia` as a static route.
+- `pnpm exec tsx src/scripts/verify-redesign-route-compatibility.ts`: passed against 332 App Router routes and 28 critical aliases.
 
 The build continues to log known dynamic-route prerender messages from unrelated legacy pages that call request-scoped APIs. The build exits successfully; the IA route itself is static and clean.
 
@@ -185,8 +186,8 @@ The following evidence is still required before production navigation changes:
 - Capability-derived branch and destination fixtures for all roles.
 - Screen-reader and 200% zoom testing.
 - Native staff and parent navigation comparison.
-- Analytics and compatibility plan for any new canonical route names.
+- Pilot browser-history, deep-link, and authorization evidence against the accepted `route-compatibility-plan.md`; the territory-neutral route/analytics plan and executable registry are complete.
 
 ## Decision
 
-Advance this IA as the working structure for territory-neutral wireflows, route compatibility planning, and design-system acceptance criteria. Do not replace production navigation or introduce `/rooms`, `/team`, or `/finance` routes until operator validation and compatibility tests close the gate.
+Advance this IA as the working structure for territory-neutral wireflows and design-system acceptance criteria. The route compatibility plan and executable registry are accepted as the reversible migration baseline. Do not replace production navigation or introduce `/rooms`, `/team`, `/finance`, or a `/reports` root until operator validation and pilot browser tests close the remaining gate.

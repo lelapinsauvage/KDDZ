@@ -592,6 +592,7 @@ Commits must be small enough to review but complete enough to run. Do not mix un
 - `docs/redesign/territory-localization-validation.md`: expanded-copy, Arabic/RTL, type-scale, logical-direction, and forced-color stress evidence for the territory gate.
 - `docs/redesign/territory-semantic-validation.md`: axe-core steady-state, worst-case, interactive-state, defect-remediation, and manual-disposition evidence for the territory gate.
 - `docs/redesign/information-architecture.md`: navigation and sitemap decisions.
+- `docs/redesign/route-compatibility-plan.md`: desired/current route map, legacy identity/query rules, native separation, analytics privacy, history behavior, and staged migration gate.
 - `docs/redesign/motion-system.md`: motion tokens and behavior.
 - `docs/redesign/accessibility-checklist.md`: component and flow acceptance.
 - `docs/redesign/decision-log.md`: dated decisions with evidence and reversibility.
@@ -617,4 +618,4 @@ Commits must be small enough to review but complete enough to run. Do not mix un
 
 ## 21. Immediate Next Action
 
-Close the creative-selection gate using the scored Daylight, Signal, and Carebook prototypes and the provisional Daylight recommendation. After selection, write the brand/design constitution and codify final visual, type, responsive, accessibility, performance, and motion tokens before production pilot implementation. Until selection is available, continue only territory-neutral parity, policy, localization, data, accessibility, performance, and workflow evidence work; do not modify production visual UI.
+Close the creative-selection gate using the scored Daylight, Signal, and Carebook prototypes and the provisional Daylight recommendation. After selection, write the brand/design constitution and codify final visual, type, responsive, accessibility, performance, and motion tokens before production pilot implementation. The territory-neutral route compatibility baseline is now executable; the pilot should use safe current routes before promoting any planned root. Until selection is available, continue only territory-neutral parity, policy, localization, data, accessibility, performance, route, and workflow evidence work; do not modify production visual UI.
