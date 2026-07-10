@@ -580,6 +580,7 @@ Commits must be small enough to review but complete enough to run. Do not mix un
 - `docs/redesign/brand-expression-synthesis.md`: brand/product expression layers and creative-territory acceptance rules.
 - `docs/redesign/cross-device-synthesis.md`: desktop, tablet, mobile, parent, native, handoff, sync, and responsive behavior.
 - `docs/redesign/native-parent-navigation-comparison.md`: actual iOS, Android, parent-web, PHP/API navigation capability, defects, convergence, and native modernization direction.
+- `docs/redesign/calls-communication-placement.md`: call record state, Messages/child-context placement, authorization target, compatibility aliases, and first-click contract.
 - `docs/redesign/jurisdiction-policy-baseline.md`: effective-dated England and Ireland ratio, funding, record, and evidence architecture.
 - `docs/redesign/localization-runtime-audit.md`: locale, time-zone, money, writing-system, address, PDF, and native compatibility contracts.
 - `docs/redesign/reliability-offline-audit.md`: service-worker, browser-storage, draft, retry, idempotency, transaction, conflict, and cross-device delivery contracts.

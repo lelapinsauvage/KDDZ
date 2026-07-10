@@ -2,8 +2,8 @@
 
 **Last updated:** 2026-07-10
 **Plan:** `docs/redesign-master-plan.md`
-**Program state:** Product discovery and benchmark research closed; territory-neutral staff IA, capability-derived navigation, route compatibility, native/parent convergence, state, motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; creative selection gate open
-**Reported progress:** **49% done / 51% left**
+**Program state:** Product discovery and benchmark research closed; territory-neutral staff IA, capability-derived navigation, Calls-under-Messages placement, route compatibility, native/parent convergence, state, motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; creative selection gate open
+**Reported progress:** **50% done / 50% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -15,12 +15,12 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | 1. Product discovery | 12% | Complete | 12% | Flow inventory, role/task matrix, current journeys, friction/risk register |
 | 2. Benchmark research | 10% | Complete | 10% | Pinterest taxonomy, Mobbin flow sheets, direct-competitor operations, benchmark synthesis |
 | 3. Brand strategy and direction | 10% | In progress | 6% | Strategy, three complete territories, selected brand constitution |
-| 4. IA and core UX | 12% | In progress | 7% | Sitemap, navigation model, Today model, tested wireframes |
+| 4. IA and core UX | 12% | In progress | 8% | Sitemap, navigation model, Today model, tested wireframes |
 | 5. Design system | 13% | In progress | 11% | Tokens, components, motion, responsive, accessibility, performance, and data-delivery foundations |
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **49%** |  |
+| **Total** | **100%** |  | **50%** |  |
 
 ## Confirmed Baseline
 
@@ -60,6 +60,7 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 - `docs/redesign/brand-expression-synthesis.md` translates the approved identity seed and research into governed color, typography, shape, illustration, voice, motion, and territory criteria.
 - `docs/redesign/cross-device-synthesis.md` assigns desktop, tablet, mobile, parent, and native surfaces distinct jobs while preserving shared state, drafts, permissions, and compatibility contracts.
 - `docs/redesign/native-parent-navigation-comparison.md` maps 24 actual iOS, Android, and parent-web destinations, identifies hidden/placeholder native debt, and recommends a shared Expo/React Native replacement while preserving installed-client adapters.
+- `docs/redesign/calls-communication-placement.md` closes the internal Calls-under-Messages source and first-click hypothesis without inventing callback state; operator validation remains open.
 - `docs/redesign/targeted-reference-flow-study.md` adds source-linked Apple, Things, Headspace, Flighty, Airbnb, Stripe, and Anything evidence for motion purpose, consequence, recovery, live state, and handoff.
 - `docs/redesign/brand-strategy.md` defines purpose, promise, positioning, audience tensions, narrative, value pillars, message hierarchy, personality, voice, terminology, and trust requirements around `Care, visibly handled.`
 - `docs/redesign/creative-territory-briefs.md` defines Daylight, Signal, and Carebook as distinct build systems with shared realistic content, palette/type/motion hypotheses, screen requirements, risks, and kill criteria.
@@ -501,6 +502,18 @@ An item is complete only when:
 - **Evidence boundary:** This is not a signed native build, simulator/emulator run, physical-device pass, provider push test, store release, or installed-version census. Those remain external acceptance gates.
 - **Next action:** Present the creative-territory decision packet. After selection, codify the brand constitution and start the parent-web or staff Today vertical pilot; create the new native workspace only after repository/signing ownership approval.
 - **Progress earned:** 1 percentage point; Phase 4 reaches 7 of 12%; total 49%.
+
+### 2026-07-10 - Phase 4 Calls-under-Messages placement
+
+- **Question:** Can Calls sit under Messages without hiding child history, breaking restored legacy Form 6 behavior, or inventing a callback workflow the database cannot represent?
+- **Evidence:** `CallLog`, `CallDirection`, attachments, migrated legacy fields, call actions and validation, global/branch/child/detail routes, production navigation, the legacy calls verifier, all call `.php` bridges, the Messages route contract, and manager/teacher desktop plus 390px Agent Browser first-click checks.
+- **Decision:** Place the global Calls collection and draft reports at `Messages / Calls`; retain a contextual Calls view under each child over the same records. Treat only `CallLog.isDraft = true` as current unfinished call work. Keep `MISSED` as direction/history until explicit owner, callback, due, status, resolution, and audit state exists.
+- **Artifacts:** `docs/redesign/calls-communication-placement.md`, `src/lib/redesign-call-workflow-contracts.ts`, `src/scripts/verify-redesign-call-workflow.ts`, the IA draft-call fixture, and expanded route compatibility for `/bcalls.php` and `/call.php`.
+- **Verification:** Three surfaces, three states, six target capabilities, and four legacy call aliases pass the new verifier; the 332-route registry passes with 30 critical aliases; the restored legacy calls suite passes. Manager and teacher first-click paths resolve correctly; the mobile queue has no overflow, unnamed button, or sub-44px visible target; browser warnings/errors are empty. Focused ESLint, full TypeScript, production build, and diff checks pass; the build retains its documented legacy dynamic-prerender messages and print CSS warning.
+- **Parity:** Production call pages, actions, database, permissions, exports, attachments, legacy route behavior, and visuals are unchanged. The design-lab task is synthetic.
+- **Evidence boundary:** Operator terminology/card sorting, production call capability enforcement, assigned-scope tests, audited voiding, authenticated real-record route/history tests, and runtime database aggregates remain open. The local database was unavailable during this source audit.
+- **Next action:** Present the creative-territory decision packet. After selection, codify the brand constitution and begin the first selected-direction pilot on safe current routes with production capability integration.
+- **Progress earned:** 1 percentage point; Phase 4 reaches 8 of 12%; total 50%.
 
 ## Work Log Template
 

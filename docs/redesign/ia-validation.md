@@ -71,13 +71,14 @@ The role control exists only to test projections. A shipping user does not casua
 | Allocate EUR 240 | Finance / Needs allocation / family | Payment exists but has not reduced an invoice balance |
 | Run inspection preflight | Reports / Compliance / Inspection preflight | Required evidence expires within 30 days |
 | Reply to Theo's parent | Messages / Needs reply / family | Message is linked to today's lunch care record |
+| Finish Alma's parent call report | Messages / Calls / Drafts / child | `CallLog.isDraft` remains incomplete until required report fields are submitted |
 
 ## Browser Evidence
 
 ### Role projection
 
-- Manager exposed seven work domains plus separated Settings and seven available tasks.
-- Teacher collapsed to Today, Children, and Messages with three relevant tasks.
+- Manager exposed seven work domains plus separated Settings and eight available tasks.
+- Teacher collapsed to Today, Children, and Messages with four relevant tasks.
 - Nurse collapsed to Today, Children, and Messages with two relevant tasks.
 - Doctor collapsed to Today, Children, and Messages with clinical-review work and no Settings access.
 - Returning to Manager restored the complete manager projection.
@@ -102,20 +103,22 @@ The executable projector and seven role/scope fixtures are documented in `naviga
 
 ### Owned work queue
 
-- Manager queue exposed seven synthetic items.
+- Manager queue exposed eight synthetic items.
 - Selecting Meadow coverage opened Rooms.
 - The path preview became `Rooms / Meadow / Coverage / 12:30-13:00`.
 - The queue closed after navigation.
+- Opening the draft call report as manager or teacher opened Messages with `Messages / Calls / Drafts / Alma Reyes`.
+- The 390px teacher queue exposed the same call task, routed to the same path, and closed after navigation.
 
 ### Responsive behavior
 
 - `1280 x 720` production capture: no horizontal overflow; full manager navigation, readiness, domain anatomy, and work routing remain visible.
 - `768 x 1024` dev measurement: no horizontal overflow and no out-of-bounds visible elements.
-- `390 x 844` production capture: no horizontal overflow, no visible interactive target smaller than 44px, and desktop comparison becomes one ordered column.
+- `390 x 844` production capture: no horizontal overflow, no visible interactive target smaller than 44px, no unnamed button, and desktop comparison becomes one ordered column.
 - Mobile sidebar is `visibility: hidden` and non-interactive while closed.
 - Opening the mobile sidebar moves focus to its close control.
 - Closing returns focus to the menu trigger.
-- A fresh browser tab produced no architecture-route console errors.
+- The call-routing pass produced no architecture-route warning or error log.
 
 ### Automated verification
 
@@ -123,8 +126,9 @@ The executable projector and seven role/scope fixtures are documented in `naviga
 - `pnpm exec tsc --noEmit --pretty false`: passed.
 - `git diff --check`: passed.
 - `pnpm build`: passed and emitted `/design-lab/ia` as a static route.
-- `pnpm exec tsx src/scripts/verify-redesign-route-compatibility.ts`: passed against 332 App Router routes and 28 critical aliases.
+- `pnpm exec tsx src/scripts/verify-redesign-route-compatibility.ts`: passed against 332 App Router routes and 30 critical aliases.
 - `pnpm exec tsx src/scripts/verify-redesign-navigation-contracts.ts`: passed against seven fixtures and all five staff roles, including missing/conflicting policy and unknown-branch defenses.
+- `pnpm exec tsx src/scripts/verify-redesign-call-workflow.ts`: passed against three call surfaces, three record/work states, six target capabilities, and four legacy call aliases.
 
 The build continues to log known dynamic-route prerender messages from unrelated legacy pages that call request-scoped APIs. The build exits successfully; the IA route itself is static and clean.
 
@@ -160,9 +164,9 @@ The prototype initially exposed `All branches` to every role. Browser testing ca
 
 The 390px projection keeps readiness and domain views in sequence. It does not stack the entire desktop work queue beside them. Search and owned work stay available as top-level utilities.
 
-### 6. Calls under Messages remains plausible but unvalidated
+### 6. Calls under Messages has an honest internal fixture
 
-The architecture spec groups calls with auditable parent/staff communication. The current prototype does not include a call task, so operator first-click testing is still required before this placement is accepted.
+The architecture groups calls with auditable parent/staff communication while retaining child-context call history. The prototype now routes a real unfinished state, `CallLog.isDraft = true`, to `Messages / Calls / Drafts`; it does not turn `MISSED` direction into fake callback work. Source, route, and synthetic first-click evidence support this reversible placement. Manager and practitioner terminology validation is still required before production navigation changes.
 
 ### 7. Compliance must stay visible from Today and Reports
 
@@ -186,7 +190,7 @@ The following evidence is still required before production navigation changes:
 - Nursery manager and practitioner card sorting.
 - First-click testing for attendance, cover, incident, care, call, payment, and inspection tasks.
 - Validation of `Rooms`, `Team`, and `Reports` labels in the first-market language.
-- Validation of calls under Messages.
+- Operator validation of Calls-under-Messages terminology and grouping; the source contract and synthetic first-click fixture are complete.
 - Production capability integration and allowed/denied direct-route evidence across reads, writes, exports, aliases, APIs, and native contracts; the territory-neutral shell fixtures are complete.
 - Screen-reader and 200% zoom testing.
 - Real-device native acceptance and supported-version evidence; the source-level comparison is complete and confirms the preserved iOS/Android clients are parent-only, not staff apps.

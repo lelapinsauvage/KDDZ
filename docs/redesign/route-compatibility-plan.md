@@ -19,7 +19,7 @@ No production navigation or route changed in this slice. In particular, `/rooms`
 
 ## Verified Route Baseline
 
-The executable census currently finds 332 App Router page/handler routes across staff web, public auth, parent, API, native compatibility, and design-lab surfaces. The staff `(app)` group contains the previously recorded 244 route entries. The route contract covers all eight proposed staff IA domains and 28 critical legacy entry aliases; the 1,713-row parity matrix remains the exhaustive preservation source.
+The executable census currently finds 332 App Router page/handler routes across staff web, public auth, parent, API, native compatibility, and design-lab surfaces. The staff `(app)` group contains the previously recorded 244 route entries. The route contract covers all eight proposed staff IA domains and 30 critical legacy entry aliases; the 1,713-row parity matrix remains the exhaustive preservation source.
 
 | User-facing domain | Desired root | Availability | Safe current landing | Current route families |
 | --- | --- | --- | --- | --- |
@@ -184,7 +184,7 @@ Run the matrix at desktop, compact desktop, tablet, and mobile projections with 
 - live target roots and current landings exist in the App Router tree;
 - planned roots do not exist prematurely;
 - every current root is represented;
-- all 28 critical alias sources and destination templates exist;
+- all 30 critical alias sources and destination templates exist;
 - alias sources are unique case-insensitively;
 - identity-bearing aliases declare accepted input keys;
 - no target, landing, or alias enters `/design-lab`;
@@ -200,7 +200,7 @@ A signed-out production smoke at `localhost:3003` additionally confirmed that `/
 ## Open Evidence
 
 - Manager and practitioner card sorting and first-click tests.
-- Final validation of `Rooms`, `Team`, `Reports`, and calls under Messages.
+- Final operator validation of `Rooms`, `Team`, `Reports`, and Calls-under-Messages terminology; the source and synthetic first-click call contract is complete.
 - Production authorization integration and allowed/denied route-loader, query, mutation, export, alias, API, and native evidence; capability-derived shell fixtures are complete.
 - Real-client iOS/Android build, parser, push, deep-link, and supported-version acceptance; the source-level navigation comparison and 24-destination executable contract are complete.
 - Pilot browser-history matrix with real authorized records and sanitized evidence.

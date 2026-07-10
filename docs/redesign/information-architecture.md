@@ -294,6 +294,8 @@ New route names such as `/rooms`, `/team`, and `/finance` are hypotheses. They s
 
 The route compatibility verifier additionally holds `/reports` as a planned root because only its monthly child routes currently exist. The first production pilot should use current safe routes and promote a planned root only through the staged gate in `route-compatibility-plan.md`.
 
+`calls-communication-placement.md` makes the call decision explicit: global calls and draft reports sit under Messages, while a child's Calls view remains available in child context over the same records. Only `isDraft` is currently eligible for Today/work routing. `MISSED` is a direction, not callback workflow state.
+
 ## Acceptance Tests
 
 ### Findability

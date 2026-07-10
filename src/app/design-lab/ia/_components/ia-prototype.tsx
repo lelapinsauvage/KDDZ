@@ -214,6 +214,17 @@ const tasks: TaskDefinition[] = [
     status: "waiting",
     roles: ["admin", "manager", "teacher"],
   },
+  {
+    id: "draft-call-report",
+    label: "Finish Alma's parent call report",
+    context: "Alma Reyes · incoming call · draft saved 09:12",
+    consequence: "The call history is incomplete until time, cause, subject, and staff are confirmed and the report is submitted.",
+    domain: "messages",
+    path: "Messages / Calls / Drafts / Alma Reyes",
+    due: "Before handover",
+    status: "required",
+    roles: ["admin", "manager", "teacher"],
+  },
 ]
 
 function isRoleAllowed(task: TaskDefinition, role: RoleId) {

@@ -45,6 +45,7 @@ export type LegacyIdentityRule =
   | "legacy-staff-id"
   | "legacy-parent-user-id"
   | "legacy-message-id"
+  | "legacy-call-id"
   | "legacy-payment-id";
 
 export type LegacyAliasContract = {
@@ -348,6 +349,32 @@ export const legacyAliasContracts = [
     strategy: "render-canonical",
     identityRule: "none",
     acceptedQueryKeys: [],
+  },
+  {
+    sourceRoute: "/bcalls.php",
+    domain: "messages",
+    destinationTemplate: "/calls",
+    strategy: "render-canonical",
+    identityRule: "legacy-branch-id",
+    acceptedQueryKeys: [
+      "brid",
+      "search",
+      "class",
+      "direction",
+      "dateFrom",
+      "dateTo",
+      "page",
+      "pageSize",
+    ],
+  },
+  {
+    sourceRoute: "/call.php",
+    domain: "messages",
+    destinationTemplate: "/calls/[id]",
+    alternateDestinationTemplates: ["/calls"],
+    strategy: "render-canonical",
+    identityRule: "legacy-call-id",
+    acceptedQueryKeys: ["fid", "id"],
   },
   {
     sourceRoute: "/accounting.php",
