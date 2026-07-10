@@ -2,8 +2,8 @@
 
 **Last updated:** 2026-07-10
 **Plan:** `docs/redesign-master-plan.md`
-**Program state:** Territory-neutral IA, state, motion, jurisdiction, and localization contracts documented and tested; creative selection gate open
-**Reported progress:** **36% done / 64% left**
+**Program state:** Product discovery closed with territory-neutral IA, state, motion, jurisdiction, localization, and reliability contracts documented and tested; creative selection gate open
+**Reported progress:** **37% done / 63% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -12,7 +12,7 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | Phase | Weight | Status | Earned | Evidence required to close |
 | --- | ---: | --- | ---: | --- |
 | 0. Safety and baseline | 3% | Complete | 3% | Clean branch, approved asset preservation, baseline screenshots and checks |
-| 1. Product discovery | 12% | In progress | 11% | Flow inventory, role/task matrix, current journeys, friction/risk register |
+| 1. Product discovery | 12% | Complete | 12% | Flow inventory, role/task matrix, current journeys, friction/risk register |
 | 2. Benchmark research | 10% | In progress | 9% | Pinterest taxonomy, Mobbin flow sheets, benchmark synthesis |
 | 3. Brand strategy and direction | 10% | In progress | 4% | Strategy, three complete territories, selected brand constitution |
 | 4. IA and core UX | 12% | In progress | 4% | Sitemap, navigation model, Today model, tested wireframes |
@@ -20,7 +20,7 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **36%** |  |
+| **Total** | **100%** |  | **37%** |  |
 
 ## Confirmed Baseline
 
@@ -340,6 +340,17 @@ An item is complete only when:
 - **Evidence boundary:** Private settings runtime was not opened because displayed demo credentials were stale; field-level bidi behavior is source-confirmed. Launch languages, legal locales, base-currency ownership, address profiles, PDF fonts, and native release matrix remain selection gates.
 - **Next action:** Add localization context and domain primitives during the selected production pilot, preserving legacy/native adapters and proving time-zone, money, RTL, PDF, and parser fixtures first.
 - **Progress earned:** 1 percentage point; total 36%.
+
+### 2026-07-10 - Phase 1 reliability, offline, and mutation-delivery audit
+
+- **Question:** Can slow, interrupted, duplicated, or conflicting requests preserve user intent without exposing protected nursery data or claiming completion before server confirmation?
+- **Evidence:** Reproducible scan of 755 production files and 39 action modules; Serwist source/default cache and generated worker; production offline fallback in Agent Browser; child enrollment storage; parent token flow; staff/parent logout; payment creation; medical aggregate update; journey, scope, native, and parity evidence; current OWASP, Serwist, MDN, Prisma, Next.js, and Stripe guidance.
+- **Decision:** Treat offline tolerance as privacy and data-integrity architecture. Cache only explicit static assets; keep protected reads network-only; move sensitive drafts to scoped server records; require operation receipts/idempotency and aggregate versions; classify high-risk work as online-confirmed; preserve native contracts through adapters.
+- **Artifacts:** `docs/redesign/reliability-offline-audit.md`, `src/scripts/report-redesign-reliability.ts`, and updated master-plan, current-state, journey-state, and cross-device evidence links.
+- **Verification:** Scanner reports 11 browser-storage writes, root-scoped Serwist default caching, 230 transition calls, zero connectivity/retry/idempotency/optimistic-state infrastructure, 32 transaction calls, 12 multi-write action-file review targets, and no schema version or operation-receipt model. Browser confirms the production offline shell; generated worker confirms API/RSC/HTML catch-all cache routes; focused lint and full TypeScript checks pass.
+- **Evidence boundary:** File-level multi-write counts are triage signals; representative medical and payment risks were manually confirmed. No protected cache/storage content was opened, no worker/cache was mutated, and no product capability was removed. Managed-device policy, queueable workflows, retention, parent-session migration, and native release matrix remain implementation gates.
+- **Next action:** After creative selection, secure the worker/browser boundary and add receipt/version primitives before any production pilot claims optimistic or offline completion.
+- **Progress earned:** 1 percentage point; Phase 1 closes at 12%; total 37%.
 
 ## Work Log Template
 

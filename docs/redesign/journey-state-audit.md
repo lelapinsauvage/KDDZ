@@ -31,7 +31,7 @@ Evidence comes from authenticated role runtime inspection and the following impl
 - Payment, accounting-entry, receipt, and invoice surfaces.
 - Monthly reports, settings exports, and SQL backup routes.
 
-No production operator was interviewed during this pass. Legal ratio rules, approval authority, notification deadlines, and the desired offline conflict policy remain validation questions. Findings about what the code does are confirmed; target workflow details remain hypotheses until operator and jurisdiction validation.
+No production operator was interviewed during this pass. Legal ratio rules, approval authority, notification deadlines, and which workflow classes may queue offline remain validation questions. `reliability-offline-audit.md` now defines the territory-neutral storage, retry, receipt, and conflict architecture; operator approval is still required before any protected workflow enters its queueable class. Findings about what the code does are confirmed; target workflow details remain hypotheses until operator and jurisdiction validation.
 
 ## State-Contract Vocabulary
 

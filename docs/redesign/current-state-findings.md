@@ -231,6 +231,22 @@ A branch-bound teacher runtime pass confirmed direct access to medical accidents
 
 **Design requirement:** Establish one fail-closed capability and scope service for navigation, routes, reads, mutations, transitions, APIs, and exports. Preserve imported grants as policy inputs, not the only boundary.
 
+### 24. Offline plumbing can persist protected data beyond authorization
+
+The parent portal registers a root-scope production service worker using Serwist's default runtime cache. The generated worker applies network-first caching to same-origin GET APIs, RSC payloads, HTML, and catch-all reads. New-child enrollment also writes the full sensitive form to one unscoped `localStorage` key every second, and staff logout does not clear it. Parent bearer credentials are stored in persistent JavaScript-readable storage.
+
+**Risk:** A shared browser can retain child, parent, medical, financial, or role-scoped data after logout, scope change, or organization change. Framework caching defaults can replay a response without re-running the application's authorization decision.
+
+**Design requirement:** Replace framework-default runtime caching with a Kiddz-owned static-only allowlist, purge protected state at identity/scope boundaries, move sensitive drafts to authorized server records, and preserve native authentication through compatibility adapters rather than browser persistence.
+
+### 25. Pending UI has no shared retry, receipt, or conflict truth
+
+The production runtime has 230 transition calls but no optimistic-state primitive, connectivity listener, idempotency receipt, aggregate version field, or shared retry contract. Payment creation can be repeated after an ambiguous response, and medical updates delete and recreate nested evidence through multiple writes without one transaction.
+
+**Risk:** A timeout can leave the user unable to distinguish failed, committed, duplicated, partial, or overwritten work. Retrying can create a second real-world effect, while a success toast or refreshed page cannot prove which operation committed.
+
+**Design requirement:** Introduce typed operation IDs and receipts, aggregate versions, server-owned drafts, atomic mutation boundaries, explicit interrupted/conflict states, and consequence-specific offline classes. High-risk work remains online-confirmed.
+
 ## Existing Strengths to Preserve
 
 1. **Functional breadth:** The modern app exposes a large restored legacy surface.
@@ -311,7 +327,7 @@ These are hypotheses to test, not final navigation:
 3. Which missing records are legal blockers versus administrative follow-up?
 4. How are funded hours, occupancy forecasts, rotas, and staff costs represented today outside the visible routes?
 5. Which roles share devices, and how often do they work with one hand or under interruption?
-6. Which actions must work offline, and what conflict policy is acceptable?
+6. Which operations may enter the audit's queueable Class C on approved devices, and who resolves each conflict type?
 7. Which exports are used operationally versus retained only for legacy parity?
 8. What notification channels and response deadlines exist for parents and staff?
 9. Which records require dual approval or immutable audit evidence?
@@ -327,3 +343,4 @@ The complete mutation and recovery evidence for J01-J07 is recorded in `docs/red
 - Use `docs/redesign/journey-state-audit.md` as the critical mutation/recovery baseline and validate its open legal and operator questions.
 - Use `docs/redesign/responsive-runtime-audit.md` and `responsive-baseline-metrics.json` as the current cross-device evidence baseline.
 - Use `docs/redesign/authorization-scope-audit.md` as the role, capability, scope, and denial baseline.
+- Use `docs/redesign/reliability-offline-audit.md` as the browser storage, cache, retry, transaction, draft, and cross-device delivery baseline.
