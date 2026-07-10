@@ -2,8 +2,8 @@
 
 **Last updated:** 2026-07-10
 **Plan:** `docs/redesign-master-plan.md`
-**Program state:** Territory-neutral IA, state, and purposeful-motion contracts browser-tested; creative selection gate open
-**Reported progress:** **34% done / 66% left**
+**Program state:** Territory-neutral IA, state, and purposeful-motion contracts browser-tested; England/Ireland policy baseline documented; creative selection gate open
+**Reported progress:** **35% done / 65% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -12,7 +12,7 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | Phase | Weight | Status | Earned | Evidence required to close |
 | --- | ---: | --- | ---: | --- |
 | 0. Safety and baseline | 3% | Complete | 3% | Clean branch, approved asset preservation, baseline screenshots and checks |
-| 1. Product discovery | 12% | In progress | 9% | Flow inventory, role/task matrix, current journeys, friction/risk register |
+| 1. Product discovery | 12% | In progress | 10% | Flow inventory, role/task matrix, current journeys, friction/risk register |
 | 2. Benchmark research | 10% | In progress | 9% | Pinterest taxonomy, Mobbin flow sheets, benchmark synthesis |
 | 3. Brand strategy and direction | 10% | In progress | 4% | Strategy, three complete territories, selected brand constitution |
 | 4. IA and core UX | 12% | In progress | 4% | Sitemap, navigation model, Today model, tested wireframes |
@@ -20,7 +20,7 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **34%** |  |
+| **Total** | **100%** |  | **35%** |  |
 
 ## Confirmed Baseline
 
@@ -318,6 +318,17 @@ An item is complete only when:
 - **Evidence boundary:** Final visual tokens, real operator testing, automated accessibility, 200% zoom, 320 reflow, screen readers, real-device frame timing, and production state-machine integration remain open.
 - **Next action:** Close the creative-territory selection gate, then codify final tokens and shared components before beginning the production pilot.
 - **Progress earned:** 2 percentage points; total 34%.
+
+### 2026-07-10 - Phase 1 England and Ireland policy baseline
+
+- **Question:** Which current official rules must shape ratio, attendance, qualification, funded-hours, finance, and inspection architecture before production UX can claim safety or compliance?
+- **Evidence:** England EYFS framework effective September 2025, April 2026 early-education statutory guidance, 2026/2027 funding guide and model agreement guidance; Irish 2016 Early Years Services Regulations and Schedule 6, May 2026 qualification guidance, ECCE 2025/2026 rules, Core Funding conditions and 2026 announced changes.
+- **Decision:** Model jurisdiction as versioned, effective-dated policy packs. Separate legal rules, regulator guidance, annual programme configuration, local agreements, and announced future changes. Missing policy, qualification, presence, or assignment evidence produces `Unknown` rather than `Safe`.
+- **Artifacts:** `docs/redesign/jurisdiction-policy-baseline.md`; evidence linkage added to `operational-architecture-synthesis.md`; launch-market question narrowed in `journey-state-audit.md`.
+- **Verification:** Every candidate ratio, record, deadline, retention, and funding claim in the baseline links to an official government, statutory, or regulator source; product implications and pre-production fixtures are explicit.
+- **Evidence boundary:** Legal review, launch market, exact provider/service classes, mixed-age/school exceptions, local-authority agreements, current NCS provider pack, operator practice, and final retention schedule remain open.
+- **Next action:** Convert the selected launch policy pack into schema and executable fixtures during the production pilot; keep calculations fixture-only until legal approval.
+- **Progress earned:** 1 percentage point; total 35%.
 
 ## Work Log Template
 

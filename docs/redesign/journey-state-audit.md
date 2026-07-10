@@ -460,7 +460,7 @@ A redesigned critical flow is not accepted until it demonstrates:
 
 ## Open Validation Questions
 
-1. Which England, Ireland, or other jurisdiction rules and qualification categories must the ratio engine support first?
+1. Which candidate policy pack in `jurisdiction-policy-baseline.md`, provider/service classes, and qualification categories must ship first? England and Ireland are researched baselines, not a launch-market decision.
 2. Which actions require manager, nurse, doctor, or dual approval?
 3. Which attendance corrections must notify parents, and what is the acceptable correction window?
 4. Which care facts may be inherited as deliberate batch values, and which must always be recorded child by child?

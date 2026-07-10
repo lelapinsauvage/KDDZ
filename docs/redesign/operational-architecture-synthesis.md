@@ -30,6 +30,7 @@ The redesign therefore organizes around operational state and resolution, not a 
 - `current-state-findings.md`: 23 confirmed UX, state, responsive, and permission findings.
 - `journey-state-audit.md`: source-backed contracts for opening, attendance, care, health, ratios, finance, and inspection.
 - `authorization-scope-audit.md`: role, scope, capability, denial, and audit requirements.
+- `jurisdiction-policy-baseline.md`: current England and Ireland ratio, evidence, funding, effective-date, and policy-model constraints.
 - `responsive-runtime-audit.md`: measured desktop, tablet, and mobile behavior.
 - `competitor-gap-analysis.md`: category baseline and six white-space hypotheses.
 - `mobbin-flow-study.md`: consequence review, progressive disclosure, durable status, stable feedback, and recovery patterns.
