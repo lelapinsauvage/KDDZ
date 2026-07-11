@@ -58,41 +58,42 @@ async function handleRequest(
 
     const parentUser =
       auth?.parentUser ?? (await resolveLegacyThreadParent(threadMessages, postedBody));
-    if (parentUser) {
-      const hasAccess = threadMessages.some(
-        (message) =>
-          (message.senderId === parentUser.id && message.senderType === "PARENT") ||
-          (message.recipientId === parentUser.id && message.recipientType === "PARENT")
-      );
-
-      if (!hasAccess) {
-        return jsonError("Access denied", 403);
-      }
+    if (!parentUser) {
+      return request.method === "POST"
+        ? jsonSuccess(buildEmptyLegacyMessageThread())
+        : jsonError("Access denied", 403);
     }
 
-    const uniqueMessages = dedupeMessages(threadMessages);
+    const relationshipMessages = threadMessages.filter(
+      (message) =>
+        (message.senderId === parentUser.id && message.senderType === "PARENT") ||
+        (message.recipientId === parentUser.id && message.recipientType === "PARENT")
+    );
+    if (relationshipMessages.length === 0) {
+      return jsonError("Access denied", 403);
+    }
+
+    const uniqueMessages = dedupeMessages(relationshipMessages);
 
     // Mark parent-recipient rows in this thread as viewed, matching the mobile
     // read-on-open behavior without touching staff recipients.
-    if (parentUser) {
-      const unreadParentIds = threadMessages
-        .filter(
-          (message) =>
-            message.recipientId === parentUser.id &&
-            message.recipientType === "PARENT" &&
-            !message.isRead
-        )
-        .map((message) => message.id);
+    const unreadParentIds = relationshipMessages
+      .filter(
+        (message) =>
+          message.recipientId === parentUser.id &&
+          message.recipientType === "PARENT" &&
+          !message.isRead
+      )
+      .map((message) => message.id);
 
-      if (unreadParentIds.length > 0) {
-        await db.message.updateMany({
-          where: { id: { in: unreadParentIds } },
-          data: { isRead: true },
-        });
-        for (const message of threadMessages) {
-          if (unreadParentIds.includes(message.id)) {
-            message.isRead = true;
-          }
+    if (unreadParentIds.length > 0) {
+      await db.message.updateMany({
+        where: { id: { in: unreadParentIds } },
+        data: { isRead: true },
+      });
+      for (const message of relationshipMessages) {
+        if (unreadParentIds.includes(message.id)) {
+          message.isRead = true;
         }
       }
     }

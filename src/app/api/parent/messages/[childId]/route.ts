@@ -225,7 +225,17 @@ async function loadLegacyParentListMessages(parentUserId: string) {
   if (threadConditions.length === 0) return [];
 
   return db.message.findMany({
-    where: { OR: threadConditions },
+    where: {
+      AND: [
+        { OR: threadConditions },
+        {
+          OR: [
+            { senderId: parentUserId, senderType: "PARENT" },
+            { recipientId: parentUserId, recipientType: "PARENT" },
+          ],
+        },
+      ],
+    },
     include: { thread: true },
     orderBy: { createdAt: "desc" },
   });

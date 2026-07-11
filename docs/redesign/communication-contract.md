@@ -30,7 +30,7 @@ The current system restores broad legacy and native capability:
 The following limitations are source-confirmed:
 
 1. `Message` contains sender, recipient, content, thread, one mutable `isRead` flag, and legacy delivery JSON. It does not model publication acceptance, immutable content revision, recipient snapshot, channel job, delivery receipt, bounce, read timestamp, reply obligation, correction, archive, or participant membership.
-2. Class and bulk sends group copies for multiple parents under one `MessageThread`. Staff and parent thread loaders authorize when the principal participates in any row, then can load every row sharing that thread. Campaign grouping is therefore not a safe substitute for a family conversation boundary.
+2. Class and bulk sends group copies for multiple parents under one `MessageThread`. Before the follow-up privacy hardening, parent list/thread loaders could authorize one participating row and then load every row sharing that thread. Parent/native list previews, payload mapping, dedupe, and read reset are now filtered to the resolved active parent relationship; ambiguous unauthenticated multi-parent opens return the parser-safe empty thread. Staff-side campaign visibility still needs an explicit capability policy.
 3. Direct send creates a thread, primary row, admin copies, provider attempts, and audit updates across separate writes. Class send also separates database creation from external delivery. Bulk selected-child send has a stronger transaction for thread, rows, and legacy side effects, but provider delivery remains a later step by design.
 4. External channel outcomes live inside `Message.legacyData`; they are summaries rather than first-class recipient/channel attempts with retry lineage.
 5. `isRead` can be toggled back to unread and has no read timestamp or device/principal receipt. It is attention state, not delivery, reply, acknowledgment, or source resolution.
@@ -189,7 +189,7 @@ Receives only conversations bound to its active relationship. It never receives:
 2. Backfill recipient-specific conversation identity from each current sender/recipient pair. Preserve `MessageThread` and legacy numeric thread identity as compatibility grouping, not authorization.
 3. Place adapters behind existing staff, parent, and `/ws/*.php` routes. Preserve current parser-safe fields, empty fallbacks, and numeric legacy IDs.
 4. Map every legacy message nature to atomic domain side effects before moving composition. Do not remove alarm, event, holiday, staff-copy, parent receipt, or channel intent.
-5. Replace shared-thread authorization with explicit participant and relation checks before any selected-direction rollout.
+5. Parent/native shared-thread projection now resolves one active parent relationship and filters before preview, dedupe, payload mapping, and read reset. Preserve this regression gate while introducing first-class conversation participants; define staff-side campaign visibility separately through capability policy.
 6. Dual-write current message rows and new lifecycle receipts during a measured pilot. Compare recipient counts, thread projections, side effects, delivery summaries, and native payloads.
 7. Replace hard delete with participant archive and governed void/retention behavior only after policy approval and parity acceptance.
 8. Keep Calls as a linked communication type with its own record source, drafts, attachments, print/export, and legacy aliases.
@@ -217,11 +217,11 @@ The verifier proves:
 - manager, practitioner, and parent privacy projections;
 - capability denial.
 
-Checkpoint verification passes all 18 redesign suites, 16 message/parent/native/legacy-side-effect/Calls parity contracts, the 343-route/30-critical-alias registry, focused ESLint, full TypeScript, diff hygiene, and the production build. Agent Browser passes 36 role/state/viewport combinations with zero axe findings, overflow, unnamed controls, undersized controls, or role leakage; the nine-step manager lifecycle and linked-parent reply pass with focus return, live announcements, and empty warning/error logs. `/design-lab/communication` emits statically; only the documented middleware, CSS `@page`, dynamic-auth prerender, and PostgreSQL SSL-mode migration warnings remain.
+Checkpoint verification passes all 18 redesign suites, 16 message/parent/native/legacy-side-effect/Calls parity contracts, the 343-route/30-critical-alias registry, focused ESLint, full TypeScript, diff hygiene, and the production build. Agent Browser passes 36 role/state/viewport combinations with zero axe findings, overflow, unnamed controls, undersized controls, or role leakage; the nine-step manager lifecycle and linked-parent reply pass with focus return, live announcements, and empty warning/error logs. The follow-up database regression proves a two-family shared legacy thread returns only the resolved family's row and preview, resets only that family's unread state, and fails closed to the existing empty payload when an unauthenticated multi-parent request has no relationship hint. Credentialed native send/reply/open/read-reset and parser suites remain green. `/design-lab/communication` emits statically; only the documented middleware, CSS `@page`, dynamic-auth prerender, and PostgreSQL SSL-mode migration warnings remain.
 
 ## Open Gates
 
-- Immediate production remediation and regression proof for shared-thread cross-family projection.
+- Staff-side shared-thread visibility, campaign-audit capability, and explicit participant policy; parent/native relationship isolation is now enforced and regression-covered.
 - Approved communication categories, approval matrix, consent/suppression rules, quiet hours, and emergency overrides.
 - Parent/family versus child-specific conversation policy.
 - Legacy message-nature side-effect mapping under one transaction/outbox.

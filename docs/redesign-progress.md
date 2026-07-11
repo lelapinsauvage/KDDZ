@@ -704,6 +704,18 @@ An item is complete only when:
 - **Next action:** Treat the confirmed shared-thread projection as an immediate privacy remediation candidate, then continue reversible Wave 6 or hardening foundations while awaiting explicit Daylight, Signal, or Carebook selection; production visual migration and Phase 6/7 credit remain gated on that choice.
 - **Progress earned:** 0 percentage points. This closes Wave 4 communication behavioral uncertainty but does not satisfy selected-direction production implementation required for Phase 6 or rollout required for Phase 7; total remains 55%.
 
+### 2026-07-11 - Parent/native shared-thread privacy hardening
+
+- **Question:** Can the restored numeric-thread and PHP-alias contracts remain parser-compatible while preventing one family from receiving another family's copy, preview, or read mutation inside a shared broadcast thread?
+- **Evidence:** Parent message list and thread route handlers; shared MessageThread fan-out behavior; legacy unauthenticated POST and authenticated bearer paths; parser-safe empty thread/list contracts; native bridge; current read-reset verifier and credentialed native E2E.
+- **Decision:** Resolve an active parent from bearer identity, explicit child/parent hint, or a unique legacy recipient; fail closed to the existing empty thread for ambiguous unauthenticated multi-parent requests; filter list/thread rows to that relationship before grouping, dedupe, payload mapping, and read reset.
+- **Implementation:** Parent legacy list queries now combine thread identity with sender/recipient relationship scope. Thread handlers reject unresolved access, operate only on relationship rows, and update only their unread parent-recipient IDs. The database verifier creates two children and parent accounts in one shared thread, proves direct and `/ws/message.php` payload isolation, proves list-preview isolation, and proves the other family's unread row remains unchanged.
+- **Verification:** Focused ESLint, full TypeScript, diff hygiene, parent message shape, two-family database isolation/read reset, native parser fields, native acceptance boundary, credentialed native send/reply/open/read-reset E2E, legacy thread visual, sent export, native navigation, 343-route/30-alias compatibility, and the production build pass. Database checks use a throwaway process-only test secret. Existing PostgreSQL SSL migration, middleware, CSS `@page`, and dynamic-auth prerender warnings remain documented.
+- **Parity:** No Message/MessageThread schema, stored row, sender/recipient identity, thread ID, subject/body, send/reply, provider delivery, legacy nature side effect, route, payload field/type, list header, numeric-key object, SQL datetime, fallback status/body, or native endpoint was removed or renamed. Ambiguous unauthenticated multi-parent opens now return the existing parser-safe empty payload instead of cross-family rows.
+- **Evidence boundary:** Staff-side shared-thread visibility and campaign-audit capability, explicit participant storage, authorization integration beyond parent relationships, operator/native-device validation, production provider rollout, and retention policy remain open.
+- **Next action:** Continue the next reversible Wave 6/hardening foundation while awaiting explicit Daylight, Signal, or Carebook selection; production visual migration and Phase 6/7 credit remain gated on that choice.
+- **Progress earned:** 0 percentage points. This is a production privacy correction and parity hardening, not selected-direction production redesign or rollout; total remains 55%.
+
 ## Work Log Template
 
 Use this format for every autonomous work session:

@@ -5,6 +5,14 @@
 
 This log records consequential redesign decisions from this point forward. Earlier decisions remain authoritative in their linked research, contract, and progress artifacts; this file does not rewrite their evidence or imply an unselected creative direction.
 
+## 2026-07-11 - Parent thread access is relationship-scoped before projection
+
+- **Decision:** Resolve one active parent relationship before returning a legacy thread, filter shared-thread rows before dedupe/payload/read reset, apply the same filter to legacy list previews, and return the existing empty compatibility payload when an unauthenticated multi-parent thread cannot be resolved safely.
+- **Why:** A shared `MessageThread` groups broadcast copies but does not establish that one parent may read another family's copy, preview, reply, or read state. Parser compatibility cannot override relationship privacy.
+- **Evidence:** Parent list/thread route source, two-family database regression, parent parser/acceptance contracts, credentialed native send/reply/open/read-reset E2E, legacy thread visual/export contracts, native navigation, route registry, TypeScript, lint, diff, and production build evidence recorded in the progress log.
+- **Reversibility:** The change narrows projection and read mutation to the already resolved relationship without changing stored messages, thread IDs, payload fields, send/reply behavior, or database schema. Ambiguous legacy requests retain HTTP 200 plus the established empty thread shape.
+- **Parity boundary:** Direct and PHP-alias routes, numeric thread IDs, numeric-key objects, SQL datetime strings, sender values, string field guardrails, read-on-open semantics, list headers/previews, send/reply, database fallbacks, and native parser shapes remain intact.
+
 ## 2026-07-11 - A broadcast campaign is not a family conversation
 
 - **Decision:** Bind one accepted content revision to one frozen recipient snapshot, but create a separate participant-scoped conversation for every family. Keep publication, channel delivery, reading, reply, follow-up, archive, and correction as distinct immutable evidence.
