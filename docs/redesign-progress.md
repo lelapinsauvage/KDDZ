@@ -3,7 +3,7 @@
 **Last updated:** 2026-07-11
 **Plan:** `docs/redesign-master-plan.md`
 **Program state:** Product discovery and benchmark research closed; territory-neutral staff IA, capability-derived navigation, Calls-under-Messages placement, route compatibility, native/parent convergence, executable state matrix and multi-room live-operations flow, motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; creative selection packet ready and explicit production choice open
-**Reported progress:** **52% done / 48% left**
+**Reported progress:** **53% done / 47% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -15,12 +15,12 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | 1. Product discovery | 12% | Complete | 12% | Flow inventory, role/task matrix, current journeys, friction/risk register |
 | 2. Benchmark research | 10% | Complete | 10% | Pinterest taxonomy, Mobbin flow sheets, direct-competitor operations, benchmark synthesis |
 | 3. Brand strategy and direction | 10% | In progress | 6% | Strategy, three complete territories, selected brand constitution |
-| 4. IA and core UX | 12% | In progress | 9% | Sitemap, navigation model, Today model, tested wireframes |
+| 4. IA and core UX | 12% | In progress | 10% | Sitemap, navigation model, Today model, tested wireframes |
 | 5. Design system | 13% | In progress | 12% | Tokens, components, motion, responsive, accessibility, performance, and data-delivery foundations |
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **52%** |  |
+| **Total** | **100%** |  | **53%** |  |
 
 ## Confirmed Baseline
 
@@ -558,11 +558,11 @@ An item is complete only when:
 - **Evidence:** The executable attendance/staff/policy contract, J05 staffing blueprint, multi-room synthetic fixture, and the first complete desktop Agent Browser replay of attendance unknown -> cover unselected -> Noor blocked -> Sam acceptable -> resolved.
 - **Decision:** Add explicit source-room identity to time-bounded assignments; project every affected source and target room before commit; classify the preview as `ACCEPTABLE`, `BLOCKED`, or `UNKNOWN`; and accept only when every affected room remains safe.
 - **Artifacts:** `src/lib/redesign-live-operations.ts`, `src/lib/redesign-live-operations-fixtures.ts`, `src/scripts/verify-redesign-live-operations.ts`, `/design-lab/operations`, `docs/redesign/live-operations-contract.md`, and the J05 blueprint update.
-- **Verification:** Deterministic checks prove Noor would reduce Seedlings to one counted adult against a supplied requirement of two and is rejected, while floating Sam affects only Meadow and resolves the branch. The five desktop states pass with the expected work counts, one H1, no overflow or unnamed controls, and zero axe violations/incomplete findings. Focused lint, full TypeScript, the live-operations verifier, 333-route compatibility, navigation/state/selection regressions, diff hygiene, and the production build pass; `/design-lab/operations` remains static with only the documented legacy build warnings.
+- **Verification:** Deterministic checks prove Noor would reduce Seedlings to one counted adult against a supplied requirement of two and is rejected, while floating Sam affects only Meadow and resolves the branch. Agent Browser replays attendance unknown -> cover unselected -> Noor blocked -> Sam acceptable -> resolved at `1440 x 900`, `390 x 844`, and `320 x 568`. All 15 combinations preserve the expected `1 -> 1 -> 1 -> 1 -> 0` work sequence, one H1, no overflow, clipping, unnamed controls, or undersized targets, and zero axe violations/incomplete findings. Normal 390px visual captures confirm the overview and blocked consequence panel reflow cleanly. Focused lint, full TypeScript, the live-operations verifier, 333-route compatibility, navigation/state/selection regressions, diff hygiene, and the production build pass; `/design-lab/operations` remains static with only the documented legacy build warnings.
 - **Parity:** The slice remains synthetic and additive. No production route, query, action, Prisma model, database row, permission, export, legacy alias, native payload, or product visual changed.
-- **Evidence boundary:** Production still needs transactional source/target recalculation against fresh revisions. The expanded `390 x 844` and `320 x 568` browser replays remain open after the browser session became trapped on its generated connection-error page during a server restart.
-- **Next action:** Re-run the five-state multi-room mobile matrix in a fresh browser session, then proceed to the first server-owned pilot after the irreversible creative-direction gate.
-- **Progress earned:** No new percentage point yet; Phase 4 remains 9 of 12% and total remains 52% until the expanded responsive gate closes.
+- **Evidence boundary:** Production still needs transactional source/target recalculation against fresh revisions; automated responsive and axe evidence does not replace actual assistive-technology, shared-tablet, physical-device, operator, or legal-policy acceptance.
+- **Next action:** Proceed to the next reversible server-owned core-UX contract while the irreversible creative-direction selection remains open.
+- **Progress earned:** 1 percentage point; Phase 4 reaches 10 of 12% and total reaches 53%.
 
 ## Work Log Template
 

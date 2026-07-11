@@ -120,9 +120,9 @@ Agent Browser replayed the full attendance -> forecast cover -> handled flow at:
 
 All nine original stage/viewport combinations produced the same `Unknown -> Safe with exceptions -> Safe` progression, one H1, zero page overflow, zero unnamed controls, zero clipped critical text, zero undersized visible targets, zero axe violations, and zero unresolved axe findings.
 
-The expanded multi-room flow adds five states: attendance unknown, cover unselected, Noor blocked, Sam acceptable, and resolved. Agent Browser completed all five at `1440 x 900`: the blocked preview showed Seedlings at `1 of 2 counted`, kept the primary action disabled, and retained one open work item; the acceptable preview enabled Sam's assignment; the resolved state showed both rooms safe and zero open work. Every desktop state retained one H1, zero overflow, zero unnamed controls, and zero axe violations or unresolved findings.
+The expanded multi-room flow adds five states: attendance unknown, cover unselected, Noor blocked, Sam acceptable, and resolved. Agent Browser completed all five at `1440 x 900`, `390 x 844`, and `320 x 568`, for 15 expanded state/viewport combinations. The blocked preview showed Seedlings at `1 of 2 counted`, kept the primary action disabled, and retained one open work item; the acceptable preview enabled Sam's assignment; the resolved state showed both rooms safe and zero open work.
 
-The expanded `390 x 844` and `320 x 568` replays remain open because the browser session fell onto its generated connection-error page during a local server restart and then rejected further local navigation. No mobile result is inferred from source or from the earlier single-room run.
+Every expanded state retained one H1, the expected `1 -> 1 -> 1 -> 1 -> 0` open-work sequence, zero page overflow, zero unnamed controls, zero clipped critical text, zero undersized visible targets, zero axe violations, and zero unresolved axe findings. Normal viewport captures at `390 x 844` confirmed the operations overview and blocked consequence panel remain readable and correctly reflowed.
 
 Browser interaction also confirmed that each accepted action moves focus to the changed work heading and announces the server-style consequence. A natural-size desktop visual pass confirmed the room comparison, source fact, decision panel, and owned work remain readable together. The first visual pass exposed and removed a duplicate derivative forecast task.
 
@@ -155,7 +155,6 @@ Future activation must map every affected parity row and prove both canonical an
 - Define protected offline capture, device identity, retention, and conflict ownership.
 - Prove legacy/native adapters, parent-safe delivery, reports/exports, and historical provenance.
 - Run actual 200% zoom, VoiceOver/NVDA, reduced-motion, shared-tablet, and physical-device acceptance.
-- Complete the expanded five-state multi-room replay at `390 x 844` and `320 x 568` in a fresh browser session.
 
 ## Decision
 
