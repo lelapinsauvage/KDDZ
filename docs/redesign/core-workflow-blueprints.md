@@ -486,6 +486,8 @@ The cross-domain action boundary is now executable in `src/lib/redesign-action-c
 
 The cross-domain child context is now executable in `src/lib/redesign-child-workspace-contracts.ts` and `/design-lab/child-workspace`, with evidence in `child-workspace-contract.md`. It proves base child access, independently authorized sections/events/notices, published parent-safe summaries, provenance, full timestamps, and append-only correction with audit retention. It remains synthetic and additive; production source adapters, section queries, correction persistence, capability integration, parent/native validation, and parity migration are still open.
 
+The J04 medical/safety boundary is now executable in `src/lib/redesign-medical-incident-contracts.ts` and `/design-lab/incident`, with evidence in `medical-incident-contract.md`. It proves retained draft facts through evidence failure, policy-derived typed obligations, separate review/delivery/acknowledgment/follow-up receipts, delivery retry work without source rollback, fresh-revision closure, capability-safe role actions, parent-safe publication, and append-only correction cycles. It remains synthetic and additive; production persistence, outbox delivery, jurisdiction policy, authorization, operator validation, native/parent integration, and parity migration are still open.
+
 ## Open Validation
 
 - Operator sequencing at opening, lunch cover, handover, and closing.

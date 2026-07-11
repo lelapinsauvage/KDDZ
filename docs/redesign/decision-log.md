@@ -25,3 +25,11 @@ This log records consequential redesign decisions from this point forward. Earli
 - **Evidence:** `docs/redesign/child-workspace-contract.md`, current child/timeline/subnav actions, parent daily/notification contracts, child parity rows, deterministic role fixtures, and browser evidence recorded with the slice.
 - **Reversibility:** The contract is additive and territory-neutral. Production source adapters, capability decisions, persistence, labels, and selected-system composition remain open.
 - **Parity boundary:** No production child query, mutation, route, output, legacy alias, parent/native contract, or restored capability changed.
+
+## 2026-07-11 - Medical incidents close from obligations, not one status
+
+- **Decision:** Keep the incident source revision separate from manager review, clinical review, parent delivery, parent acknowledgment, follow-up, and closure. Require typed capabilities and fresh source revisions for every transition; append correction cycles instead of overwriting or deleting submitted evidence.
+- **Why:** The current `DRAFT`/`SUBMITTED`/`REVIEWED` status can be assigned directly and cannot prove delivery, acknowledgment, follow-up, retry ownership, or accountable closure. Legacy alarm receipts preserve compatibility but are not parent acknowledgment.
+- **Evidence:** `docs/redesign/medical-incident-contract.md`, J04 journey audit and blueprint, current medical actions and accident form, legacy medical alarm/receipt verifiers, deterministic lifecycle verifier, and 30 Agent Browser state/viewport combinations.
+- **Reversibility:** The contract and prototype are additive and territory-neutral. Jurisdiction policy, storage schema, transaction/outbox design, provider integration, production authorization, and final selected-system composition remain open.
+- **Parity boundary:** No production medical query, mutation, upload, alarm, receipt, schema, database row, route, PDF, export, legacy alias, parent/native payload, or restored capability changed.

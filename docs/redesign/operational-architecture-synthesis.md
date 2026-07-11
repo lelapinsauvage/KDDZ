@@ -90,6 +90,7 @@ The names may change during domain design; their responsibilities may not.
 | RoomCareSession | Fast batch care with exceptions | shared observation, child exceptions, completeness, draft revision, sync |
 | HandoverSession | Accountable shift and room continuity | source obligations, blockers, allowed carry, incoming acknowledgment, source revisions, close receipt |
 | WorkItem | Resolution instead of notifications | cause, consequence, owner, due time, state, escalation, resolution evidence |
+| MedicalIncident and IncidentObligation | Accountable safety and health lifecycle | source revision, policy version, evidence state, typed reviews, delivery attempts, acknowledgment, follow-up, correction cycle, close receipt |
 | RecordRevision and AuditEvent | Accountable change | actor, reason, before/after, source, policy version, correlation ID |
 | FamilyLedger and Allocation | One financial truth | charge, payment, allocation, credit, reversal, balance, provenance |
 | InspectionPackage and ManifestEntry | Trustworthy regulator evidence | preflight, source revision, checksum, redaction, status, recipient |
@@ -99,6 +100,8 @@ Compatibility projections preserve imported structures while canonical objects a
 The territory-neutral `WorkItem` projection is now executable in `src/lib/redesign-action-center-contracts.ts` and `/design-lab/action-center`, with evidence in `action-center-contract.md`. It keeps capability/scope filtering ahead of counts and separates viewed, claimed, deferred, and source-resolved facts. It remains synthetic and additive; source adapters, persistence, escalation policy, authorization, and parity migration are still open.
 
 The territory-neutral child workspace is now executable in `src/lib/redesign-child-workspace-contracts.ts` and `/design-lab/child-workspace`, with evidence in `child-workspace-contract.md`. It composes independently authorized sections, staff/parent-safe source events, safety notices, provenance, and append-only corrections without loading the restored dossier as one permission. It remains synthetic and additive; production capability integration, source adapters, persistence, operator validation, and parity migration are still open.
+
+The territory-neutral medical incident lifecycle is now executable in `src/lib/redesign-medical-incident-contracts.ts` and `/design-lab/incident`, with evidence in `medical-incident-contract.md`. It keeps the source incident separate from review, family delivery, acknowledgment, follow-up, retry, closure, and correction obligations while preserving a capability-safe parent publication boundary. It remains synthetic and additive; production policy, persistence, transactions, outbox/provider integration, source adapters, authorization, operator validation, and parity migration are still open.
 
 ## The Manager Day Model
 

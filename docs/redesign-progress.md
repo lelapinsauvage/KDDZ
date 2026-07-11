@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-07-11
 **Plan:** `docs/redesign-master-plan.md`
-**Program state:** Product discovery and benchmark research closed; territory-neutral staff IA, capability-derived navigation and global search, Calls-under-Messages placement, route compatibility, native/parent convergence, executable state matrix, multi-room live operations, accountable handover closure, source-linked Action Center behavior, and capability-safe child workspace behavior, plus motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; Phase 4 is complete, the creative selection packet is ready, and the explicit production choice remains open
+**Program state:** Product discovery and benchmark research closed; territory-neutral staff IA, capability-derived navigation and global search, Calls-under-Messages placement, route compatibility, native/parent convergence, executable state matrix, multi-room live operations, accountable handover closure, source-linked Action Center behavior, capability-safe child workspace behavior, and accountable medical incident lifecycle, plus motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; Phase 4 is complete, the creative selection packet is ready, and the explicit production choice remains open
 **Reported progress:** **55% done / 45% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
@@ -64,6 +64,7 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 - `docs/redesign/targeted-reference-flow-study.md` adds source-linked Apple, Things, Headspace, Flighty, Airbnb, Stripe, and Anything evidence for motion purpose, consequence, recovery, live state, and handoff.
 - `docs/redesign/brand-strategy.md` defines purpose, promise, positioning, audience tensions, narrative, value pillars, message hierarchy, personality, voice, terminology, and trust requirements around `Care, visibly handled.`
 - `docs/redesign/creative-territory-briefs.md` defines Daylight, Signal, and Carebook as distinct build systems with shared realistic content, palette/type/motion hypotheses, screen requirements, risks, and kill criteria.
+- `docs/redesign/medical-incident-contract.md`, its executable contract, verifier, and `/design-lab/incident` close the reversible J04 lifecycle boundary across evidence recovery, typed reviews, parent delivery and acknowledgment, follow-up, fresh-revision closure, correction, and role-safe publication.
 
 ## Locked Decisions
 
@@ -612,6 +613,18 @@ An item is complete only when:
 - **Evidence boundary:** Production section/source capabilities, assignment and parent policy, canonical adapters, correction persistence, pagination, operator validation, representative scale, notification/acknowledgment, offline/shared-device behavior, assistive technology, print/export, native clients, and selected-system polish remain release gates.
 - **Next action:** Receive the explicit Daylight, Signal, or Carebook selection, codify the brand/design constitution and final tokens, then implement the first server-owned pilot using the proven shell, Today, attendance, ratio, Action Center, handover, and child-workspace contracts.
 - **Progress earned:** 0 percentage points. This closes child-profile behavioral uncertainty but is not the selected-direction production implementation required to start earning Phase 6; total remains 55%.
+
+### 2026-07-11 - J04 accountable medical incident lifecycle foundation
+
+- **Question:** Can the restored medical and accident surface gain an accountable lifecycle without losing imported forms, attachments, alarms, receipts, PDFs, routes, or native/parent compatibility?
+- **Evidence:** Current Prisma medical status and rows; create/update/delete actions; accident capture/upload behavior; legacy medical form definitions and migration matrix; medical alarm, staff/parent receipt, push-delivery, route, PDF, and parity contracts; J04 audit and workflow blueprint.
+- **Decision:** Keep one versioned incident source and create independent policy-derived obligations for manager review, clinical review, parent delivery, parent acknowledgment, and follow-up. Require typed capability, expected source revisions, actor, timestamp, and idempotency for every transition. Failed delivery creates retry work without rolling back submission; correction appends a new obligation cycle and retains old receipts.
+- **Artifacts:** `src/lib/redesign-medical-incident-contracts.ts`, `src/scripts/verify-redesign-medical-incident-contracts.ts`, `/design-lab/incident`, `docs/redesign/medical-incident-contract.md`, and linked architecture, blueprint, and decision-log updates.
+- **Verification:** Deterministic checks prove retained facts through evidence failure, ready-state validation, five policy obligations, exact replay, changed-input rejection, typed review dependency, provider failure and retry receipt, separate parent acknowledgment, named follow-up, stale-close rejection, capability enforcement, fresh-revision closure, and append-only correction reopening. Agent Browser covers ten states at `1440 x 900`, `390 x 844`, and `320 x 568` for 30 combinations; all retain one H1, expected status, zero overflow, unnamed or undersized controls, axe violations, or incomplete findings. Parent-before/after-publication checks expose no internal evidence or provider/review detail; accepted submission and acknowledgment update the live region and focus the changed heading. The 320px pass closed a wrapped-brand header issue. Focused ESLint, full TypeScript, every current redesign regression, static medical/accident parity contracts, both database-backed medical delivery verifiers, diff hygiene, and the production build pass; the route verifier covers 337 app routes and 30 critical aliases, and `/design-lab/incident` emits statically with only documented repository warnings.
+- **Parity:** The slice is synthetic and additive. No production medical query, form, entry, attachment, upload, alarm, notification receipt, parent endpoint, server action, Prisma model, database row, route, PDF, export, legacy alias, native payload, permission, or restored capability changed.
+- **Evidence boundary:** Jurisdiction/severity policy, dual approval, deadlines, regulator reporting, production persistence and outbox, transactions, provider integration, authorization, migration/backfill, representative scale, operator validation, assistive technology, real-device/native behavior, retention, and selected-system polish remain release gates.
+- **Next action:** Continue the next highest-risk reversible canonical contract while awaiting explicit Daylight, Signal, or Carebook selection; production visual migration and Phase 6 credit remain gated on that choice.
+- **Progress earned:** 0 percentage points. This closes J04 behavioral uncertainty but does not satisfy the selected-direction production implementation required for Phase 6; total remains 55%.
 
 ## Work Log Template
 
