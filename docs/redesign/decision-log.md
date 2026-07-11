@@ -5,6 +5,14 @@
 
 This log records consequential redesign decisions from this point forward. Earlier decisions remain authoritative in their linked research, contract, and progress artifacts; this file does not rewrite their evidence or imply an unselected creative direction.
 
+## 2026-07-11 - A broadcast campaign is not a family conversation
+
+- **Decision:** Bind one accepted content revision to one frozen recipient snapshot, but create a separate participant-scoped conversation for every family. Keep publication, channel delivery, reading, reply, follow-up, archive, and correction as distinct immutable evidence.
+- **Why:** Current direct/class/bulk sends mix message rows, mutable read flags, shared broadcast thread IDs, external-delivery JSON, legacy side effects, and hard delete. Authorizing one row in a shared thread is not sufficient to project every family copy safely.
+- **Evidence:** `docs/redesign/communication-contract.md`, current Message/MessageThread schema and staff/parent/native actions, legacy delivery and message-nature side effects, parent parser contracts, deterministic lifecycle verifier, and the browser evidence recorded with this slice.
+- **Reversibility:** The contract and prototype are additive, synthetic, territory-neutral, and policy-neutral. Immediate privacy remediation and production models, transactions/outbox, provider policy, retention, authorization, native adapters, and visual treatment remain open.
+- **Parity boundary:** No production message, thread, notification, alarm/event/holiday side effect, provider attempt, read flag, query, mutation, schema, database row, route, permission, PHP alias, parent/native payload, call record, or restored capability changed.
+
 ## 2026-07-11 - Daily care completion ends at delivered evidence, not a report row
 
 - **Decision:** Begin factual care fields unset; apply shared observations only to explicitly selected, confirmed-present children; preserve child exceptions and immutable report revisions; keep draft, submission, parent delivery, and correction as separate source-linked states.

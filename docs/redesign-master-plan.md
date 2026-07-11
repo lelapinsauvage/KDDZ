@@ -597,6 +597,7 @@ Commits must be small enough to review but complete enough to run. Do not mix un
 - `docs/redesign/state-pattern-validation.md`: executable initial/loading/empty/partial/input/system/result contract and full desktop/mobile semantic evidence.
 - `docs/redesign/live-operations-contract.md`: executable explicit attendance, staff eligibility, policy-supplied ratio, forecast work, and additive compatibility migration contract.
 - `docs/redesign/daily-care-contract.md`: executable unset observation, shared entry, exception, draft, sync, atomic submission, parent delivery, correction, and additive migration contract.
+- `docs/redesign/communication-contract.md`: executable source-linked draft, recipient snapshot, isolated family conversation, channel delivery, reply, archive, correction, and additive migration contract.
 - `docs/redesign/staffing-rota-contract.md`: executable shift, presence, qualification, absence, cover, break, source-revision, and additive migration contract.
 - `docs/redesign/occupancy-planning-contract.md`: executable roster, booking, live occupancy, future availability, place hold, capacity block, funding-hour, and additive migration contract.
 - `docs/redesign/information-architecture.md`: navigation and sitemap decisions.
