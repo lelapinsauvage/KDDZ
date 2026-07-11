@@ -5,6 +5,14 @@
 
 This log records consequential redesign decisions from this point forward. Earlier decisions remain authoritative in their linked research, contract, and progress artifacts; this file does not rewrite their evidence or imply an unselected creative direction.
 
+## 2026-07-11 - Daily care completion ends at delivered evidence, not a report row
+
+- **Decision:** Begin factual care fields unset; apply shared observations only to explicitly selected, confirmed-present children; preserve child exceptions and immutable report revisions; keep draft, submission, parent delivery, and correction as separate source-linked states.
+- **Why:** Current batch defaults can invent care facts, any report row can appear done, report-owned absence conflicts with attendance, nested update can partially delete evidence, and `SUBMITTED` alone cannot prove parent delivery.
+- **Evidence:** `docs/redesign/daily-care-contract.md`, current DailyReport/nested/AbsenceReport schema and actions, batch and full forms, approval setting, parent/native adapters, J03 audit/blueprint, deterministic verifier, 36 Agent Browser role/state/viewport scans, 12 live manager transitions, privacy checks, visual scrolling, and empty browser logs.
+- **Reversibility:** The contract and prototype are additive, synthetic, territory-neutral, and policy-neutral. Production policy, models, transactions/outbox, adapters, authorization, deletion/correction rules, and visual treatment remain open.
+- **Parity boundary:** No production daily report, nested evidence, absence, attendance, list/draft, approval, print/export, schema, database row, query, mutation, permission, route, PHP alias, parent/native payload, or restored capability changed.
+
 ## 2026-07-11 - Staffing readiness is a source-linked interval calculation
 
 - **Decision:** Keep availability, scheduled shift, room assignment, observed presence, effective qualification, reported/confirmed absence, break obligation, candidate preview, and temporary cover as separate facts. Accept cover only after both target-room and source-room consequences remain safe at the current plan revision.
