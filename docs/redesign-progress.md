@@ -2,8 +2,8 @@
 
 **Last updated:** 2026-07-11
 **Plan:** `docs/redesign-master-plan.md`
-**Program state:** Product discovery and benchmark research closed; territory-neutral staff IA, capability-derived navigation, Calls-under-Messages placement, route compatibility, native/parent convergence, executable state matrix and multi-room live-operations flow, motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; creative selection packet ready and explicit production choice open
-**Reported progress:** **53% done / 47% left**
+**Program state:** Product discovery and benchmark research closed; territory-neutral staff IA, capability-derived navigation and global search, Calls-under-Messages placement, route compatibility, native/parent convergence, executable state matrix and multi-room live-operations flow, motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; creative selection packet ready and explicit production choice open
+**Reported progress:** **54% done / 46% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -15,12 +15,12 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | 1. Product discovery | 12% | Complete | 12% | Flow inventory, role/task matrix, current journeys, friction/risk register |
 | 2. Benchmark research | 10% | Complete | 10% | Pinterest taxonomy, Mobbin flow sheets, direct-competitor operations, benchmark synthesis |
 | 3. Brand strategy and direction | 10% | In progress | 6% | Strategy, three complete territories, selected brand constitution |
-| 4. IA and core UX | 12% | In progress | 10% | Sitemap, navigation model, Today model, tested wireframes |
+| 4. IA and core UX | 12% | In progress | 11% | Sitemap, navigation model, Today model, tested wireframes |
 | 5. Design system | 13% | In progress | 12% | Tokens, components, motion, responsive, accessibility, performance, and data-delivery foundations |
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **53%** |  |
+| **Total** | **100%** |  | **54%** |  |
 
 ## Confirmed Baseline
 
@@ -563,6 +563,19 @@ An item is complete only when:
 - **Evidence boundary:** Production still needs transactional source/target recalculation against fresh revisions; automated responsive and axe evidence does not replace actual assistive-technology, shared-tablet, physical-device, operator, or legal-policy acceptance.
 - **Next action:** Proceed to the next reversible server-owned core-UX contract while the irreversible creative-direction selection remains open.
 - **Progress earned:** 1 percentage point; Phase 4 reaches 10 of 12% and total reaches 53%.
+
+### 2026-07-11 - Phase 4 capability-safe global search contract
+
+- **Question:** Can global search expose the restored product's breadth without leaking a protected record, denied capability, out-of-scope task, or write action outside a concrete branch context?
+- **Evidence:** Current `globalSearch` organization-only queries; the production command dialog's static pages/actions and origin-wide recents; authorization, route, reliability, localization, and data-delivery audits; executable navigation fixtures; and focused Agent Browser runs across manager, teacher, administrator, desktop, and narrow-screen states.
+- **Decision:** Make search a server-owned capability and effective-scope projection. Every candidate declares kind, canonical path, domain, capability, read/write mode, and organization/branch/room/record scope. Missing/conflicting policy fails closed; all-branches context is read-only; one-character protected search returns `TOO_SHORT`; ranking and grouping occur only after authorization.
+- **Artifacts:** `src/lib/redesign-search-contracts.ts`, `src/scripts/verify-redesign-search-contracts.ts`, `docs/redesign/global-search-contract.md`, the shared axe harness and grouped search integration in `/design-lab/ia`, plus IA and route-plan evidence updates.
+- **Verification:** Deterministic manager, teacher, all-branches, denied, missing-policy, pending-scope, duplicate-ID, Unicode-normalization, limit, and stable-ranking checks pass. Agent Browser covers 12 focused states at `1280 x 800`, `390 x 844`, and `320 x 568`, including `Command/Control + K`, Escape, suggestions, grouped results, denied payment, attendance, all-branches write suppression, short query, canonical path, and post-selection focus. Measured states retain one H1, no overflow, unnamed or undersized controls, zero axe violations/incomplete findings, and an empty warning/error browser log. Focused lint, full TypeScript, search/navigation/route/state/selection regressions, diff hygiene, and the production build pass; `/design-lab/ia` remains static with only documented legacy build warnings.
+- **Defects closed:** Implemented the advertised command shortcut; added search result grouping and source-heading focus; fixed role-group semantics, two contrast failures, desktop compact-control height, and machine-verifiable short-query layering.
+- **Parity:** No production search query, command dialog, route, action, Prisma model, database row, permission, export, legacy alias, native payload, or restored capability changed. Production migration remains additive and server-gated.
+- **Evidence boundary:** The current production dialog still has organization-only scope, static client actions/pages, raw browser recents, and stale-response risk. Canonical person identity, server scope integration, privacy approval, representative scale, operator validation, assistive technology, and selected-system polish remain open.
+- **Next action:** Use this contract in the selected-direction shell after the irreversible territory decision; continue the last reversible Phase 4 gate without changing production visuals.
+- **Progress earned:** 1 percentage point; Phase 4 reaches 11 of 12% and total reaches 54%.
 
 ## Work Log Template
 

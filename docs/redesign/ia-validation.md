@@ -100,6 +100,12 @@ The executable projector and seven role/scope fixtures are documented in `naviga
 - Opening the result changed the canonical domain to Finance.
 - The path preview became `Finance / Needs allocation / Martin family`.
 - The search dialog closed and the source task remained selected.
+- The executable search contract now projects owned work, records, actions, and destinations only after capability, effective-scope, and concrete-write-context checks.
+- Teacher `payment` returns zero without a denied count; teacher `attendance` returns four in-scope grouped results.
+- Administrator `All branches (read-only)` can find cross-branch read work but cannot find `Register a child`.
+- Empty-query suggestions no longer depend on browser-stored names or raw searches in the territory-neutral prototype.
+- `Command/Control + K`, Escape focus return, source-heading focus after selection, one-character privacy threshold, stable ranking, and grouped mobile reflow are browser-verified.
+- The production migration boundary and current shell risks are documented in `global-search-contract.md`.
 
 ### Owned work queue
 

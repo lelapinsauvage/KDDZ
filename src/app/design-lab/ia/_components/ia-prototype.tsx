@@ -18,13 +18,25 @@ import {
   WalletCards,
   X,
 } from "lucide-react"
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
 import {
   defaultRedesignNavigationFixture,
   projectRedesignNavigation,
   type RedesignStaffRole,
 } from "@/lib/redesign-navigation-contracts"
-import type { RedesignDomainId as DomainId } from "@/lib/redesign-route-compatibility"
+import {
+  redesignDomainRouteContracts,
+  type RedesignDomainId as DomainId,
+} from "@/lib/redesign-route-compatibility"
+import {
+  projectRedesignSearch,
+  type RedesignSearchCandidate,
+  type RedesignSearchEffectiveScope,
+  type RedesignSearchKind,
+  type RedesignSearchResult,
+  type RedesignSearchScope,
+} from "@/lib/redesign-search-contracts"
+import { IaAxeHarness } from "./ia-axe-harness"
 
 type RoleId = "admin" | "manager" | "teacher" | "nurse" | "doctor"
 
@@ -122,6 +134,17 @@ const domains: Record<DomainId, DomainDefinition> = {
     views: ["Nursery", "Organizations", "Access and roles", "Parent accounts", "Notifications", "School years", "Advanced"],
     records: ["Organization", "Capability", "User", "Policy", "Calendar", "System setting"],
   },
+}
+
+const domainCapabilities: Record<DomainId, string> = {
+  today: "today.view",
+  children: "children.view",
+  rooms: "rooms.view",
+  team: "team.view",
+  messages: "messages.view",
+  finance: "finance.view",
+  reports: "reports.run",
+  settings: "settings.view",
 }
 
 const fixtureRole: Record<RoleId, RedesignStaffRole> = {
@@ -227,11 +250,129 @@ const tasks: TaskDefinition[] = [
   },
 ]
 
+const organizationId = "org-kiddz-fixture"
+function currentLandingForDomain(domain: DomainId) {
+  const route = redesignDomainRouteContracts.find((candidate) => candidate.id === domain)
+  if (!route) throw new Error(`Missing route contract for ${domain}`)
+  return route.currentLanding
+}
+
+const taskSearchScopes: Record<TaskDefinition["id"], RedesignSearchScope> = {
+  "accident-review": { kind: "record", branchId: "branch-riverside", roomId: "room-studio", recordId: "accident-1047" },
+  "meadow-cover": { kind: "room", branchId: "branch-riverside", roomId: "room-meadow" },
+  "care-reports": { kind: "room", branchId: "branch-riverside", roomId: "room-meadow" },
+  "unknown-arrival": { kind: "record", branchId: "branch-riverside", roomId: "room-orchard", recordId: "child-alma" },
+  "unallocated-payment": { kind: "branch", branchId: "branch-riverside" },
+  "inspection-preflight": { kind: "branch", branchId: "branch-riverside" },
+  "parent-reply": { kind: "record", branchId: "branch-riverside", roomId: "room-meadow", recordId: "child-theo" },
+  "draft-call-report": { kind: "record", branchId: "branch-riverside", roomId: "room-orchard", recordId: "child-alma" },
+}
+
+const iaSearchCandidates: readonly RedesignSearchCandidate[] = [
+  ...tasks.map((task) => ({
+    id: `work-${task.id}`,
+    kind: "work" as const,
+    label: task.label,
+    detail: `${task.context} / ${task.due}`,
+    path: task.path,
+    domain: task.domain,
+    href: currentLandingForDomain(task.domain),
+    organizationId,
+    requiredCapability: `work.${task.id}.view`,
+    mode: "read" as const,
+    scope: taskSearchScopes[task.id],
+    keywords: [task.status, task.consequence, domains[task.domain].label],
+    suggested: task.status === "urgent" || task.status === "forecast",
+    priority: task.status === "urgent" ? 90 : task.status === "forecast" ? 80 : task.status === "required" ? 60 : 40,
+  })),
+  {
+    id: "record-alma-reyes",
+    kind: "record",
+    label: "Alma Reyes",
+    detail: "Orchard / Riverside / attendance unknown",
+    path: "Children / Alma Reyes",
+    domain: "children",
+    href: "/children/child-alma",
+    organizationId,
+    requiredCapability: "children.view",
+    mode: "read",
+    scope: { kind: "record", branchId: "branch-riverside", roomId: "room-orchard", recordId: "child-alma" },
+    keywords: ["child", "arrival", "attendance"],
+    suggested: false,
+    priority: 50,
+  },
+  {
+    id: "action-observe-attendance",
+    kind: "action",
+    label: "Record observed attendance",
+    detail: "Capture one factual arrival or absence in Meadow",
+    path: "Today / Meadow / Attendance",
+    domain: "today",
+    href: "/today",
+    organizationId,
+    requiredCapability: "attendance.observe",
+    mode: "write",
+    scope: { kind: "room", branchId: "branch-riverside", roomId: "room-meadow" },
+    keywords: ["check in", "arrival", "present", "absent"],
+    suggested: true,
+    priority: 81,
+  },
+  {
+    id: "action-register-child",
+    kind: "action",
+    label: "Register a child",
+    detail: "Create a branch-scoped enrollment draft",
+    path: "Children / New child",
+    domain: "children",
+    href: "/children/new",
+    organizationId,
+    requiredCapability: "children.create",
+    mode: "write",
+    scope: { kind: "branch", branchId: "branch-riverside" },
+    keywords: ["new", "enroll", "add"],
+    suggested: false,
+    priority: 40,
+  },
+  ...redesignDomainRouteContracts.map((route) => ({
+    id: `destination-${route.id}`,
+    kind: "destination" as const,
+    label: route.label,
+    detail: domains[route.id].purpose,
+    path: route.label,
+    domain: route.id,
+    href: route.currentLanding,
+    organizationId,
+    requiredCapability: domainCapabilities[route.id],
+    mode: "read" as const,
+    scope: { kind: "organization" as const },
+    keywords: [...domains[route.id].views, ...domains[route.id].records],
+    suggested: false,
+    priority: 10,
+  })),
+]
+
+const searchGroupLabels: Record<RedesignSearchKind, string> = {
+  work: "Owned work",
+  record: "Records",
+  action: "Actions",
+  destination: "Destinations",
+}
+
+function subscribeToLocation(onStoreChange: () => void) {
+  window.addEventListener("popstate", onStoreChange)
+  return () => window.removeEventListener("popstate", onStoreChange)
+}
+
+function getAxeAuditSnapshot() {
+  return new URLSearchParams(window.location.search).get("audit") === "axe"
+}
+
 function isRoleAllowed(task: TaskDefinition, role: RoleId) {
   return task.roles.includes(role)
 }
 
 export function IaPrototype() {
+  const axeAudit = useSyncExternalStore(subscribeToLocation, getAxeAuditSnapshot, () => false)
   const [activeRole, setActiveRole] = useState<RoleId>("manager")
   const [activeDomain, setActiveDomain] = useState<DomainId>("today")
   const [activeBranch, setActiveBranch] = useState("branch-riverside")
@@ -241,11 +382,13 @@ export function IaPrototype() {
   const [queueOpen, setQueueOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [announcement, setAnnouncement] = useState("")
+  const [selectedSearchResult, setSelectedSearchResult] = useState<RedesignSearchResult | null>(null)
   const menuTriggerRef = useRef<HTMLButtonElement>(null)
   const menuCloseRef = useRef<HTMLButtonElement>(null)
   const searchTriggerRef = useRef<HTMLButtonElement>(null)
   const queueTriggerRef = useRef<HTMLButtonElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const pathHeadingRef = useRef<HTMLHeadingElement>(null)
 
   const navigationProjection = useMemo(() => projectionForRole(activeRole), [activeRole])
   const availableDomains = navigationProjection.destinations.map((destination) => destination.id)
@@ -258,13 +401,52 @@ export function IaPrototype() {
     (option) => option.id === activeBranch,
   )?.label ?? "Scope unavailable"
 
-  const searchResults = (() => {
-    const normalizedQuery = query.trim().toLowerCase()
-    if (!normalizedQuery) return availableTasks.slice(0, 5)
-    return availableTasks.filter((task) =>
-      [task.label, task.context, task.path, domains[task.domain].label].some((value) => value.toLowerCase().includes(normalizedQuery)),
-    )
-  })()
+  const searchDecisions = useMemo(() => {
+    const allowedDomainCapabilities = new Set(navigationProjection.destinations.map((destination) => destination.capability))
+    const allowedExtraCapabilities = new Set([
+      ...(activeRole === "admin" || activeRole === "manager" || activeRole === "teacher" ? ["attendance.observe"] : []),
+      ...(activeRole === "admin" || activeRole === "manager" ? ["children.create"] : []),
+    ])
+    return [...new Set(iaSearchCandidates.map((candidate) => candidate.requiredCapability))].map((capability) => ({
+      capability,
+      allowed: allowedDomainCapabilities.has(capability as never)
+        || allowedExtraCapabilities.has(capability)
+        || tasks.some((task) => `work.${task.id}.view` === capability && task.roles.includes(activeRole)),
+      policySource: "ia-fixture-policy",
+      reasonCode: "territory-neutral-projection",
+    }))
+  }, [activeRole, navigationProjection.destinations])
+
+  const searchScope = useMemo<RedesignSearchEffectiveScope>(() => {
+    const writeBranchIds = navigationProjection.branchContext.writeBranchIds
+    const currentBranchIds = activeBranch === "all" ? writeBranchIds : writeBranchIds.filter((id) => id === activeBranch)
+    const kind: RedesignSearchEffectiveScope["kind"] = activeRole === "admin"
+      ? "organization"
+      : activeRole === "manager" || activeRole === "nurse"
+        ? "assigned-branches"
+        : activeRole === "teacher"
+          ? "assigned-rooms"
+          : "assigned-records"
+    return {
+      organizationId,
+      kind,
+      readableBranchIds: currentBranchIds,
+      readableRoomIds: activeRole === "teacher" ? ["room-meadow", "room-orchard", "room-studio"] : [],
+      readableRecordIds: activeRole === "doctor" ? ["accident-1047", "child-alma"] : [],
+      writeBranchIds,
+      writeContextBranchId: activeBranch !== "all" && writeBranchIds.includes(activeBranch) ? activeBranch : null,
+      revision: Number(`${Object.keys(roleLabels).indexOf(activeRole) + 1}${writeBranchIds.length}`),
+    }
+  }, [activeBranch, activeRole, navigationProjection.branchContext.writeBranchIds])
+
+  const searchProjection = useMemo(() => projectRedesignSearch({
+    requestId: `ia-${activeRole}-${activeBranch || "none"}-${query || "suggested"}`,
+    query,
+    limit: 12,
+    candidates: iaSearchCandidates,
+    decisions: searchDecisions,
+    scope: searchScope,
+  }), [activeBranch, activeRole, query, searchDecisions, searchScope])
 
   const closeMobileNavigation = useCallback(() => {
     setMobileOpen(false)
@@ -284,6 +466,12 @@ export function IaPrototype() {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault()
+        if (searchOpen) closeSearch()
+        else setSearchOpen(true)
+        return
+      }
       if (event.key !== "Escape") return
       if (searchOpen) closeSearch()
       else if (queueOpen) closeQueue()
@@ -301,18 +489,34 @@ export function IaPrototype() {
     if (mobileOpen) menuCloseRef.current?.focus()
   }, [mobileOpen])
 
-  const navigateToDomain = (domain: DomainId, message?: string) => {
+  const navigateToDomain = (domain: DomainId, message?: string, preserveSearchSelection = false) => {
     setActiveDomain(domain)
     setMobileOpen(false)
     setSearchOpen(false)
     setQueueOpen(false)
     setQuery("")
+    if (!preserveSearchSelection) setSelectedSearchResult(null)
     setAnnouncement(message ?? `${domains[domain].label} opened`)
   }
 
+  const focusPathHeading = () => window.requestAnimationFrame(() => pathHeadingRef.current?.focus())
+
   const openTask = (task: TaskDefinition) => {
     setSelectedTaskId(task.id)
+    setSelectedSearchResult(null)
     navigateToDomain(task.domain, `${task.label} opened in ${domains[task.domain].label}`)
+    focusPathHeading()
+  }
+
+  const openSearchResult = (result: RedesignSearchResult) => {
+    const task = result.kind === "work" ? tasks.find((candidate) => `work-${candidate.id}` === result.id) : null
+    if (task) {
+      openTask(task)
+      return
+    }
+    setSelectedSearchResult(result)
+    navigateToDomain(result.domain, `${result.label} opened from search`, true)
+    focusPathHeading()
   }
 
   const switchRole = (role: RoleId) => {
@@ -325,6 +529,7 @@ export function IaPrototype() {
     }
     const nextTask = tasks.find((task) => isRoleAllowed(task, role))
     if (nextTask) setSelectedTaskId(nextTask.id)
+    setSelectedSearchResult(null)
     setAnnouncement(`${roleLabels[role]} projection loaded`)
   }
 
@@ -333,9 +538,14 @@ export function IaPrototype() {
   return (
     <div
       className="ia-lab"
+      data-axe-audit={axeAudit ? "axe" : "off"}
       data-policy-role={navigationProjection.role}
       data-scope-status={navigationProjection.branchContext.status}
     >
+      <IaAxeHarness
+        enabled={axeAudit}
+        signature={`ia-search:${activeRole}:${activeBranch || "none"}:${searchOpen ? searchProjection.status : "closed"}:${searchOpen ? searchProjection.normalizedQuery || "suggested" : "none"}`}
+      />
       <aside className={`ia-sidebar${mobileOpen ? " is-open" : ""}`} aria-label="Architecture navigation">
         <div className="ia-wordmark-row">
           <span className="ia-wordmark">Kiddz <span>Online</span></span>
@@ -391,7 +601,7 @@ export function IaPrototype() {
           </label>
           <span className="ia-live-state"><span />Live · Tue 14 Jul · 09:18</span>
 
-          <div className="ia-role-switch" aria-label="Role projection">
+          <div className="ia-role-switch" role="group" aria-label="Role projection">
             {(Object.keys(roleLabels) as RoleId[]).map((role) => (
               <button className={activeRole === role ? "is-active" : undefined} onClick={() => switchRole(role)} key={role} type="button">{roleLabels[role]}</button>
             ))}
@@ -448,11 +658,11 @@ export function IaPrototype() {
             </section>
           </div>
 
-          {selectedTask && (
+          {(selectedSearchResult || selectedTask) && (
             <section className="ia-path-preview" aria-labelledby="ia-path-heading">
-              <div><span>Canonical path</span><h2 id="ia-path-heading">{selectedTask.label}</h2><p>{selectedTask.path}</p></div>
-              <div><span>Why it stays open</span><p>{selectedTask.consequence}</p></div>
-              <button type="button" onClick={() => openTask(selectedTask)}>Open in {domains[selectedTask.domain].label}<ChevronRight aria-hidden="true" /></button>
+              <div><span>Canonical path</span><h2 id="ia-path-heading" ref={pathHeadingRef} tabIndex={-1}>{selectedSearchResult?.label ?? selectedTask?.label}</h2><p>{selectedSearchResult?.path ?? selectedTask?.path}</p></div>
+              <div><span>{selectedSearchResult ? "Search context" : "Why it stays open"}</span><p>{selectedSearchResult?.detail ?? selectedTask?.consequence}</p></div>
+              <button type="button" onClick={() => selectedSearchResult ? openSearchResult(selectedSearchResult) : selectedTask && openTask(selectedTask)}>Open in {domains[(selectedSearchResult?.domain ?? selectedTask?.domain) as DomainId].label}<ChevronRight aria-hidden="true" /></button>
             </section>
           )}
         </main>
@@ -465,9 +675,21 @@ export function IaPrototype() {
           <section className="ia-search-dialog" role="dialog" aria-modal="true" aria-label="Global search">
             <label><Search aria-hidden="true" /><span className="ia-visually-hidden">Search people, work, or records</span><input ref={searchInputRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search people, work, or records" /><kbd>Esc</kbd></label>
             <div className="ia-search-results">
-              <span>{query ? `${searchResults.length} matching tasks` : "Suggested work"}</span>
-              {searchResults.map((task) => <button onClick={() => openTask(task)} key={task.id} type="button"><span><strong>{task.label}</strong><small>{task.path}</small></span><span>{domains[task.domain].label}<ChevronRight aria-hidden="true" /></span></button>)}
-              {searchResults.length === 0 && <div className="ia-empty"><strong>No accessible result</strong><span>Try a child, room, work state, record, or command.</span></div>}
+              <span aria-live="polite">{query ? `${searchProjection.resultCount} accessible ${searchProjection.resultCount === 1 ? "result" : "results"}` : "Suggested from current scope"}</span>
+              {searchProjection.groups.map((group) => (
+                <div className="ia-search-group" key={group.kind}>
+                  <span>{searchGroupLabels[group.kind]}</span>
+                  {group.results.map((result) => (
+                    <button onClick={() => openSearchResult(result)} key={result.id} type="button">
+                      <span><strong>{result.label}</strong><small>{result.path}</small></span>
+                      <span>{domains[result.domain].label}<ChevronRight aria-hidden="true" /></span>
+                    </button>
+                  ))}
+                </div>
+              ))}
+              {searchProjection.status === "TOO_SHORT" && <div className="ia-empty"><strong>Keep typing</strong><span>Use at least two characters to search protected records.</span></div>}
+              {searchProjection.status === "NO_EFFECTIVE_SCOPE" && <div className="ia-empty"><strong>Scope is not ready</strong><span>Search cannot expose records until an effective assignment is confirmed.</span></div>}
+              {searchProjection.status === "READY" && searchProjection.resultCount === 0 && <div className="ia-empty"><strong>No accessible result</strong><span>Try a child, room, work state, record, or command.</span></div>}
             </div>
           </section>
         </div>

@@ -195,6 +195,8 @@ Focused ESLint and full TypeScript checks pass alongside the verifier. Productio
 
 `pnpm exec tsx src/scripts/verify-redesign-navigation-contracts.ts` now independently proves seven capability/scope fixtures across administrator, manager, teacher, nurse, and doctor projections. It covers organization read-all, assigned branches/rooms/reviews, an imported explicit deny, pending setup, missing/conflicting policy default-deny, unknown-branch non-disclosure, and concrete-only write contexts. The IA lab consumes the same projector. This closes the route plan's shell-fixture evidence, not production route authorization.
 
+`pnpm exec tsx src/scripts/verify-redesign-search-contracts.ts` adds the search-side route gate: same-origin canonical paths, capability and effective-scope filtering before ranking, concrete write context, privacy-safe counts, deterministic grouping, and canonical source focus. The IA lab consumes it; production search remains on its current routes until the server query and compatibility migration gates in `global-search-contract.md` pass.
+
 A signed-out production smoke at `localhost:3003` additionally confirmed that `/index.php` becomes the sanitized `/login?callbackUrl=%2Findex.php` return intent, `/children.php?q=synthetic` preserves its same-origin path/query in the login callback, and browser Back/Forward restores those two callback states without console warnings or errors. This verifies the unauthenticated boundary only; authenticated alias resolution remains in the pilot matrix because the visible demo credentials are not valid in the current database.
 
 ## Open Evidence
