@@ -5,6 +5,14 @@
 
 This log records consequential redesign decisions from this point forward. Earlier decisions remain authoritative in their linked research, contract, and progress artifacts; this file does not rewrite their evidence or imply an unselected creative direction.
 
+## 2026-07-11 - A roster count is not occupancy or availability
+
+- **Decision:** Keep current roster, confirmed session bookings, explicit live attendance, physical/policy/staffing capacity, named capacity blocks, expiring place holds, future sellable places, and booked/attended/funded/invoiced hours as separate source-linked facts. Confirming a held place creates distinct expected-attendance and billing-input identities atomically.
+- **Why:** Current class assignment and active-child counts have no day/session semantics. Relabeling them as occupancy would make future places, staffing consequences, funding, and invoices look precise while being unsupported.
+- **Evidence:** `docs/redesign/occupancy-planning-contract.md`, current Class/Child/BranchCompliance schema and actions, class/child migration semantics, dashboard/class count projections, official competitor flow synthesis, deterministic verifier, 27 Agent Browser role/state/viewport scans, nine focused mobile regressions, and live capacity/request/hold/booking/recovery transitions.
+- **Reversibility:** The contract and prototype are additive, synthetic, territory-neutral, and policy-neutral. Production sessions, bookings, capacity rules, funding policy, visual treatment, and activation remain open.
+- **Parity boundary:** No production class, child, branch, attendance, finance, schema, query, mutation, route, permission, export, legacy alias, parent/native payload, or restored capability changed.
+
 ## 2026-07-11 - Inspection completeness begins with a versioned manifest
 
 - **Decision:** Build inspection output only from a policy-supplied requirement profile and immutable evidence manifest. Bind exceptions and redactions to exact source revisions, generate through a retryable server job, checksum the manifest and artifact, expire recipient access, audit downloads, and mark prior output historical after source drift. Keep SQL backup categorically separate.
