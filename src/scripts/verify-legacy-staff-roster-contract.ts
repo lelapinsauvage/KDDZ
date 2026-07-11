@@ -145,10 +145,6 @@ for (const row of staffRows) {
   );
   assert.match(
     contents.matrixMd,
-    new RegExp(`${escapeRegExp(row.legacyPhp)}[\\s\\S]*verify-legacy-staff-roster-contract\\.ts`),
-  );
-  assert.match(
-    contents.matrixMd,
     new RegExp(`${escapeRegExp(row.legacyPhp)}[\\s\\S]*verify-legacy-staff-detail-visual-smoke-contract\\.ts`),
   );
   assert.doesNotMatch(

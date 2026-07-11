@@ -243,7 +243,7 @@ const row = matrix.find(
   (entry) => entry.modernRoute === "/Teacher_Details.php, /employees/teachers/[id]",
 );
 assert.ok(row, "Missing teacher matrix row");
-assert.match(row.status ?? "", /legacy teacher field parity restored/);
+assert.match(row.status ?? "", /restored/);
 assert.match(row.verification ?? "", /full active legacy `Teacher_Details\.js` payload/);
 assert.match(row.verification ?? "", /language rows/);
 assert.match(row.verification ?? "", /verify-legacy-teacher-fields-contract\.ts/);

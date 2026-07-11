@@ -195,8 +195,9 @@ for (const route of [
 ]) {
   const row = matrix.find((entry) => entry.modernRoute === route);
   assert.ok(row, `Missing matrix row for ${route}`);
-  assert.match(row.status ?? "", /action audit completed/);
+  assert.match(row.status ?? "", /restored/);
   assert.doesNotMatch(row.status ?? "", /action audit remains/);
+  assert.match(row.verification ?? "", /action audit confirmed/);
   assert.match(row.verification ?? "", /no active legacy ACTION gate/);
   assert.match(
     row.verification ?? "",

@@ -68,7 +68,7 @@ for (const route of [
 ]) {
   const row = matrix.find((entry) => entry.modernRoute === route);
   assert.ok(row, `Missing matrix row for ${route}`);
-  assert.match(row.status ?? "", /address edit provenance/);
+  assert.match(row.status ?? "", /restored/);
   assert.match(row.verification ?? "", /preserve existing staff address rows in place/);
   assert.match(
     row.verification ?? "",

@@ -5,6 +5,14 @@
 
 This log records consequential redesign decisions from this point forward. Earlier decisions remain authoritative in their linked research, contract, and progress artifacts; this file does not rewrite their evidence or imply an unselected creative direction.
 
+## 2026-07-11 - Staffing readiness is a source-linked interval calculation
+
+- **Decision:** Keep availability, scheduled shift, room assignment, observed presence, effective qualification, reported/confirmed absence, break obligation, candidate preview, and temporary cover as separate facts. Accept cover only after both target-room and source-room consequences remain safe at the current plan revision.
+- **Why:** Current static class placement, day-level employee events, profile evidence, and appendable scanner logs cannot prove who contributes to one room at one time. Treating them as a rota would hide overlaps, expired qualifications, unknown presence, unstaffed breaks, and risk transferred between rooms.
+- **Evidence:** `docs/redesign/staffing-rota-contract.md`, current Teacher/EmployeeEvent/TeacherAttendance schema and actions, employee calendar/attendance surfaces, J05 workflow blueprint, deterministic contract verifier, 27 Agent Browser role/state/viewport scans, nine live manager transitions, privacy checks, visual scrolling, and empty browser logs.
+- **Reversibility:** The contract and prototype are additive, synthetic, territory-neutral, and policy-neutral. Production models, policy, source adapters, payroll effects, visual treatment, and activation remain open.
+- **Parity boundary:** No production staff, event, attendance, calendar, class, branch, ratio, payroll, schema, database row, query, mutation, route, permission, export, PHP alias, parent/native payload, or restored capability changed.
+
 ## 2026-07-11 - A roster count is not occupancy or availability
 
 - **Decision:** Keep current roster, confirmed session bookings, explicit live attendance, physical/policy/staffing capacity, named capacity blocks, expiring place holds, future sellable places, and booked/attended/funded/invoiced hours as separate source-linked facts. Confirming a held place creates distinct expected-attendance and billing-input identities atomically.

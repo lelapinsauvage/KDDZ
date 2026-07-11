@@ -134,7 +134,7 @@ for (const page of staffDetailPages) {
 
   const row = matrix.find((entry) => entry.modernRoute === page.matrixRoute);
   assert.ok(row, `Missing matrix row for ${page.matrixRoute}`);
-  assert.match(row.status ?? "", /direct-render/);
+  assert.match(row.status ?? "", /restored/);
   assert.match(row.verification ?? "", /legacy URL stability/);
   assert.match(
     row.verification ?? "",

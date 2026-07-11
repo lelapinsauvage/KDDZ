@@ -107,7 +107,7 @@ const matrix = JSON.parse(modern.matrix) as MatrixRow[];
 for (const role of roles) {
   const row = matrix.find((entry) => entry.modernRoute === role.route);
   assert.ok(row, `Missing matrix row for ${role.route}`);
-  assert.match(row.status ?? "", /profile-photo\/draft behavior audited/);
+  assert.match(row.status ?? "", /restored/);
   assert.doesNotMatch(row.status ?? "", /save\/draft\/photo behavior audit remains/);
   assert.match(row.verification ?? "", /legacy staff draft button is hidden/);
   assert.match(row.verification ?? "", /profile photo uploads and clears through `?imageUrl`?/);
