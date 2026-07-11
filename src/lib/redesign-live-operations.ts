@@ -565,6 +565,7 @@ export function deriveRoomWorkItems(room: RoomOperationProjection): OperationalW
 export type CoverAssignment = {
   assignmentId: string
   staffId: string
+  fromRoomId: string | null
   roomId: string
   startsAt: string
   endsAt: string
@@ -586,13 +587,83 @@ export function applyCoverAssignment(
 
   const candidate = staff.find((item) => item.staffId === assignment.staffId)
   if (!candidate) throw new Error("Cover candidate was not found")
-  if (candidate.assignedRoomId) throw new Error("Cover candidate already has a room assignment")
+  if (candidate.assignedRoomId !== assignment.fromRoomId) {
+    throw new Error("Cover assignment source does not match the candidate's current room")
+  }
+  if (assignment.fromRoomId === assignment.roomId) throw new Error("Cover target must differ from the source room")
   if (candidate.state !== "PRESENT") throw new Error("Cover candidate is not present")
   if (!candidate.workingDirectly || candidate.eligibility !== "COUNTED") {
     throw new Error("Cover candidate is not eligible to count")
+  }
+  if (!Number.isInteger(assignment.sourceRevision) || assignment.sourceRevision < 0) {
+    throw new Error("Cover assignment source revision is invalid")
   }
 
   return staff.map((item) => item.staffId === assignment.staffId
     ? { ...item, assignedRoomId: assignment.roomId, sourceEventIds: [...item.sourceEventIds, assignment.assignmentId] }
     : item)
+}
+
+export type RatioRoomDefinition = Omit<RatioSnapshotInput, "snapshotId" | "staff"> & {
+  snapshotId: string
+}
+
+export type CoverAssignmentPreview = {
+  assignment: CoverAssignment
+  status: "ACCEPTABLE" | "BLOCKED" | "UNKNOWN"
+  affectedRoomIds: string[]
+  before: RatioSnapshot[]
+  after: RatioSnapshot[]
+  updatedStaff: StaffRatioFact[]
+  reasons: string[]
+}
+
+export function previewCoverAssignment(
+  roomDefinitions: readonly RatioRoomDefinition[],
+  staff: readonly StaffRatioFact[],
+  assignment: CoverAssignment,
+): CoverAssignmentPreview {
+  const targetRoom = roomDefinitions.find((room) => room.roomId === assignment.roomId)
+  if (!targetRoom) throw new Error("Cover target room was not found")
+
+  const sourceRoom = assignment.fromRoomId
+    ? roomDefinitions.find((room) => room.roomId === assignment.fromRoomId)
+    : null
+  if (assignment.fromRoomId && !sourceRoom) throw new Error("Cover source room was not found")
+
+  const affectedRoomIds = [...new Set([assignment.fromRoomId, assignment.roomId].filter(Boolean))] as string[]
+  const affectedDefinitions = affectedRoomIds.map((roomId) => {
+    const definition = roomDefinitions.find((room) => room.roomId === roomId)
+    if (!definition) throw new Error("Affected cover room was not found")
+    return definition
+  })
+  const updatedStaff = applyCoverAssignment(staff, assignment)
+  const before = affectedDefinitions.map((definition) => projectRatioSnapshot({
+    ...definition,
+    snapshotId: `${definition.snapshotId}:before`,
+    staff,
+  }))
+  const after = affectedDefinitions.map((definition) => projectRatioSnapshot({
+    ...definition,
+    snapshotId: `${definition.snapshotId}:after`,
+    staff: updatedStaff,
+  }))
+
+  const unknown = after.filter((snapshot) => snapshot.status === "UNKNOWN")
+  const blocked = after.filter((snapshot) => snapshot.status === "NEEDS_ATTENTION")
+  const status = unknown.length > 0 ? "UNKNOWN" : blocked.length > 0 ? "BLOCKED" : "ACCEPTABLE"
+  const reasons = status === "UNKNOWN"
+    ? unknown.flatMap((snapshot) => snapshot.unknownFacts.map((reason) => `${snapshot.roomName}: ${reason}`))
+    : status === "BLOCKED"
+      ? blocked.flatMap((snapshot) => snapshot.reasons.map((reason) => `${snapshot.roomName}: ${reason}`))
+      : after.map((snapshot) => `${snapshot.roomName}: ${snapshot.countedAdults} of ${snapshot.requiredAdults ?? "?"} counted adults after assignment`)
+
+  return { assignment, status, affectedRoomIds, before, after, updatedStaff, reasons }
+}
+
+export function acceptCoverAssignmentPreview(preview: CoverAssignmentPreview) {
+  if (preview.status !== "ACCEPTABLE") {
+    throw new Error("Cover preview must be acceptable before assignment")
+  }
+  return preview.updatedStaff
 }

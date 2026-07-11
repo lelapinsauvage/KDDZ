@@ -1,6 +1,6 @@
 # Kiddz Online Live Operations Contract
 
-**Date:** 2026-07-10
+**Date:** 2026-07-11
 **Status:** Executable territory-neutral behavior contract; production persistence and policy activation open
 **Prototype:** `/design-lab/operations`
 **Contract:** `src/lib/redesign-live-operations.ts`
@@ -86,20 +86,27 @@ Owned work is derived from the source condition. A current unknown suppresses de
 
 ### Time-bounded cover
 
-The fixture permits only a present, directly working, already eligible, currently unassigned candidate. Cover has a start, end, actor, assignment ID, and source revision. A candidate already assigned to a room is rejected because the source-room consequence has not been evaluated.
+Cover has a start, end, actor, assignment ID, explicit source room, target room, and source revision. A candidate must be present, directly working, and already eligible. The candidate's declared source room must match the current assignment so a stale or ambiguous move fails before projection.
 
-Production cross-room reassignment must recalculate both rooms atomically before acceptance.
+The executable preview now recalculates every affected source and target room before acceptance. It returns:
+
+- `ACCEPTABLE` only when every affected room remains safe;
+- `BLOCKED` when the move would leave any affected room needing attention;
+- `UNKNOWN` when missing policy or source facts prevent a safe decision.
+
+Acceptance consumes the preview and fails unless its status is `ACCEPTABLE`. Production must preserve the same invariant inside one transaction with fresh attendance, staffing, policy, qualification, and assignment revisions.
 
 ## Interaction Fixture
 
-The synthetic Meadow fixture tests one complete causal chain:
+The synthetic Meadow and Seedlings fixture tests one complete causal chain:
 
-1. Three accepted arrivals and one unknown child produce `Unknown` readiness and one attendance work item.
+1. Meadow has three accepted arrivals and one unknown child; Seedlings has five accepted arrivals and confirmed staffing. Branch readiness is `Unknown` with one attendance work item.
 2. No attendance choice is preselected.
-3. Recording Alma as present appends revision 4, changes current children from three to four, and changes room state to `Safe with exceptions`.
+3. Recording Alma as present appends revision 9, changes Meadow from three to four present children, and changes branch state to `Safe with exceptions`.
 4. Lina's 12:30 break produces one forecast cover item with zero counted adults against the supplied requirement of one.
-5. Sam appears because the fixture marks him present, eligible, directly working, floating, and conflict-free.
-6. Assigning Sam from 12:30 to 13:00 appends assignment provenance, makes the forecast safe, and reduces open work to zero.
+5. Noor appears as present and eligible but is currently one of Seedlings' two required counted adults. Her preview makes Meadow safe while reducing Seedlings to one of two, so the assignment is blocked before commit.
+6. Sam appears as present, eligible, directly working, floating, and conflict-free. His preview keeps every affected room safe.
+7. Assigning Sam from 12:30 to 13:00 appends assignment provenance, makes the forecast safe, and reduces open work to zero without changing Seedlings.
 
 The UI uses source-state changes and a polite live region. A toast, animation, or local browser flag is never the only proof.
 
@@ -111,11 +118,15 @@ Agent Browser replayed the full attendance -> forecast cover -> handled flow at:
 - `390 x 844` with a 44px target floor;
 - `320 x 568` with a 44px target floor.
 
-All nine stage/viewport combinations produced the same `Unknown -> Safe with exceptions -> Safe` progression, one H1, zero page overflow, zero unnamed controls, zero clipped critical text, zero undersized visible targets, zero axe violations, and zero unresolved axe findings.
+All nine original stage/viewport combinations produced the same `Unknown -> Safe with exceptions -> Safe` progression, one H1, zero page overflow, zero unnamed controls, zero clipped critical text, zero undersized visible targets, zero axe violations, and zero unresolved axe findings.
+
+The expanded multi-room flow adds five states: attendance unknown, cover unselected, Noor blocked, Sam acceptable, and resolved. Agent Browser completed all five at `1440 x 900`: the blocked preview showed Seedlings at `1 of 2 counted`, kept the primary action disabled, and retained one open work item; the acceptable preview enabled Sam's assignment; the resolved state showed both rooms safe and zero open work. Every desktop state retained one H1, zero overflow, zero unnamed controls, and zero axe violations or unresolved findings.
+
+The expanded `390 x 844` and `320 x 568` replays remain open because the browser session fell onto its generated connection-error page during a local server restart and then rejected further local navigation. No mobile result is inferred from source or from the earlier single-room run.
 
 Browser interaction also confirmed that each accepted action moves focus to the changed work heading and announces the server-style consequence. A natural-size desktop visual pass confirmed the room comparison, source fact, decision panel, and owned work remain readable together. The first visual pass exposed and removed a duplicate derivative forecast task.
 
-Focused ESLint, full TypeScript, the live-operations verifier, route/navigation/state/selection regressions, diff hygiene, and the production build pass. The build emits `/design-lab/operations` as a static route and retains only the documented legacy dynamic-prerender messages and print CSS warning.
+Focused ESLint, full TypeScript, the live-operations verifier, 333-route compatibility, navigation/state/selection regressions, diff hygiene, and the production build pass for this slice. The build emits `/design-lab/operations` as a static route and retains only the documented legacy dynamic-prerender messages and print CSS warning.
 
 ## Additive Production Migration
 
@@ -125,7 +136,7 @@ Focused ESLint, full TypeScript, the live-operations verifier, route/navigation/
 4. Dual-read old and new projections over representative branch/date fixtures; publish contradictions and unknowns rather than forcing equality.
 5. Move new attendance writes to canonical events while deriving current absence lists, child attendance history, heatmaps, daily-care eligibility, parent-safe state, exports, legacy aliases, and native outputs through adapters.
 6. Add effective policy and qualification adjudication only after launch-market, provider/service-class, legal, and operator approval.
-7. Activate ratio snapshots and cover mutation only after database transactions, optimistic concurrency, idempotency receipts, source-room recalculation, and audit-history tests pass.
+7. Activate ratio snapshots and cover mutation only after database transactions, optimistic concurrency, idempotency receipts, atomic source-and-target recalculation, and audit-history tests pass.
 8. Remove the browser completion flag only after every supported route and client consumes server session state.
 
 ## Parity Boundary
@@ -144,6 +155,7 @@ Future activation must map every affected parity row and prove both canonical an
 - Define protected offline capture, device identity, retention, and conflict ownership.
 - Prove legacy/native adapters, parent-safe delivery, reports/exports, and historical provenance.
 - Run actual 200% zoom, VoiceOver/NVDA, reduced-motion, shared-tablet, and physical-device acceptance.
+- Complete the expanded five-state multi-room replay at `390 x 844` and `320 x 568` in a fresh browser session.
 
 ## Decision
 

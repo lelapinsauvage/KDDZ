@@ -1,8 +1,8 @@
 # Kiddz Online Redesign Progress
 
-**Last updated:** 2026-07-10
+**Last updated:** 2026-07-11
 **Plan:** `docs/redesign-master-plan.md`
-**Program state:** Product discovery and benchmark research closed; territory-neutral staff IA, capability-derived navigation, Calls-under-Messages placement, route compatibility, native/parent convergence, executable state matrix and live-operations flow, motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; creative selection packet ready and explicit production choice open
+**Program state:** Product discovery and benchmark research closed; territory-neutral staff IA, capability-derived navigation, Calls-under-Messages placement, route compatibility, native/parent convergence, executable state matrix and multi-room live-operations flow, motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; creative selection packet ready and explicit production choice open
 **Reported progress:** **52% done / 48% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
@@ -551,6 +551,18 @@ An item is complete only when:
 - **Evidence boundary:** Printed demo credentials are stale, so authenticated current-Today runtime reproduction remains open. The fixture uses synthetic data and a supplied policy decision; production persistence, legal approval, authorization, cross-room transactions, operator validation, offline/privacy, native adapters, assistive technology, and real devices remain release gates.
 - **Next action:** Receive the explicit creative direction, codify final tokens, then consume this contract in the first complete server-owned Today/attendance/ratio pilot with parity adapters and database evidence.
 - **Progress earned:** 1 percentage point; Phase 4 reaches 9 of 12% and total reaches 52%.
+
+### 2026-07-11 - Phase 4 multi-room cover consequence preview
+
+- **Question:** Can a manager preview a cover move and resolve Meadow without silently creating a new staffing risk in the candidate's source room?
+- **Evidence:** The executable attendance/staff/policy contract, J05 staffing blueprint, multi-room synthetic fixture, and the first complete desktop Agent Browser replay of attendance unknown -> cover unselected -> Noor blocked -> Sam acceptable -> resolved.
+- **Decision:** Add explicit source-room identity to time-bounded assignments; project every affected source and target room before commit; classify the preview as `ACCEPTABLE`, `BLOCKED`, or `UNKNOWN`; and accept only when every affected room remains safe.
+- **Artifacts:** `src/lib/redesign-live-operations.ts`, `src/lib/redesign-live-operations-fixtures.ts`, `src/scripts/verify-redesign-live-operations.ts`, `/design-lab/operations`, `docs/redesign/live-operations-contract.md`, and the J05 blueprint update.
+- **Verification:** Deterministic checks prove Noor would reduce Seedlings to one counted adult against a supplied requirement of two and is rejected, while floating Sam affects only Meadow and resolves the branch. The five desktop states pass with the expected work counts, one H1, no overflow or unnamed controls, and zero axe violations/incomplete findings. Focused lint, full TypeScript, the live-operations verifier, 333-route compatibility, navigation/state/selection regressions, diff hygiene, and the production build pass; `/design-lab/operations` remains static with only the documented legacy build warnings.
+- **Parity:** The slice remains synthetic and additive. No production route, query, action, Prisma model, database row, permission, export, legacy alias, native payload, or product visual changed.
+- **Evidence boundary:** Production still needs transactional source/target recalculation against fresh revisions. The expanded `390 x 844` and `320 x 568` browser replays remain open after the browser session became trapped on its generated connection-error page during a server restart.
+- **Next action:** Re-run the five-state multi-room mobile matrix in a fresh browser session, then proceed to the first server-owned pilot after the irreversible creative-direction gate.
+- **Progress earned:** No new percentage point yet; Phase 4 remains 9 of 12% and total remains 52% until the expanded responsive gate closes.
 
 ## Work Log Template
 

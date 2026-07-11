@@ -18,9 +18,14 @@ import {
   buildFixtureOperations,
   createFixtureAttendanceSession,
   createForecastFixtureStaff,
+  fixtureCoverCandidates,
   fixturePolicy,
+  fixtureRoomMeta,
+  fixtureSeedlingsPolicy,
+  previewFixtureCover,
   recordFixtureAttendance,
   type FixtureAttendanceChoice,
+  type FixtureCoverCandidateId,
 } from "@/lib/redesign-live-operations-fixtures"
 import { OperationsAxeHarness } from "./operations-axe-harness"
 
@@ -38,6 +43,11 @@ const statusLabels: Record<LiveReadinessStatus, string> = {
   SAFE: "Safe",
 }
 
+const fixturePolicies = {
+  "room-meadow": fixturePolicy,
+  "room-seedlings": fixtureSeedlingsPolicy,
+}
+
 function subscribeToLocation(onStoreChange: () => void) {
   window.addEventListener("popstate", onStoreChange)
   return () => window.removeEventListener("popstate", onStoreChange)
@@ -52,7 +62,7 @@ export function LiveOperationsLab() {
   const [attendance, setAttendance] = useState(createFixtureAttendanceSession)
   const [forecastStaff, setForecastStaff] = useState(createForecastFixtureStaff)
   const [attendanceChoice, setAttendanceChoice] = useState<FixtureAttendanceChoice | null>(null)
-  const [coverSelected, setCoverSelected] = useState(false)
+  const [coverCandidate, setCoverCandidate] = useState<FixtureCoverCandidateId | null>(null)
   const [announcement, setAnnouncement] = useState("")
   const actionHeadingRef = useRef<HTMLHeadingElement>(null)
 
@@ -67,6 +77,10 @@ export function LiveOperationsLab() {
     : operations.room.forecast?.status === "NEEDS_ATTENTION"
       ? "cover"
       : "resolved"
+  const coverPreview = useMemo(
+    () => coverCandidate ? previewFixtureCover(attendance, forecastStaff, coverCandidate) : null,
+    [attendance, coverCandidate, forecastStaff],
+  )
 
   const focusActionHeading = () => window.requestAnimationFrame(() => actionHeadingRef.current?.focus())
 
@@ -79,10 +93,11 @@ export function LiveOperationsLab() {
   }
 
   function handleCover() {
-    if (!coverSelected) return
-    setForecastStaff((current) => assignFixtureCover(current))
-    setCoverSelected(false)
-    setAnnouncement("Sam Okafor assigned to Meadow from 12:30 to 13:00. Forecast source updated.")
+    if (!coverCandidate || coverPreview?.status !== "ACCEPTABLE") return
+    const selectedCandidate = fixtureCoverCandidates.find((candidate) => candidate.staffId === coverCandidate)
+    setForecastStaff((current) => assignFixtureCover(attendance, current, coverCandidate))
+    setCoverCandidate(null)
+    setAnnouncement(`${selectedCandidate?.name ?? "Selected cover"} assigned to Meadow from 12:30 to 13:00. Both affected room forecasts updated.`)
     focusActionHeading()
   }
 
@@ -90,7 +105,7 @@ export function LiveOperationsLab() {
     setAttendance(createFixtureAttendanceSession())
     setForecastStaff(createForecastFixtureStaff())
     setAttendanceChoice(null)
-    setCoverSelected(false)
+    setCoverCandidate(null)
     setAnnouncement("Live operations fixture reset.")
     focusActionHeading()
   }
@@ -109,7 +124,7 @@ export function LiveOperationsLab() {
     >
       <OperationsAxeHarness
         enabled={axeAudit}
-        signature={`operations:${stage}:${operations.branch.status}`}
+        signature={`operations:${stage}:${operations.branch.status}:${coverCandidate ?? "none"}:${coverPreview?.status ?? "none"}`}
       />
 
       <header className="operations-topbar">
@@ -158,39 +173,49 @@ export function LiveOperationsLab() {
               <span>Current and next change</span>
             </header>
 
-            <div className="operations-room" data-room-status={operations.room.status}>
-              <div className="operations-room__identity">
-                <span>2-3 years</span>
-                <h3>Meadow</h3>
-                <p>{operations.room.primaryReason}</p>
-              </div>
-              <dl className="operations-room__facts">
-                <div>
-                  <dt>Children now</dt>
-                  <dd><strong>{operations.room.current.presentChildren}</strong> present</dd>
-                  <dd className="operations-room__meta">{operations.room.current.unknownChildren} unknown</dd>
+            {operations.rooms.map((room) => {
+              const roomId = room.roomId as keyof typeof fixtureRoomMeta
+              const meta = fixtureRoomMeta[roomId]
+              const policy = fixturePolicies[roomId]
+              const isMeadow = room.roomId === "room-meadow"
+              return (
+                <div className="operations-room" data-room-status={room.status} key={room.roomId}>
+                  <div className="operations-room__identity">
+                    <span>{meta.ageBand}</span>
+                    <h3>{room.roomName}</h3>
+                    <p>{room.primaryReason}</p>
+                  </div>
+                  <dl className="operations-room__facts">
+                    <div>
+                      <dt>Children now</dt>
+                      <dd><strong>{room.current.presentChildren}</strong> present</dd>
+                      <dd className="operations-room__meta">{room.current.unknownChildren} unknown</dd>
+                    </div>
+                    <div>
+                      <dt>Counted staff</dt>
+                      <dd><strong>{room.current.countedAdults}</strong> of {room.current.requiredAdults ?? "?"}</dd>
+                      <dd className="operations-room__meta">{policy.label}</dd>
+                    </div>
+                    <div>
+                      <dt>Next change</dt>
+                      <dd>{isMeadow ? <><strong>12:30</strong> Lina&apos;s break</> : <><strong>None</strong> scheduled</>}</dd>
+                      <dd className="operations-room__meta">{room.forecast?.countedAdults ?? "?"} of {room.forecast?.requiredAdults ?? "?"} counted then</dd>
+                    </div>
+                  </dl>
+                  <div className="operations-room__state">
+                    <span className={`operations-status is-${room.status.toLowerCase()}`}>
+                      {statusLabels[room.status]}
+                    </span>
+                    {isMeadow ? (
+                      <button type="button" onClick={focusActionHeading} aria-controls="operations-action-panel">
+                        {stage === "attendance" ? "Resolve attendance" : stage === "cover" ? "Review cover" : "View handled state"}
+                        <ArrowRight aria-hidden="true" />
+                      </button>
+                    ) : <span className="operations-room__source-note">Sources confirmed</span>}
+                  </div>
                 </div>
-                <div>
-                  <dt>Counted staff</dt>
-                  <dd><strong>{operations.room.current.countedAdults}</strong> of {operations.room.current.requiredAdults ?? "?"}</dd>
-                  <dd className="operations-room__meta">{fixturePolicy.label}</dd>
-                </div>
-                <div>
-                  <dt>Next change</dt>
-                  <dd><strong>12:30</strong> Lina&apos;s break</dd>
-                  <dd className="operations-room__meta">{operations.room.forecast?.countedAdults ?? "?"} counted then</dd>
-                </div>
-              </dl>
-              <div className="operations-room__state">
-                <span className={`operations-status is-${operations.room.status.toLowerCase()}`}>
-                  {statusLabels[operations.room.status]}
-                </span>
-                <button type="button" onClick={focusActionHeading} aria-controls="operations-action-panel">
-                  {stage === "attendance" ? "Resolve attendance" : stage === "cover" ? "Review cover" : "View handled state"}
-                  <ArrowRight aria-hidden="true" />
-                </button>
-              </div>
-            </div>
+              )
+            })}
 
             <section className="operations-work" aria-labelledby="operations-work-title">
               <div className="operations-section-heading">
@@ -260,22 +285,43 @@ export function LiveOperationsLab() {
                   <div><dt>Cause</dt><dd>Lina&apos;s scheduled break</dd></div>
                 </dl>
                 <fieldset className="operations-options operations-options--cover">
-                  <legend>Eligible cover</legend>
-                  <label>
-                    <input
-                      type="radio"
-                      name="cover-choice"
-                      checked={coverSelected}
-                      onChange={() => setCoverSelected(true)}
-                    />
-                    <span className="operations-option__mark" aria-hidden="true"><Check /></span>
-                    <span><strong>Sam Okafor</strong><small>Present, approved, floating, no room conflict</small></span>
-                    <UserCheck aria-hidden="true" />
-                  </label>
+                  <legend>Available candidates</legend>
+                  {fixtureCoverCandidates.map((candidate) => (
+                    <label key={candidate.staffId}>
+                      <input
+                        type="radio"
+                        name="cover-choice"
+                        checked={coverCandidate === candidate.staffId}
+                        onChange={() => setCoverCandidate(candidate.staffId)}
+                      />
+                      <span className="operations-option__mark" aria-hidden="true"><Check /></span>
+                      <span><strong>{candidate.name}</strong><small>{candidate.detail}</small></span>
+                      <UserCheck aria-hidden="true" />
+                    </label>
+                  ))}
                 </fieldset>
+                {coverPreview && (
+                  <section
+                    className={`operations-cover-preview is-${coverPreview.status.toLowerCase()}`}
+                    aria-live="polite"
+                    aria-label="Cover impact preview"
+                  >
+                    <header><span>Impact preview</span><strong>{coverPreview.status === "ACCEPTABLE" ? "Both rooms remain safe" : coverPreview.status === "BLOCKED" ? "Creates another room risk" : "Impact remains unknown"}</strong></header>
+                    <dl>
+                      {coverPreview.after.map((room) => (
+                        <div key={room.roomId}>
+                          <dt>{room.roomName}</dt>
+                          <dd>{room.countedAdults} of {room.requiredAdults ?? "?"} counted</dd>
+                          <dd><span className={`operations-status is-${room.status.toLowerCase()}`}>{statusLabels[room.status]}</span></dd>
+                        </div>
+                      ))}
+                    </dl>
+                    <p>{coverPreview.reasons[0]}</p>
+                  </section>
+                )}
                 <p className="operations-policy-note">This fixture consumes an approved policy decision. It does not calculate or claim a legal ratio.</p>
-                <button className="operations-primary" type="button" disabled={!coverSelected} onClick={handleCover}>
-                  Assign 12:30-13:00 cover<ArrowRight aria-hidden="true" />
+                <button className="operations-primary" type="button" disabled={coverPreview?.status !== "ACCEPTABLE"} onClick={handleCover}>
+                  {!coverPreview ? "Select cover to preview impact" : coverPreview.status === "ACCEPTABLE" ? "Assign 12:30-13:00 cover" : "Cannot create another room risk"}<ArrowRight aria-hidden="true" />
                 </button>
               </>
             )}
@@ -284,7 +330,7 @@ export function LiveOperationsLab() {
               <div className="operations-resolved">
                 <span aria-hidden="true"><CheckCircle2 /></span>
                 <strong>Current and forecast sources confirmed</strong>
-                <p>Alma&apos;s accepted attendance event updates the current room. Sam&apos;s time-bounded assignment covers the 12:30 forecast without replacing Lina&apos;s history.</p>
+                <p>Alma&apos;s accepted attendance event updates Meadow. Sam&apos;s time-bounded assignment covers 12:30 while Seedlings remains safe and Lina&apos;s history stays intact.</p>
                 <dl>
                   <div><dt>Attendance revision</dt><dd>{attendance.revision}</dd></div>
                   <div><dt>Cover source</dt><dd>12:30-13:00</dd></div>

@@ -288,7 +288,7 @@ These contracts are currently incomplete and must be implemented before the UI c
 2. Show current ratio, required ratio, source children/staff, and forecast change.
 3. Explain the exact cause: arrival, departure, break, absence, qualification, or assignment.
 4. List only qualified, available, in-scope cover candidates with conflicts.
-5. Preview the source and downstream schedule changes.
+5. Preview every affected source and target room after the proposed move; block the commit if any room becomes unsafe or unknown.
 6. Assign cover or record an authorized alternative.
 7. Recalculate and persist the ratio snapshot.
 8. Show restored compliance and append the decision history.
@@ -296,6 +296,7 @@ These contracts are currently incomplete and must be implemented before the UI c
 ### Completion
 
 - Room state, team schedule, work queue, and audit history update from one confirmed result.
+- No accepted cover assignment can resolve the target room by creating a new source-room risk.
 - A temporary cover assignment expires at the stated time and does not silently become permanent.
 
 ### Failure and recovery
@@ -477,7 +478,7 @@ Preflight, view sensitive evidence, accept exception, generate, download, and au
 
 The visual redesign may prototype later stages, but production implementation cannot reverse this dependency order without inventing data or weakening trust.
 
-The territory-neutral behavior foundation for steps 2-4 is now executable in `src/lib/redesign-live-operations.ts` and `/design-lab/operations`, with evidence in `live-operations-contract.md`. It proves explicit unknown attendance, idempotent accepted events, append-only correction, policy-supplied ratio decisions, explainable staff inclusion, forecast work, and time-bounded floating cover. It remains synthetic and additive; production persistence, policy activation, authorization, and compatibility migration are still open.
+The territory-neutral behavior foundation for steps 2-5 is now executable in `src/lib/redesign-live-operations.ts` and `/design-lab/operations`, with evidence in `live-operations-contract.md`. It proves explicit unknown attendance, idempotent accepted events, append-only correction, policy-supplied ratio decisions, explainable staff inclusion, forecast work, time-bounded floating cover, and pre-commit source/target room consequence preview. It remains synthetic and additive; production persistence, atomic transactions, policy activation, authorization, and compatibility migration are still open.
 
 ## Open Validation
 

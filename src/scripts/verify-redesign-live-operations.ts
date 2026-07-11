@@ -18,6 +18,7 @@ import {
   createCurrentFixtureStaff,
   fixtureContext,
   fixturePolicy,
+  previewFixtureCover,
   recordFixtureAttendance,
 } from "../lib/redesign-live-operations-fixtures"
 
@@ -25,7 +26,7 @@ const read = (path: string) => readFileSync(resolve(path), "utf8")
 
 const initialSession = createFixtureAttendanceSession()
 const initialAttendance = projectAttendanceSession(initialSession)
-assert.equal(initialAttendance.counts.PRESENT, 3)
+assert.equal(initialAttendance.counts.PRESENT, 8)
 assert.equal(initialAttendance.counts.UNKNOWN, 1)
 assert.equal(initialAttendance.isComplete, false)
 assert.throws(() => submitAttendanceSession(initialSession, {
@@ -41,22 +42,36 @@ assert.equal(initialOperations.branch.status, "UNKNOWN")
 assert.equal(initialOperations.room.current.status, "UNKNOWN")
 assert.equal(initialOperations.room.current.presentChildren, 3)
 assert.equal(initialOperations.room.current.unknownChildren, 1)
+assert.equal(initialOperations.branch.roomCount, 2)
+assert.equal(initialOperations.rooms.find((room) => room.roomId === "room-seedlings")?.status, "SAFE")
 assert.deepEqual(initialOperations.workItems.map((item) => item.kind), ["ATTENDANCE_UNKNOWN"])
 
 const presentSession = recordFixtureAttendance(initialSession, "PRESENT")
 const presentOperations = buildFixtureOperations(presentSession, createForecastFixtureStaff())
-assert.equal(projectAttendanceSession(presentSession).counts.PRESENT, 4)
+assert.equal(projectAttendanceSession(presentSession).counts.PRESENT, 9)
 assert.equal(presentOperations.room.current.status, "SAFE")
 assert.equal(presentOperations.room.forecast?.status, "NEEDS_ATTENTION")
 assert.equal(presentOperations.room.status, "SAFE_WITH_EXCEPTIONS")
 assert.deepEqual(presentOperations.workItems.map((item) => item.kind), ["RATIO_FORECAST"])
 
-const coveredStaff = assignFixtureCover(createForecastFixtureStaff())
+const forecastStaff = createForecastFixtureStaff()
+const blockedPreview = previewFixtureCover(presentSession, forecastStaff, "staff-noor")
+assert.equal(blockedPreview.status, "BLOCKED")
+assert.deepEqual(blockedPreview.affectedRoomIds, ["room-seedlings", "room-meadow"])
+assert.equal(blockedPreview.after.find((room) => room.roomId === "room-meadow")?.status, "SAFE")
+assert.equal(blockedPreview.after.find((room) => room.roomId === "room-seedlings")?.status, "NEEDS_ATTENTION")
+assert(blockedPreview.reasons.some((reason) => reason.startsWith("Seedlings:")))
+assert.throws(() => assignFixtureCover(presentSession, forecastStaff, "staff-noor"), /must be acceptable/)
+
+const acceptablePreview = previewFixtureCover(presentSession, forecastStaff, "staff-sam")
+assert.equal(acceptablePreview.status, "ACCEPTABLE")
+assert.deepEqual(acceptablePreview.affectedRoomIds, ["room-meadow"])
+const coveredStaff = assignFixtureCover(presentSession, forecastStaff)
 const coveredOperations = buildFixtureOperations(presentSession, coveredStaff)
 assert.equal(coveredOperations.room.forecast?.status, "SAFE")
 assert.equal(coveredOperations.branch.status, "SAFE")
 assert.equal(coveredOperations.workItems.length, 0)
-assert(coveredOperations.room.forecast?.sourceEventIds.includes("cover-sam-meadow-1230"))
+assert(coveredOperations.room.forecast?.sourceEventIds.includes("cover-staff-sam-meadow-1230"))
 
 const presentEvent = presentSession.events.at(-1)
 assert(presentEvent)
@@ -192,10 +207,6 @@ assert.equal(currentRisk.status, "NEEDS_ATTENTION")
 const riskRoom = projectRoomOperation(currentRisk, null, null)
 assert.equal(projectBranchReadiness([coveredOperations.room, riskRoom]).status, "NEEDS_ATTENTION")
 
-assert.throws(() => assignFixtureCover(createCurrentFixtureStaff().map((staff) =>
-  staff.staffId === "staff-sam" ? { ...staff, assignedRoomId: "room-seedlings" } : staff,
-)), /already has a room assignment/)
-
 const markerSource = read("src/components/today/attendance-marker.tsx")
 const actionSource = read("src/lib/actions/attendance.ts")
 const labSource = read("src/app/design-lab/operations/_components/live-operations-lab.tsx")
@@ -209,6 +220,10 @@ assert.match(actionSource, /absentChildIds: string\[\]/)
 assert.match(actionSource, /db\.absenceReport\.create/)
 assert.match(labSource, /useState<FixtureAttendanceChoice \| null>\(null\)/)
 assert.match(labSource, /buildFixtureOperations\(attendance, forecastStaff\)/)
+assert.match(labSource, /operations\.rooms\.map/)
+assert.match(labSource, /fixtureCoverCandidates\.map/)
+assert.match(labSource, /previewFixtureCover\(attendance, forecastStaff, coverCandidate\)/)
+assert.match(labSource, /coverPreview\?\.status !== "ACCEPTABLE"/)
 assert.match(labSource, /data-stage=\{stage\}/)
 assert.match(labSource, /aria-live="polite"/)
 assert.doesNotMatch(labSource, /localStorage|recharts|<svg/)
@@ -217,8 +232,9 @@ assert.match(labStyles, /@media \(max-width: 700px\)/)
 assert.match(labStyles, /min-height: 44px/)
 assert.doesNotMatch(labStyles, /gradient\(/)
 assert.match(contractDocument, /## Additive Production Migration/)
+assert.match(contractDocument, /No accepted cover assignment can resolve the target room|source and target room before acceptance/)
 assert.match(contractDocument, /zero axe violations/)
 
 process.stdout.write(
-  "Redesign live operations verification passed (explicit attendance, idempotency, append-only correction, policy-owned ratio, forecast cover, source-gap guard)\n",
+  "Redesign live operations verification passed (explicit attendance, idempotency, append-only correction, policy-owned ratio, forecast cover, cross-room preview, source-gap guard)\n",
 )
