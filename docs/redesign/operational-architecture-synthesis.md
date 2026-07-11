@@ -103,6 +103,8 @@ The territory-neutral child workspace is now executable in `src/lib/redesign-chi
 
 The territory-neutral medical incident lifecycle is now executable in `src/lib/redesign-medical-incident-contracts.ts` and `/design-lab/incident`, with evidence in `medical-incident-contract.md`. It keeps the source incident separate from review, family delivery, acknowledgment, follow-up, retry, closure, and correction obligations while preserving a capability-safe parent publication boundary. It remains synthetic and additive; production policy, persistence, transactions, outbox/provider integration, source adapters, authorization, operator validation, and parity migration are still open.
 
+The territory-neutral family ledger is now executable in `src/lib/redesign-family-ledger-contracts.ts` and `/design-lab/finance`, with evidence in `family-ledger-contract.md`. It derives family balance, invoice outstanding, unallocated credit, receipt, parent statement, and correction from one immutable event set while failing closed on imported payment/accounting disagreement. It remains synthetic and additive; production source reconciliation, family/account identity, persistence, transactions, numbering/tax policy, authorization, operator validation, and parity migration are still open.
+
 ## The Manager Day Model
 
 The primary desktop experience changes emphasis with the operating rhythm while retaining a stable layout.

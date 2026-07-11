@@ -33,3 +33,11 @@ This log records consequential redesign decisions from this point forward. Earli
 - **Evidence:** `docs/redesign/medical-incident-contract.md`, J04 journey audit and blueprint, current medical actions and accident form, legacy medical alarm/receipt verifiers, deterministic lifecycle verifier, and 30 Agent Browser state/viewport combinations.
 - **Reversibility:** The contract and prototype are additive and territory-neutral. Jurisdiction policy, storage schema, transaction/outbox design, provider integration, production authorization, and final selected-system composition remain open.
 - **Parity boundary:** No production medical query, mutation, upload, alarm, receipt, schema, database row, route, PDF, export, legacy alias, parent/native payload, or restored capability changed.
+
+## 2026-07-11 - Family finance derives from one immutable event set
+
+- **Decision:** Treat imported payment/accounting disagreement as an explicit source conflict. Record charges, payments, allocations, receipts, delivery, and correction as immutable events in integer minor units; derive family and invoice balances from that one set.
+- **Why:** Current `Payment` and `AccountingEntry` stores have no allocation relation. The same child page displays paid totals from one store and balance from the other, while receipt routes, parent/native finance, reminders, and soft deletion cannot prove a shared result.
+- **Evidence:** `docs/redesign/family-ledger-contract.md`, J06 journey audit and blueprint, current payment/accounting actions and UI, migration/parity/native contracts, deterministic verifier, and 27 Agent Browser state/viewport combinations.
+- **Reversibility:** The contract is additive and territory-neutral. Source reconciliation, account identity, schema, transaction/outbox design, invoice/receipt policy, production authorization, and selected-system composition remain open.
+- **Parity boundary:** No production payment, accounting entry, reminder, alarm, receipt, parent/native response, invoice, print, export, schema, database row, route, permission, or restored capability changed.

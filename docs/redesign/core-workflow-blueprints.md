@@ -488,6 +488,8 @@ The cross-domain child context is now executable in `src/lib/redesign-child-work
 
 The J04 medical/safety boundary is now executable in `src/lib/redesign-medical-incident-contracts.ts` and `/design-lab/incident`, with evidence in `medical-incident-contract.md`. It proves retained draft facts through evidence failure, policy-derived typed obligations, separate review/delivery/acknowledgment/follow-up receipts, delivery retry work without source rollback, fresh-revision closure, capability-safe role actions, parent-safe publication, and append-only correction cycles. It remains synthetic and additive; production persistence, outbox delivery, jurisdiction policy, authorization, operator validation, native/parent integration, and parity migration are still open.
 
+The J06 family finance boundary is now executable in `src/lib/redesign-family-ledger-contracts.ts` and `/design-lab/finance`, with evidence in `family-ledger-contract.md`. It proves explicit source conflict, integer minor-unit money, historical duplicate review, atomic fresh-revision allocation, one shared balance invariant, receipt/delivery separation, role-safe parent projection, and append-only payment reversal. It remains synthetic and additive; production source reconciliation, persistence, transactions, invoice policy, authorization, operator validation, native/parent integration, and parity migration are still open.
+
 ## Open Validation
 
 - Operator sequencing at opening, lunch cover, handover, and closing.
