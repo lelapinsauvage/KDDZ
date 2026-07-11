@@ -480,6 +480,8 @@ The visual redesign may prototype later stages, but production implementation ca
 
 The territory-neutral behavior foundation for steps 2-5 is now executable in `src/lib/redesign-live-operations.ts` and `/design-lab/operations`, with evidence in `live-operations-contract.md`. It proves explicit unknown attendance, idempotent accepted events, append-only correction, policy-supplied ratio decisions, explainable staff inclusion, forecast work, time-bounded floating cover, and pre-commit source/target room consequence preview. It remains synthetic and additive; production persistence, atomic transactions, policy activation, authorization, and compatibility migration are still open.
 
+The handover boundary is now executable in `src/lib/redesign-handover-contracts.ts` and `/design-lab/handover`, with evidence in `handover-contract.md`. It proves that unknown sources and drafts block closure, only policy-allowed work can carry, incoming ownership requires acknowledgment, and close revalidates every source revision while retaining carried work. It remains synthetic and additive; operator policy, persistence, authorization, parent/native consequences, and parity migration are still open.
+
 ## Open Validation
 
 - Operator sequencing at opening, lunch cover, handover, and closing.

@@ -88,6 +88,7 @@ The names may change during domain design; their responsibilities may not.
 | Shift and RoomAssignment | Expected and actual cover over time | room, interval, role, qualification, source, reassignment |
 | RatioRule and RatioSnapshot | Explainable compliance | jurisdiction version, age band, observed/required values, causes, forecast |
 | RoomCareSession | Fast batch care with exceptions | shared observation, child exceptions, completeness, draft revision, sync |
+| HandoverSession | Accountable shift and room continuity | source obligations, blockers, allowed carry, incoming acknowledgment, source revisions, close receipt |
 | WorkItem | Resolution instead of notifications | cause, consequence, owner, due time, state, escalation, resolution evidence |
 | RecordRevision and AuditEvent | Accountable change | actor, reason, before/after, source, policy version, correlation ID |
 | FamilyLedger and Allocation | One financial truth | charge, payment, allocation, credit, reversal, balance, provenance |

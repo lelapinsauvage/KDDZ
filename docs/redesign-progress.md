@@ -2,8 +2,8 @@
 
 **Last updated:** 2026-07-11
 **Plan:** `docs/redesign-master-plan.md`
-**Program state:** Product discovery and benchmark research closed; territory-neutral staff IA, capability-derived navigation and global search, Calls-under-Messages placement, route compatibility, native/parent convergence, executable state matrix and multi-room live-operations flow, motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; creative selection packet ready and explicit production choice open
-**Reported progress:** **54% done / 46% left**
+**Program state:** Product discovery and benchmark research closed; territory-neutral staff IA, capability-derived navigation and global search, Calls-under-Messages placement, route compatibility, native/parent convergence, executable state matrix, multi-room live operations, and accountable handover closure, plus motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; Phase 4 is complete, the creative selection packet is ready, and the explicit production choice remains open
+**Reported progress:** **55% done / 45% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -15,12 +15,12 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | 1. Product discovery | 12% | Complete | 12% | Flow inventory, role/task matrix, current journeys, friction/risk register |
 | 2. Benchmark research | 10% | Complete | 10% | Pinterest taxonomy, Mobbin flow sheets, direct-competitor operations, benchmark synthesis |
 | 3. Brand strategy and direction | 10% | In progress | 6% | Strategy, three complete territories, selected brand constitution |
-| 4. IA and core UX | 12% | In progress | 11% | Sitemap, navigation model, Today model, tested wireframes |
+| 4. IA and core UX | 12% | Complete | 12% | Sitemap, navigation model, Today model, tested wireframes |
 | 5. Design system | 13% | In progress | 12% | Tokens, components, motion, responsive, accessibility, performance, and data-delivery foundations |
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **54%** |  |
+| **Total** | **100%** |  | **55%** |  |
 
 ## Confirmed Baseline
 
@@ -576,6 +576,18 @@ An item is complete only when:
 - **Evidence boundary:** The current production dialog still has organization-only scope, static client actions/pages, raw browser recents, and stale-response risk. Canonical person identity, server scope integration, privacy approval, representative scale, operator validation, assistive technology, and selected-system polish remain open.
 - **Next action:** Use this contract in the selected-direction shell after the irreversible territory decision; continue the last reversible Phase 4 gate without changing production visuals.
 - **Progress earned:** 1 percentage point; Phase 4 reaches 11 of 12% and total reaches 54%.
+
+### 2026-07-11 - Phase 4 accountable handover and closure contract
+
+- **Question:** Can a nursery team close a lunch or end-of-day handover without treating an unknown attendance state, draft report, dismissed notification, or unacknowledged carry-forward as completed work?
+- **Evidence:** Current Today browser-local completion, explicit `DRAFT`/`SUBMITTED` care state, fragmented attendance/care/medical/message/staff alert sources, J01/J02/J05 workflow evidence, and a synthetic Riverside/Meadow source-revision fixture.
+- **Decision:** Make handover a versioned server transition. A session snapshots source obligations and their revisions; unknown and blocking work prevent closure; policy-approved carry requires a concrete incoming owner, reason, and acknowledgment; close revalidates every source revision and appends a receipt without erasing carried work.
+- **Artifacts:** `src/lib/redesign-handover-contracts.ts`, `src/scripts/verify-redesign-handover-contracts.ts`, `/design-lab/handover`, `docs/redesign/handover-contract.md`, and linked workflow and operational-architecture evidence.
+- **Verification:** Deterministic checks prove initial unknowns, blocked premature close, exact idempotent replay, changed-input rejection, blocker carry rejection, acknowledged allowed carry, stale-source close rejection, capability enforcement, append-only five-event closure, and visible carried work after close. Agent Browser covers seven states at `1440 x 900`, `390 x 844`, and `320 x 568` for 21 combinations: every state has one H1, expected source/event counts, accepted-transition focus, zero overflow, unnamed or undersized controls, axe violations, incomplete findings, or browser warnings/errors. Focused ESLint, full TypeScript, handover/live-operations/search/navigation/route/state/selection verifiers, diff hygiene, and the production build pass; the route verifier covers 334 app routes and `/design-lab/handover` emits statically with only documented legacy build warnings.
+- **Parity:** The slice is synthetic and additive. It changes no production Today behavior, report mutation, attendance source, alert, message, Prisma model, database row, permission, route, export, legacy alias, native payload, or restored capability.
+- **Evidence boundary:** Real manager/practitioner policy, production persistence and transactions, authorization, source adapters, operator acceptance, representative scale, offline/shared-device behavior, notification and parent delivery, assistive technology, exports, native clients, and selected-system polish remain release gates.
+- **Next action:** Phase 4 is closed. Receive the explicit Daylight, Signal, or Carebook selection, then write the final brand/design constitution, codify selected production tokens, and begin the first server-owned vertical pilot. Until that irreversible decision, continue only reversible contracts that do not alter production visuals.
+- **Progress earned:** 1 percentage point; Phase 4 reaches 12 of 12% and total reaches 55%.
 
 ## Work Log Template
 
