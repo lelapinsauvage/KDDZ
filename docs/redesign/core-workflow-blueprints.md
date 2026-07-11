@@ -484,6 +484,8 @@ The handover boundary is now executable in `src/lib/redesign-handover-contracts.
 
 The cross-domain action boundary is now executable in `src/lib/redesign-action-center-contracts.ts` and `/design-lab/action-center`, with evidence in `action-center-contract.md`. It proves capability-safe counts, deterministic attention grouping, explicit ownership, bounded deferral that preserves canonical due time, and closure only from a newer source revision with evidence. It remains synthetic and additive; production adapters, persistence, escalation, authorization, operator validation, and parity migration are still open.
 
+The cross-domain child context is now executable in `src/lib/redesign-child-workspace-contracts.ts` and `/design-lab/child-workspace`, with evidence in `child-workspace-contract.md`. It proves base child access, independently authorized sections/events/notices, published parent-safe summaries, provenance, full timestamps, and append-only correction with audit retention. It remains synthetic and additive; production source adapters, section queries, correction persistence, capability integration, parent/native validation, and parity migration are still open.
+
 ## Open Validation
 
 - Operator sequencing at opening, lunch cover, handover, and closing.

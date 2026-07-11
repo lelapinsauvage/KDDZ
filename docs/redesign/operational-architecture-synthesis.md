@@ -98,6 +98,8 @@ Compatibility projections preserve imported structures while canonical objects a
 
 The territory-neutral `WorkItem` projection is now executable in `src/lib/redesign-action-center-contracts.ts` and `/design-lab/action-center`, with evidence in `action-center-contract.md`. It keeps capability/scope filtering ahead of counts and separates viewed, claimed, deferred, and source-resolved facts. It remains synthetic and additive; source adapters, persistence, escalation policy, authorization, and parity migration are still open.
 
+The territory-neutral child workspace is now executable in `src/lib/redesign-child-workspace-contracts.ts` and `/design-lab/child-workspace`, with evidence in `child-workspace-contract.md`. It composes independently authorized sections, staff/parent-safe source events, safety notices, provenance, and append-only corrections without loading the restored dossier as one permission. It remains synthetic and additive; production capability integration, source adapters, persistence, operator validation, and parity migration are still open.
+
 ## The Manager Day Model
 
 The primary desktop experience changes emphasis with the operating rhythm while retaining a stable layout.

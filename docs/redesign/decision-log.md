@@ -17,3 +17,11 @@ This log records consequential redesign decisions from this point forward. Earli
 
 - **Creative territory:** Daylight, Signal, or Carebook requires explicit user selection before `docs/brand-design-constitution.md`, final tokens, or production visual migration.
 - **Recommendation:** Daylight remains recommended; `docs/redesign/creative-selection-gate.md` and `docs/redesign/territory-evaluation.md` contain the scored evidence.
+
+## 2026-07-11 - Child workspace access composes by section and event
+
+- **Decision:** Resolve base child access first, then independently authorize workspace sections, timeline events, safety notices, and actions. Publish separate parent-safe content and preserve append-only corrections.
+- **Why:** Current organization-level child access can load a full dossier and cross-domain timeline, while parent adapters, clinical details, finance, calls, drafts, and safeguarding require different policy and language.
+- **Evidence:** `docs/redesign/child-workspace-contract.md`, current child/timeline/subnav actions, parent daily/notification contracts, child parity rows, deterministic role fixtures, and browser evidence recorded with the slice.
+- **Reversibility:** The contract is additive and territory-neutral. Production source adapters, capability decisions, persistence, labels, and selected-system composition remain open.
+- **Parity boundary:** No production child query, mutation, route, output, legacy alias, parent/native contract, or restored capability changed.
