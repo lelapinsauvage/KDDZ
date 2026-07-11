@@ -105,6 +105,8 @@ The territory-neutral medical incident lifecycle is now executable in `src/lib/r
 
 The territory-neutral family ledger is now executable in `src/lib/redesign-family-ledger-contracts.ts` and `/design-lab/finance`, with evidence in `family-ledger-contract.md`. It derives family balance, invoice outstanding, unallocated credit, receipt, parent statement, and correction from one immutable event set while failing closed on imported payment/accounting disagreement. It remains synthetic and additive; production source reconciliation, family/account identity, persistence, transactions, numbering/tax policy, authorization, operator validation, and parity migration are still open.
 
+The territory-neutral inspection package is now executable in `src/lib/redesign-inspection-package-contracts.ts` and `/design-lab/inspection`, with evidence in `inspection-package-contract.md`. It keeps policy profile, manifest, evidence revisions, exceptions, recipient redactions, server jobs, checksums, access grants, downloads, and source drift inside one accountable package while treating SQL backup as a separate restoration artifact. It remains synthetic and additive; approved policy, production source adapters and revisions, persistence, private storage, encryption, authorization, retention, operator/inspector validation, and parity migration are still open.
+
 ## The Manager Day Model
 
 The primary desktop experience changes emphasis with the operating rhythm while retaining a stable layout.

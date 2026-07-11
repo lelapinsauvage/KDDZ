@@ -5,6 +5,14 @@
 
 This log records consequential redesign decisions from this point forward. Earlier decisions remain authoritative in their linked research, contract, and progress artifacts; this file does not rewrite their evidence or imply an unselected creative direction.
 
+## 2026-07-11 - Inspection completeness begins with a versioned manifest
+
+- **Decision:** Build inspection output only from a policy-supplied requirement profile and immutable evidence manifest. Bind exceptions and redactions to exact source revisions, generate through a retryable server job, checksum the manifest and artifact, expire recipient access, audit downloads, and mark prior output historical after source drift. Keep SQL backup categorically separate.
+- **Why:** Current exports are feature-specific tables or browser downloads, current compliance documents lack package provenance, and the admin SQL export is for restoration. Presenting any of them as complete inspection evidence would overstate coverage and can leak or omit sensitive records.
+- **Evidence:** `docs/redesign/inspection-package-contract.md`, J07 journey audit and blueprint, branch/staff compliance schema and actions, current export/monthly-report/storage/SQL-backup surfaces, deterministic contract verifier, 33 Agent Browser state/role/viewport scans, and live manager/retry/expiry/contributor transitions.
+- **Reversibility:** The contract and prototype are additive, synthetic, territory-neutral, and policy-neutral. Production models, source adapters, first-market requirements, visual treatment, and activation remain open.
+- **Parity boundary:** No production export, report, backup, storage object, compliance document, query, mutation, schema, route, permission, native payload, legacy alias, or restored capability changed.
+
 ## 2026-07-11 - Action Center closes only from source evidence
 
 - **Decision:** Keep viewed, claimed, deferred, and source-resolved as independent facts. Remove an item from active work only after a newer canonical source revision supplies resolution evidence.

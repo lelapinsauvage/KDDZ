@@ -490,6 +490,8 @@ The J04 medical/safety boundary is now executable in `src/lib/redesign-medical-i
 
 The J06 family finance boundary is now executable in `src/lib/redesign-family-ledger-contracts.ts` and `/design-lab/finance`, with evidence in `family-ledger-contract.md`. It proves explicit source conflict, integer minor-unit money, historical duplicate review, atomic fresh-revision allocation, one shared balance invariant, receipt/delivery separation, role-safe parent projection, and append-only payment reversal. It remains synthetic and additive; production source reconciliation, persistence, transactions, invoice policy, authorization, operator validation, native/parent integration, and parity migration are still open.
 
+The J07 inspection-package boundary is now executable in `src/lib/redesign-inspection-package-contracts.ts` and `/design-lab/inspection`, with evidence in `inspection-package-contract.md`. It proves policy-supplied requirement profiles, exact evidence revisions, blocking preflight, authorized exceptions, recipient redaction, capability-safe no-leak projection, retryable server generation, checksummed provenance, expiring access, download audit, historical source drift, and the SQL-backup distinction. It remains synthetic and additive; approved first-market policy, production persistence, source adapters, worker/storage security, authorization, operator and inspector validation, retention, and parity migration are still open.
+
 ## Open Validation
 
 - Operator sequencing at opening, lunch cover, handover, and closing.
