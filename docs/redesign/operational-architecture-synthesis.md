@@ -97,6 +97,7 @@ The names may change during domain design; their responsibilities may not.
 | StaffingPlan, Shift, Qualification, and CoverAssignment | Trustworthy room readiness | demand source, availability, presence, qualification, absence, break, target/source consequence, expiry |
 | InspectionPackage and ManifestEntry | Trustworthy regulator evidence | preflight, source revision, checksum, redaction, status, recipient |
 | CommunicationPublication, Conversation, and DeliveryAttempt | Accountable family communication | content revision, frozen audience, isolated participants, channel receipt, reply obligation, correction |
+| AcademicRolloverSession, Plan, BackupArtifact, and Receipt | Recoverable year transition | source revisions, dry run, impact, checksum, restore proof, approvals, lock, validation, rollback, audit |
 
 Compatibility projections preserve imported structures while canonical objects are introduced. The UI must not display a synthesized value as authoritative until its source contract is implemented.
 
@@ -117,6 +118,8 @@ The territory-neutral occupancy plan is now executable in `src/lib/redesign-occu
 The territory-neutral staffing plan is now executable in `src/lib/redesign-staffing-rota-contracts.ts` and `/design-lab/staffing`, with evidence in `staffing-rota-contract.md`. It keeps availability, shifts, room assignments, presence, effective qualification, absence, break obligations, candidate previews, and temporary cover distinct while proving both target-room and source-room consequences. It remains synthetic and additive; production policy, source adapters, persistence, transactions, payroll effects, authorization, operator validation, and parity migration are still open.
 
 The territory-neutral inspection package is now executable in `src/lib/redesign-inspection-package-contracts.ts` and `/design-lab/inspection`, with evidence in `inspection-package-contract.md`. It keeps policy profile, manifest, evidence revisions, exceptions, recipient redactions, server jobs, checksums, access grants, downloads, and source drift inside one accountable package while treating SQL backup as a separate restoration artifact. It remains synthetic and additive; approved policy, production source adapters and revisions, persistence, private storage, encryption, authorization, retention, operator/inspector validation, and parity migration are still open.
+
+The territory-neutral academic rollover is now executable in `src/lib/redesign-academic-rollover-contracts.ts` and `/design-lab/academic-rollover`, with evidence in `academic-rollover-contract.md`. It keeps source manifests, plan revisions, read-only preflight, impact confirmation, immutable backup, isolated restore proof, distinct approvals, locked execution, post-cutover validation, rollback, and audit separate while preserving the restored `ArchiveAndCreate`, `SchoolYear`, `ChildHistory`, `LegacyYearDatabase`, SQL export, and PHP route boundaries. It remains synthetic and additive; dedicated production authorization, persistence, approved recovery engine/policy, restore worker, storage immutability, concurrency, optional-import proof, operator exercises, and parity migration are still open.
 
 ## The Manager Day Model
 

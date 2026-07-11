@@ -600,6 +600,7 @@ Commits must be small enough to review but complete enough to run. Do not mix un
 - `docs/redesign/communication-contract.md`: executable source-linked draft, recipient snapshot, isolated family conversation, channel delivery, reply, archive, correction, and additive migration contract.
 - `docs/redesign/staffing-rota-contract.md`: executable shift, presence, qualification, absence, cover, break, source-revision, and additive migration contract.
 - `docs/redesign/occupancy-planning-contract.md`: executable roster, booking, live occupancy, future availability, place hold, capacity block, funding-hour, and additive migration contract.
+- `docs/redesign/academic-rollover-contract.md`: executable source-lock, dry-run, recovery proof, dual approval, atomic cutover, validation, rollback, audit, and additive migration contract.
 - `docs/redesign/information-architecture.md`: navigation and sitemap decisions.
 - `docs/redesign/route-compatibility-plan.md`: desired/current route map, legacy identity/query rules, native separation, analytics privacy, history behavior, and staged migration gate.
 - `docs/redesign/navigation-capability-fixtures.md`: executable capability-derived staff destinations, branch context, default-deny behavior, and production authorization boundary.

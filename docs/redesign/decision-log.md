@@ -5,6 +5,14 @@
 
 This log records consequential redesign decisions from this point forward. Earlier decisions remain authoritative in their linked research, contract, and progress artifacts; this file does not rewrite their evidence or imply an unselected creative direction.
 
+## 2026-07-11 - A database file is not a recoverable academic rollover
+
+- **Decision:** Bind a versioned carry-forward plan to a complete source manifest and read-only preflight; require an immutable checksummed backup, isolated restore proof, distinct operator/data-custodian approvals, fresh-source organization lock, atomic cutover receipt, post-cutover invariants, and verified rollback before the lifecycle can complete.
+- **Why:** The restored action has valuable SQL-snapshot and transactional progression behavior, but upload success cannot prove restoration, transaction acceptance cannot prove all downstream invariants, and broad organization access cannot safely authorize an irreversible year transition.
+- **Evidence:** `docs/redesign/academic-rollover-contract.md`, current new-year/school-year actions, SQL dump engine, object storage, `SchoolYear`/`ChildHistory`/`LegacyYearDatabase` schema, legacy `ArchiveAndCreate` flow, parity verifier, deterministic lifecycle verifier, and browser evidence recorded with this slice.
+- **Reversibility:** The contract and prototype are additive, synthetic, territory-neutral, and do not execute against production. Production capabilities, persistence, recovery policy/worker, storage guarantees, optional imports, operator drills, and visual treatment remain open.
+- **Parity boundary:** No production year, child, teacher, class, branch, history, legacy registry, backup object, action, schema, row, route, permission, PHP alias, export, parent/native payload, or restored capability changed.
+
 ## 2026-07-11 - Parent thread access is relationship-scoped before projection
 
 - **Decision:** Resolve one active parent relationship before returning a legacy thread, filter shared-thread rows before dedupe/payload/read reset, apply the same filter to legacy list previews, and return the existing empty compatibility payload when an unauthenticated multi-parent thread cannot be resolved safely.

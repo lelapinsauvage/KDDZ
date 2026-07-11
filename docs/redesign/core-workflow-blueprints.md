@@ -496,6 +496,8 @@ The J06 family finance boundary is now executable in `src/lib/redesign-family-le
 
 The J07 inspection-package boundary is now executable in `src/lib/redesign-inspection-package-contracts.ts` and `/design-lab/inspection`, with evidence in `inspection-package-contract.md`. It proves policy-supplied requirement profiles, exact evidence revisions, blocking preflight, authorized exceptions, recipient redaction, capability-safe no-leak projection, retryable server generation, checksummed provenance, expiring access, download audit, historical source drift, and the SQL-backup distinction. It remains synthetic and additive; approved first-market policy, production persistence, source adapters, worker/storage security, authorization, operator and inspector validation, retention, and parity migration are still open.
 
+The Wave 6 academic-rollover boundary is now executable in `src/lib/redesign-academic-rollover-contracts.ts` and `/design-lab/academic-rollover`, with evidence in `academic-rollover-contract.md`. It proves complete and non-regressing source manifests, versioned carry-forward plans, read-only blocker/impact preflight, approved immutable backup metadata, isolated restore proof, distinct revision-bound approvals, organization lock, fresh-source atomic execution, post-cutover invariants, verified rollback, idempotency, and role-safe evidence. It remains synthetic and additive; dedicated production capabilities, persisted operation records, restore worker/storage guarantees, optional-import effects, concurrency/scale, operator drills, and compatibility migration are still open.
+
 ## Open Validation
 
 - Operator sequencing at opening, lunch cover, handover, and closing.
