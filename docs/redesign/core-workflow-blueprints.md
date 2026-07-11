@@ -482,6 +482,8 @@ The territory-neutral behavior foundation for steps 2-5 is now executable in `sr
 
 The handover boundary is now executable in `src/lib/redesign-handover-contracts.ts` and `/design-lab/handover`, with evidence in `handover-contract.md`. It proves that unknown sources and drafts block closure, only policy-allowed work can carry, incoming ownership requires acknowledgment, and close revalidates every source revision while retaining carried work. It remains synthetic and additive; operator policy, persistence, authorization, parent/native consequences, and parity migration are still open.
 
+The cross-domain action boundary is now executable in `src/lib/redesign-action-center-contracts.ts` and `/design-lab/action-center`, with evidence in `action-center-contract.md`. It proves capability-safe counts, deterministic attention grouping, explicit ownership, bounded deferral that preserves canonical due time, and closure only from a newer source revision with evidence. It remains synthetic and additive; production adapters, persistence, escalation, authorization, operator validation, and parity migration are still open.
+
 ## Open Validation
 
 - Operator sequencing at opening, lunch cover, handover, and closing.

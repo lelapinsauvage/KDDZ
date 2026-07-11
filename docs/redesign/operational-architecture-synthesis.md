@@ -96,6 +96,8 @@ The names may change during domain design; their responsibilities may not.
 
 Compatibility projections preserve imported structures while canonical objects are introduced. The UI must not display a synthesized value as authoritative until its source contract is implemented.
 
+The territory-neutral `WorkItem` projection is now executable in `src/lib/redesign-action-center-contracts.ts` and `/design-lab/action-center`, with evidence in `action-center-contract.md`. It keeps capability/scope filtering ahead of counts and separates viewed, claimed, deferred, and source-resolved facts. It remains synthetic and additive; source adapters, persistence, escalation policy, authorization, and parity migration are still open.
+
 ## The Manager Day Model
 
 The primary desktop experience changes emphasis with the operating rhythm while retaining a stable layout.
