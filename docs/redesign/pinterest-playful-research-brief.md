@@ -1,12 +1,20 @@
 # Kiddz Online Playful Pinterest Research Brief
 
 **Date:** 2026-07-13
-**Status:** Collection complete and verified in Pinterest
+**Status:** Foundational mechanics corpus complete; supporting research only
 **Board target:** `Kiddz Online - Playful Brand Research 2026`
 **Board:** https://fr.pinterest.com/mawzeeee/kiddz-online-playful-brand-research-2026/
 **Minimum corpus:** 300 qualified pins across six sections, 50 per section
 **Verified corpus:** 300 pins across six sections, exactly 50 per section
-**Branding status:** Research gate passed; direction development may begin
+**Branding status:** Superseded as the primary creative source by
+`docs/redesign/brand-world-art-direction-research.md`
+
+**Primary brand-world board:**
+https://fr.pinterest.com/mawzeeee/kiddz-online-brand-world-art-direction-2026/
+
+This board remains useful for geometry, logo motion, character construction,
+type, pictograms, and product restraint. It must not define the creative idea
+or pull Kiddz toward a generic SaaS dashboard aesthetic.
 
 ## Creative-Director Lens
 

@@ -7,10 +7,12 @@
 **Working surface:** `/design-lab/brand-directions`
 **Finalist identity proof:** `/design-lab/brand-directions/identity-worlds`
 
-The working surface is the required decision entry point. It opens with no
-active direction and shows the refreshed Pinterest source board, ten direct
-references, four taste clusters, and all six systems together. Detailed proofs
-remain available from each option, but no finalist is preselected.
+**Brand-world research:** `docs/redesign/brand-world-art-direction-research.md`
+
+The existing working surface remains historical evidence, not the next decision
+gate. The product owner rejected the SaaS-led character of that round. The next
+review must begin with five or six complete brand-world hypotheses derived from
+the verified art-direction corpus before any production UI work resumes.
 
 ## Why The Direction Gate Was Reset
 
@@ -85,6 +87,12 @@ Render identical nursery content in every system. Test calm, forecast, critical,
 **Gate:** no production tokens or page migration before the owner selects one direction or a precisely defined hybrid.
 
 ## Source Stack
+
+The primary creative-source corpus is now the public board documented in
+`docs/redesign/brand-world-art-direction-research.md`: 300 references across
+color, shape mythology, character lore, image-making, physical expression, and
+living identity. The earlier product and identity references remain supporting
+evidence only.
 
 ### Process and system construction
 

@@ -71,8 +71,15 @@ This log records consequential redesign decisions from this point forward. Earli
 
 ## Open Irreversible Decision
 
-- **Creative territory:** Daylight, Signal, or Carebook requires explicit user selection before `docs/brand-design-constitution.md`, final tokens, or production visual migration.
-- **Recommendation:** Daylight remains recommended; `docs/redesign/creative-selection-gate.md` and `docs/redesign/territory-evaluation.md` contain the scored evidence.
+- **Creative territory:** No visual direction is selected. Daylight, Signal,
+  Carebook, Kinetic Kindness, Living Record, and the earlier SaaS-led proofs are
+  historical evidence only.
+- **Current gate:** Build five or six complete brand-world hypotheses from the
+  verified 300-pin art-direction corpus before selecting finalists or changing
+  production tokens. See `docs/redesign/brand-world-art-direction-research.md`.
+- **Production boundary:** No final tokens, component migration, dashboard
+  redesign, or `docs/brand-design-constitution.md` until the product owner
+  selects one direction after controlled world and product proofs.
 
 ## 2026-07-11 - Child workspace access composes by section and event
 
