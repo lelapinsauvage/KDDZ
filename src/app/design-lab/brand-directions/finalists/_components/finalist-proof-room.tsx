@@ -192,7 +192,7 @@ export function FinalistProofRoom({
             <strong>Final brand lock still open.</strong>
             <span>{active.motion} Production components, tokens, and page migration remain paused.</span>
           </div>
-          <Link href="/design-lab/brand-directions/evaluation">Return to weighted verdict <ArrowRight aria-hidden="true" /></Link>
+          <Link href={`/design-lab/brand-directions/identity-worlds?direction=${activeId}`}>Test the identity world <ArrowRight aria-hidden="true" /></Link>
         </footer>
       </main>
     </MotionConfig>

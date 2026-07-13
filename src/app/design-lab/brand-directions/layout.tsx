@@ -14,6 +14,7 @@ import {
 import "./brand-directions.css"
 import "./evaluation/evaluation.css"
 import "./finalists/finalists.css"
+import "./identity-worlds/identity-worlds.css"
 
 const inter = Inter({ subsets: ["latin"], variable: "--brand-font-inter", display: "swap" })
 const fredoka = Fredoka({ subsets: ["latin"], variable: "--brand-font-fredoka", display: "swap" })

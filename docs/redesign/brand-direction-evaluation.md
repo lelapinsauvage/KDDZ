@@ -5,6 +5,8 @@
 **Live evidence:** `/design-lab/brand-directions/evaluation`
 **Final proof:** `/design-lab/brand-directions/finalists`
 **Type/color readiness:** `docs/redesign/finalist-type-color-readiness.md`
+**Identity-world proof:** `/design-lab/brand-directions/identity-worlds`
+**Identity-world dossier:** `docs/redesign/finalist-identity-worlds.md`
 **Production redesign:** Paused
 
 This dossier pressure-tests the six V2 creative directions. It ranks strategic
@@ -176,11 +178,14 @@ direction should not set the brand constitution in its current form.
    surfaces preserve the same source content and behavior for both finalists,
    while its readiness appendix exposes type roles, 200% specimen behavior,
    French, Arabic RTL, mixed numerals, and semantic color.
-4. Select Kinetic Kindness or Living Record. Do not create a hybrid by taste.
-5. After the lock, codify the brand constitution before production components:
+4. Review `/design-lab/brand-directions/identity-worlds`; it keeps the logo seed,
+   source meaning, application jobs, and decision criteria constant while
+   comparing memory asset, voice, image grammar, motion, and brand expression.
+5. Select Kinetic Kindness or Living Record. Do not create a hybrid by taste.
+6. After the lock, codify the brand constitution before production components:
    purpose, promise, personality, distinctive assets, typography, color roles,
    illustration/imagery, voice, motion, accessibility, and do-not rules.
-6. Test the chosen constitution on the same three proof surfaces: live
+7. Test the chosen constitution on the same three proof surfaces: live
    operations, a high-trust record, and a parent-facing moment.
 
 ## External Research Basis

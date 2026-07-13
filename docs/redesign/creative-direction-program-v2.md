@@ -5,6 +5,7 @@
 **Decision owner:** Product owner
 **Production redesign:** Paused until a direction is explicitly locked
 **Working surface:** `/design-lab/brand-directions`
+**Finalist identity proof:** `/design-lab/brand-directions/identity-worlds`
 
 ## Why The Direction Gate Was Reset
 
@@ -23,6 +24,10 @@ The selected direction must answer:
 3. Which two or three assets can become unmistakably Kiddz over time?
 4. How does the brand behave in a calm moment, an urgent moment, and a completed moment?
 5. Can the system survive a ratio warning, a 40-row table, a medical form, an invoice, and a parent message without becoming generic or childish?
+
+The final comparison now includes `docs/redesign/finalist-identity-worlds.md`,
+which tests both finalists through the same approved logo seed, care meanings,
+application jobs, and decision criteria before production selection.
 
 ## Research Operating System
 

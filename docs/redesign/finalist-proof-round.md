@@ -3,6 +3,7 @@
 **Date:** 2026-07-13
 **Status:** Final proof complete; owner brand lock open
 **Live evidence:** `/design-lab/brand-directions/finalists`
+**Identity-world evidence:** `/design-lab/brand-directions/identity-worlds`
 **Production redesign:** Paused
 
 This is the single explicitly bounded proof round allowed by the weighted
@@ -204,6 +205,11 @@ controls, zero axe violations, and zero incomplete findings. Browser interaction
 also confirmed text scale survives finalist switching without dropping unrelated
 query state. Both original cover/review/approval/parent-preview workflows pass
 again after the appendix was added.
+
+The subsequent identity-world proof keeps the approved logo render, O-ring seed,
+source meaning, three application jobs, and five decision criteria constant while
+testing memory asset, voice, image grammar, motion signature, and cross-surface
+expression. See `docs/redesign/finalist-identity-worlds.md`.
 
 ## Open Gate
 
