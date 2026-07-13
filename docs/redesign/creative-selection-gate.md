@@ -1,11 +1,18 @@
 # Creative Selection Gate
 
-**Status:** Decision packet complete; explicit production selection open
+**Status:** Superseded on 2026-07-13; retained as first-round evidence
 **Review surface:** `/design-lab/territories`
 **Verifier:** `src/scripts/verify-redesign-territory-selection.ts`
 **Production UI changed:** No
 
-## Decision Required
+> The product owner rejected the first-round recommendation because the three
+> systems did not diverge enough in brand identity or product expression. Do not
+> use the Daylight recommendation to set production tokens. The active program is
+> `creative-direction-program-v2.md`, with six hypotheses in
+> `creative-directions-v2.md` and the review surface at
+> `/design-lab/brand-directions`.
+
+## Historical Decision Requested
 
 Select one production creative constitution:
 
@@ -15,7 +22,7 @@ Select one production creative constitution:
 
 The three prototypes use identical Riverside state, rooms, work, Children, Daily care, and Safety review flows. Selecting a territory therefore chooses expression, not a different feature set.
 
-## Recommendation
+## Historical Recommendation
 
 Advance **Daylight**.
 
@@ -64,4 +71,4 @@ The selection surface uses real captured prototype screens, seven weighted crite
 
 Actual browser zoom, screen readers, real OS forced colors/reduced motion, color-vision simulation, native devices, nursery operators, and field performance remain later acceptance gates. Those limits do not require a fourth visual territory; they remain mandatory tests for the selected system.
 
-No production direction is selected until the user explicitly chooses **Daylight**, **Signal**, or **Carebook**. After that decision, the next work is the brand/design constitution, final tokens, component APIs, and the desktop-first shell/Today pilot.
+No production direction was selected from **Daylight**, **Signal**, or **Carebook**. The active six-system gate replaces that choice before any brand/design constitution, final tokens, component APIs, or production pilot.

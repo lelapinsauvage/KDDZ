@@ -1,8 +1,8 @@
 # Kiddz Online Redesign Progress
 
-**Last updated:** 2026-07-11
+**Last updated:** 2026-07-13
 **Plan:** `docs/redesign-master-plan.md`
-**Program state:** Product discovery and benchmark research closed; territory-neutral staff IA, capability-derived navigation and global search, Calls-under-Messages placement, route compatibility, native/parent convergence, executable state matrix, multi-room live operations, accountable handover closure, source-linked Action Center behavior, capability-safe child workspace behavior, accountable daily care, accountable family communication, accountable medical incident lifecycle, reconciled family-ledger behavior, trustworthy inspection packaging, source-linked occupancy/future-place planning, accountable staffing/rota readiness, and recoverable academic rollover, plus motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; Phase 4 is complete, the creative selection packet is ready, and the explicit production choice remains open
+**Program state:** Product discovery and benchmark research closed; territory-neutral staff IA, capability-derived navigation and global search, Calls-under-Messages placement, route compatibility, native/parent convergence, executable state matrix, multi-room live operations, accountable handover closure, source-linked Action Center behavior, capability-safe child workspace behavior, accountable daily care, accountable family communication, accountable medical incident lifecycle, reconciled family-ledger behavior, trustworthy inspection packaging, source-linked occupancy/future-place planning, accountable staffing/rota readiness, and recoverable academic rollover, plus motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; Phase 4 is complete, the rejected three-territory recommendation is historical, the six-system creative-direction program is active, and the explicit production choice remains open
 **Reported progress:** **55% done / 45% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
@@ -14,7 +14,7 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | 0. Safety and baseline | 3% | Complete | 3% | Clean branch, approved asset preservation, baseline screenshots and checks |
 | 1. Product discovery | 12% | Complete | 12% | Flow inventory, role/task matrix, current journeys, friction/risk register |
 | 2. Benchmark research | 10% | Complete | 10% | Pinterest taxonomy, Mobbin flow sheets, direct-competitor operations, benchmark synthesis |
-| 3. Brand strategy and direction | 10% | In progress | 6% | Strategy, three complete territories, selected brand constitution |
+| 3. Brand strategy and direction | 10% | In progress | 6% | Strategy, six complete creative systems, selected brand constitution |
 | 4. IA and core UX | 12% | Complete | 12% | Sitemap, navigation model, Today model, tested wireframes |
 | 5. Design system | 13% | In progress | 12% | Tokens, components, motion, responsive, accessibility, performance, and data-delivery foundations |
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
@@ -116,11 +116,12 @@ The Mobbin MCP is registered, authenticated, and available in this task. Two flo
 
 ## Next Work Queue
 
-1. Receive the explicit Daylight, Signal, or Carebook production selection from the completed creative-selection packet.
-2. After selection, codify the final brand constitution, visual tokens, themes, component APIs, and motion tokens.
-3. Build the desktop-first production pilot across shell, Today, live attendance/ratios, and child profile with parity evidence.
-4. Validate the pilot with role, branch, permission, database, responsive, accessibility, and performance fixtures before rollout.
-5. Continue operator, jurisdiction, real-device, and direct-nursery questions at their implementation gates.
+1. Review the six systems in `/design-lab/brand-directions` and select, reject, or precisely hybridize one strategic direction.
+2. Expand the preferred one or two systems through the controlled dense-record, form, critical-state, completion, and cross-device specimen set before final selection if needed.
+3. After selection, codify the final brand constitution, visual tokens, themes, component APIs, imagery rules, and motion tokens.
+4. Build the desktop-first production pilot across shell, Today, live attendance/ratios, and child profile with parity evidence.
+5. Validate the pilot with role, branch, permission, database, responsive, accessibility, and performance fixtures before rollout.
+6. Continue operator, jurisdiction, real-device, and direct-nursery questions at their implementation gates.
 
 ## Definition of a Completed Tracker Item
 
@@ -145,6 +146,7 @@ An item is complete only when:
 | 2026-07-10 | Keep functional parity as a parallel acceptance track | A beautiful redesign cannot remove restored legacy behavior | No for removal; mapping is revisable |
 | 2026-07-10 | Create `ux-redesign-awards` directly from verified `main` | All local and remote restoration/design refs shared the same base, and the new name separates accepted work from rejected experiments | Yes |
 | 2026-07-10 | Preserve the approved Remotion identity work and exclude the dashboard card lab | The user approved the logo direction and explicitly rejected the dashboard experiment | Yes |
+| 2026-07-13 | Supersede the Daylight recommendation and reopen the creative gate with six strategic systems | The first three territories changed styling without diverging enough in identity, product expression, or strategic belief | Yes; no production tokens were selected |
 | 2026-07-10 | Organize the product around a live, explainable operating model and owned resolution | Current modules expose facts but force managers to assemble readiness and responsibility mentally | Yes, pending prototype and operator validation |
 | 2026-07-10 | Separate brand, guidance, operational, and evidence expression levels | Kiddz needs warmth and recognition without weakening dense or high-risk work | Yes, through territory testing |
 | 2026-07-10 | Design desktop, tablet, mobile, parent, and native projections around distinct jobs | Runtime measurements show that stacked desktop hierarchy preserves too much decision load | Yes, while shared object contracts remain fixed |
@@ -728,6 +730,18 @@ An item is complete only when:
 - **Evidence boundary:** Dedicated rollover capabilities, persistent operation/plan/source/receipt models, approved recovery engine and retention policy, immutable private storage, production-equivalent isolated restore worker, optional-import domain effects, lock/concurrency/scale tests, operator/data-custodian/support exercises, assisted rollback drill, production authorization, and selected-system polish remain release gates.
 - **Next action:** Continue the next reversible Wave 6/hardening foundation while awaiting explicit Daylight, Signal, or Carebook selection; production visual migration and Phase 6/7 credit remain gated on that choice.
 - **Progress earned:** 0 percentage points. This closes academic-rollover trust and recovery behavior at the reversible contract layer but does not satisfy selected-direction production implementation or rollout; total remains 55%.
+
+### 2026-07-13 - Phase 3 six-system creative-direction reset
+
+- **Question:** Can the brand decision move upstream from dashboard styling to six genuinely different systems with explicit strategy, identity, typography, color, image, voice, motion, product proof, and failure criteria?
+- **Evidence:** Rejected Daylight/Signal/Carebook comparison; approved Remotion identity seed; Pinterest and ElevenLabs references; existing brand strategy and product contracts; current Mobbin screens for Duolingo, Headspace, Notion, and Revolut; official Design Council, Apple HIG, WCAG 2.2, GOV.UK, Notion/Headspace, and Duolingo identity guidance.
+- **Decision:** Supersede the provisional Daylight recommendation, preserve it only as first-round evidence, pause production redesign, and compare Kinetic Kindness, Open Studio, Living Record, Bright Signal, Care Commons, and Quiet Magic with no preselected winner.
+- **Artifacts:** `docs/redesign/creative-direction-program-v2.md`, `docs/redesign/creative-directions-v2.md`, superseded `creative-selection-gate.md`, `/design-lab/brand-directions`, and `src/scripts/verify-redesign-brand-direction-program.ts`.
+- **Verification:** The source verifier proves six unique strategies, motion signatures, type systems, six-role palettes, explicit risks, research lanes, and no production selection. TypeScript, focused ESLint, diff hygiene, and the production build pass. Agent Browser verifies all six direct-review URLs independently at `1440 x 900` and `390 x 844`: each renders the requested direction, one H1, one active choice, zero page or mobile room overflow, zero unnamed or undersized user controls, and zero axe violations or incomplete findings. Motion replay increments the rendered signature state. No chart is present.
+- **Parity:** The slice adds an isolated design-lab route and documentation only. No production component, route behavior, query, mutation, database row, permission, legacy alias, native payload, or restored capability changed.
+- **Evidence boundary:** The systems are brand-direction proofs, not final logos or production components. Real operator preference, trademark review, font licensing/fallback approval, illustration/photography production, sound, dark mode, RTL/200% text, assistive technology, and the complete dense-surface specimen set remain selection or constitution gates.
+- **Next action:** Review the six systems with the product owner. Expand the strongest one or two through the controlled dense record, form, critical, completion, and cross-device specimen set before final constitution if the brand choice is not yet decisive.
+- **Progress earned:** 0 percentage points. The creative gate is materially stronger but remains unselected, so Phase 3 stays 6 of 10% and total remains 55%.
 
 ## Work Log Template
 
