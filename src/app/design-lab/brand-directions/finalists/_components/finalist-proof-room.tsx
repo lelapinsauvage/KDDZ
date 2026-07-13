@@ -12,11 +12,13 @@ import {
   Clock3,
   FileCheck2,
   Heart,
+  Languages,
   Leaf,
   LockKeyhole,
   MessageCircle,
   Moon,
   ShieldCheck,
+  Type,
   UserCheck,
   UsersRound,
   Utensils,
@@ -31,6 +33,7 @@ import {
   operationsFixture,
   parentFixture,
   type FinalistId,
+  type FinalistTextScale,
 } from "../../_finalist-data"
 
 type ReviewState = "idle" | "error" | "approved"
@@ -41,9 +44,11 @@ const recordTransition = { type: "spring" as const, stiffness: 250, damping: 32,
 export function FinalistProofRoom({
   axeAuditEnabled,
   initialFinalist,
+  initialTextScale,
 }: {
   axeAuditEnabled: boolean
   initialFinalist: FinalistId
+  initialTextScale: FinalistTextScale
 }) {
   const [activeId, setActiveId] = useState<FinalistId>(initialFinalist)
   const [coverOpen, setCoverOpen] = useState(false)
@@ -51,7 +56,16 @@ export function FinalistProofRoom({
   const [reviewState, setReviewState] = useState<ReviewState>("idle")
   const [parentPreview, setParentPreview] = useState(false)
   const [announcement, setAnnouncement] = useState("")
+  const [textScale, setTextScale] = useState<FinalistTextScale>(initialTextScale)
   const active = finalistDefinitions[activeId]
+
+  const replaceQuery = (direction: FinalistId, scale: FinalistTextScale) => {
+    const params = new URLSearchParams(window.location.search)
+    params.set("direction", direction)
+    if (scale === "200") params.set("text", "200")
+    else params.delete("text")
+    window.history.replaceState(null, "", `${window.location.pathname}?${params.toString()}`)
+  }
 
   const selectFinalist = (id: FinalistId) => {
     setActiveId(id)
@@ -60,7 +74,13 @@ export function FinalistProofRoom({
     setReviewState("idle")
     setParentPreview(false)
     setAnnouncement(`${finalistDefinitions[id].name} proof loaded.`)
-    window.history.replaceState(null, "", `?direction=${id}`)
+    replaceQuery(id, textScale)
+  }
+
+  const selectTextScale = (scale: FinalistTextScale) => {
+    setTextScale(scale)
+    setAnnouncement(`${scale} percent type specimen loaded.`)
+    replaceQuery(activeId, scale)
   }
 
   const toggleCover = () => {
@@ -89,13 +109,14 @@ export function FinalistProofRoom({
         className="finalist-room"
         data-axe-audit={axeAuditEnabled ? "axe" : undefined}
         data-finalist={activeId}
+        data-text-scale={textScale}
       >
         <AxeAuditHarness
           activeRootSelector='.finalist-room[data-axe-audit="axe"]'
           auditNodeId="kiddz-finalist-proof-axe-audit"
           auditTriggerId="kiddz-run-finalist-proof-axe-audit"
           enabled={axeAuditEnabled}
-          signature={`${activeId}:${coverOpen}:${reviewState}:${parentPreview}`}
+          signature={`${activeId}:${coverOpen}:${reviewState}:${parentPreview}:${textScale}`}
           surfaceToken="--finalist-surface"
         />
         <div aria-live="polite" className="sr-only">{announcement}</div>
@@ -157,6 +178,11 @@ export function FinalistProofRoom({
               state={reviewState}
             />
             <ParentProof onTogglePreview={toggleParentPreview} previewOpen={parentPreview} />
+            <TypeReadinessProof
+              finalist={activeId}
+              onScaleChange={selectTextScale}
+              textScale={textScale}
+            />
           </motion.div>
         </AnimatePresence>
 
@@ -364,6 +390,100 @@ function ParentProof({ onTogglePreview, previewOpen }: { onTogglePreview: () => 
             ) : null}
           </AnimatePresence>
         </aside>
+      </div>
+    </section>
+  )
+}
+
+function TypeReadinessProof({
+  finalist,
+  onScaleChange,
+  textScale,
+}: {
+  finalist: FinalistId
+  onScaleChange: (scale: FinalistTextScale) => void
+  textScale: FinalistTextScale
+}) {
+  const type = finalistDefinitions[finalist].type
+
+  return (
+    <section
+      className="finalist-proof finalist-proof--type-readiness"
+      data-type-scale={textScale}
+      aria-labelledby="type-readiness-title"
+    >
+      <ProofHeader
+        description="The identity must preserve hierarchy, evidence, language, and semantic meaning before any production font becomes a token."
+        id="type-readiness-title"
+        label="Pre-lock readiness · type, language, and color"
+        number="04"
+        title="The brand must survive the words the nursery actually uses"
+      />
+
+      <div className="type-readiness-grid">
+        <article className="type-role-proof">
+          <header>
+            <div><Type aria-hidden="true" /><span><strong>Role separation</strong><small>{type.display} + {type.product}</small></span></div>
+            <div className="type-scale-control" aria-label="Type specimen size" role="group">
+              {(["100", "200"] as const).map((scale) => (
+                <button
+                  aria-pressed={textScale === scale}
+                  key={scale}
+                  onClick={() => onScaleChange(scale)}
+                  type="button"
+                >
+                  {scale}%
+                </button>
+              ))}
+            </div>
+          </header>
+
+          <div className="type-display-sample">
+            <span>Display / brand · {type.display}</span>
+            <strong>Care, visibly handled.</strong>
+            <small>Reserved for identity, opening briefs, and selected low-risk moments.</small>
+          </div>
+
+          <div className="type-product-sample">
+            <span>Product / evidence · {type.product}</span>
+            <strong>{operationsFixture.headline}</strong>
+            <p>{operationsFixture.cover.consequence} Revision 13 remains the source.</p>
+            <bdi>1:6 · 12:30-13:00 · revision 13</bdi>
+          </div>
+        </article>
+
+        <article className="language-proof">
+          <header><Languages aria-hidden="true" /><span><strong>Writing-system readiness</strong><small>Meaning and order must survive fallback</small></span></header>
+          <div lang="en">
+            <span>English · supported</span>
+            <p>Meadow needs qualified cover before 12:30.</p>
+          </div>
+          <div lang="fr">
+            <span>French · supported upstream</span>
+            <p>Meadow a besoin d&apos;un remplacement qualifié avant 12 h 30.</p>
+          </div>
+          <div className="language-proof__arabic" dir="rtl" lang="ar">
+            <span>العربية · عائلة خط مخصصة مطلوبة</span>
+            <p>تحتاج غرفة المرج إلى تغطية مؤهلة قبل ١٢:٣٠.</p>
+            <bdi>Meadow · 1:6 · 12:30</bdi>
+          </div>
+          <footer><strong>{type.arabicStatus}</strong><small>System Arabic is shown deliberately; it is not a selected brand font.</small></footer>
+        </article>
+      </div>
+
+      <div className="type-readiness-meta">
+        <dl>
+          <div><dt>Display coverage</dt><dd>{type.displayCoverage}</dd></div>
+          <div><dt>Product coverage</dt><dd>{type.productCoverage}</dd></div>
+          <div><dt>License</dt><dd>Fredoka, Newsreader, and Inter are SIL OFL 1.1</dd></div>
+          <div><dt>Delivery</dt><dd>Next font self-hosting; no browser request to Google</dd></div>
+        </dl>
+        <div className="semantic-color-proof" aria-label="Semantic color roles" role="group">
+          <span className="is-safe"><i aria-hidden="true"><Check /></i><strong>Safe</strong><small>Confirmed source</small></span>
+          <span className="is-forecast"><i aria-hidden="true"><Clock3 /></i><strong>Forecast</strong><small>Future consequence</small></span>
+          <span className="is-unknown"><i aria-hidden="true">?</i><strong>Unknown</strong><small>Source missing</small></span>
+          <span className="is-critical"><i aria-hidden="true"><AlertTriangle /></i><strong>Critical</strong><small>Immediate risk</small></span>
+        </div>
       </div>
     </section>
   )

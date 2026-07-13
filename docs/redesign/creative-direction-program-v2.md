@@ -140,6 +140,12 @@ record and form, and a parent-safe projection without changing source content or
 behavior. Kinetic Kindness is the research lead; Living Record remains the
 evidence-led alternative; neither is locked for production.
 
+Pre-lock font, script, delivery, 200% specimen, mixed-direction, and semantic
+color due diligence lives in
+`docs/redesign/finalist-type-color-readiness.md` and the readiness appendix on
+the finalist route. The current Latin families are OFL and production-feasible,
+but neither finalist has a selected Arabic family.
+
 | Criterion | Weight | Reject below |
 | --- | ---: | ---: |
 | Strategic distinctiveness | 20% | 3.5 / 5 |

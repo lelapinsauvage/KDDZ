@@ -4,6 +4,7 @@
 **Status:** Research shortlist and controlled finalist proof complete; final brand lock open
 **Live evidence:** `/design-lab/brand-directions/evaluation`
 **Final proof:** `/design-lab/brand-directions/finalists`
+**Type/color readiness:** `docs/redesign/finalist-type-color-readiness.md`
 **Production redesign:** Paused
 
 This dossier pressure-tests the six V2 creative directions. It ranks strategic
@@ -172,7 +173,9 @@ direction should not set the brand constitution in its current form.
 2. Review this evidence and the two finalists second.
 3. Review the completed controlled proof at
    `/design-lab/brand-directions/finalists`; its operations, incident, and parent
-   surfaces preserve the same source content and behavior for both finalists.
+   surfaces preserve the same source content and behavior for both finalists,
+   while its readiness appendix exposes type roles, 200% specimen behavior,
+   French, Arabic RTL, mixed numerals, and semantic color.
 4. Select Kinetic Kindness or Living Record. Do not create a hybrid by taste.
 5. After the lock, codify the brand constitution before production components:
    purpose, promise, personality, distinctive assets, typography, color roles,

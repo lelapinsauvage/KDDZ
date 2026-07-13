@@ -54,6 +54,23 @@ completion, and the difference between internal review and family consequence.
 This surface tests warmth, privacy, projection, family language, and whether the
 brand can feel generous without becoming childish.
 
+### Readiness appendix: type, language, and color
+
+- Display, product, label, body, metadata, and tabular numeric roles remain
+  separate.
+- English, French, and a nested Arabic RTL sample use the same source-backed
+  Meadow consequence and mixed numerals.
+- A reversible 100%/200% specimen control exposes wrapping and hierarchy cost.
+- Semantic safe, forecast, unknown, and critical roles retain text and shape in
+  addition to color.
+- Official licensing, upstream script coverage, Next.js delivery, and Arabic
+  candidate lanes are documented in
+  `docs/redesign/finalist-type-color-readiness.md`.
+
+This appendix does not add a fourth product concept. It closes pre-lock
+feasibility questions shared by both finalists and keeps the dedicated Arabic
+family explicitly open.
+
 ## Invariants
 
 Both finalists use:
@@ -178,8 +195,18 @@ production build pass. The build emits the finalist proof as its own route and
 retains only the previously documented middleware, print CSS, and authenticated
 dynamic-prerender warnings.
 
+The readiness appendix adds eight synchronized states: both finalists at 100%
+and 200% specimen text on `1440 x 900` and `390 x 844`. Every state retained the
+requested finalist, one H1, one active choice, correct display/product family
+separation, Arabic `lang="ar"` and `dir="rtl"`, isolated LTR mixed numerals, four
+labeled semantic states, zero page/panel/grid overflow, zero undersized visible
+controls, zero axe violations, and zero incomplete findings. Browser interaction
+also confirmed text scale survives finalist switching without dropping unrelated
+query state. Both original cover/review/approval/parent-preview workflows pass
+again after the appendix was added.
+
 ## Open Gate
 
 The research and final proof are complete. The irreversible brand selection,
-brand/design constitution, final tokens, component system, and production pilot
-remain open.
+dedicated Arabic family, brand/design constitution, final tokens, component
+system, and production pilot remain open.

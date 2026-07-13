@@ -1,4 +1,5 @@
 export type FinalistId = "kinetic-kindness" | "living-record"
+export type FinalistTextScale = "100" | "200"
 
 export const finalistIds: FinalistId[] = ["kinetic-kindness", "living-record"]
 
@@ -8,12 +9,26 @@ export const finalistDefinitions = {
     short: "Warmth makes completion memorable",
     proofQuestion: "Can expressive warmth remain disciplined during dense and high-trust work?",
     motion: "Spring into place; settle immediately after consequence is clear.",
+    type: {
+      display: "Fredoka",
+      product: "Inter",
+      displayCoverage: "Latin, Latin extended, Hebrew upstream; Latin loaded in this proof",
+      productCoverage: "Latin, Latin extended, Greek, Cyrillic, Vietnamese upstream; Latin loaded here",
+      arabicStatus: "Dedicated Arabic family required before brand lock",
+    },
   },
   "living-record": {
     name: "Living Record",
     short: "Evidence becomes humane and legible",
     proofQuestion: "Can editorial humanity remain fast enough for live operations?",
     motion: "Reveal source and chronology; never animate settled evidence.",
+    type: {
+      display: "Newsreader",
+      product: "Inter",
+      displayCoverage: "Latin, Latin extended, Vietnamese upstream; Latin loaded in this proof",
+      productCoverage: "Latin, Latin extended, Greek, Cyrillic, Vietnamese upstream; Latin loaded here",
+      arabicStatus: "Dedicated Arabic family required before brand lock",
+    },
   },
 } as const
 

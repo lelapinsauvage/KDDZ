@@ -1,5 +1,5 @@
 import { FinalistProofRoom } from "./_components/finalist-proof-room"
-import { finalistIds, type FinalistId } from "../_finalist-data"
+import { finalistIds, type FinalistId, type FinalistTextScale } from "../_finalist-data"
 
 type FinalistProofPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>
@@ -11,11 +11,13 @@ export default async function FinalistProofPage({ searchParams }: FinalistProofP
   const initialFinalist = finalistIds.includes(requested as FinalistId)
     ? requested as FinalistId
     : finalistIds[0]
+  const initialTextScale: FinalistTextScale = params.text === "200" ? "200" : "100"
 
   return (
     <FinalistProofRoom
       axeAuditEnabled={params.audit === "axe"}
       initialFinalist={initialFinalist}
+      initialTextScale={initialTextScale}
     />
   )
 }
