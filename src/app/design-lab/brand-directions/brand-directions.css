@@ -334,6 +334,8 @@
 .brand-room__boundary div { display: flex; flex-direction: column; gap: 5px; }
 .brand-room__boundary strong { color: var(--ink); font-size: 13px; }
 .brand-room__boundary span { font-size: 12px; line-height: 1.4; }
+.brand-room__boundary > a { align-items: center; color: var(--ink); display: inline-flex; font-size: 12px; font-weight: 680; gap: 7px; margin-left: auto; text-decoration: none; white-space: nowrap; }
+.brand-room__boundary > a svg { height: 15px; width: 15px; }
 
 .brand-room[data-direction="open-studio"] .direction-hero__identity { background: #ecece6; }
 .brand-room[data-direction="living-record"] .direction-hero__identity { background: #fffdf8; }
@@ -431,7 +433,8 @@
   .direction-verdict { grid-template-columns: 1fr; }
   .direction-verdict > div { padding: 30px 26px 30px 62px; }
   .direction-verdict svg { top: 32px; left: 26px; }
-  .brand-room__boundary { align-items: flex-start; padding: 0 20px 44px; }
+  .brand-room__boundary { align-items: flex-start; flex-wrap: wrap; padding: 0 20px 44px; }
+  .brand-room__boundary > a { margin-left: 42px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

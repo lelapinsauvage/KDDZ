@@ -1,6 +1,7 @@
 "use client"
 
 import { AlertTriangle, ArrowRight, Check, CircleHelp, Clock3, Play, ShieldCheck, Sparkles, UsersRound } from "lucide-react"
+import Link from "next/link"
 import { useState, type CSSProperties } from "react"
 import { AxeAuditHarness } from "@/components/design-lab/axe-audit-harness"
 import { brandDirections, type BrandDirection, type BrandDirectionId } from "../_data"
@@ -78,6 +79,7 @@ export function BrandDirectionRoom({
           <strong>This is the decision before the design system.</strong>
           <span>After selection: codify the identity, tokens, components, motion, and the first production pilot.</span>
         </div>
+        <Link href="/design-lab/brand-directions/evaluation">Read the research verdict <ArrowRight aria-hidden="true" /></Link>
       </footer>
     </main>
   )

@@ -128,6 +128,11 @@ Render identical nursery content in every system. Test calm, forecast, critical,
 
 ## Selection Scorecard
 
+The completed weighted evaluation and research shortlist live in
+`docs/redesign/brand-direction-evaluation.md` and
+`/design-lab/brand-directions/evaluation`. The scorecard ranks potential; it
+does not select production tokens.
+
 | Criterion | Weight | Reject below |
 | --- | ---: | ---: |
 | Strategic distinctiveness | 20% | 3.5 / 5 |

@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-07-13
 **Plan:** `docs/redesign-master-plan.md`
-**Program state:** Product discovery and benchmark research closed; territory-neutral staff IA, capability-derived navigation and global search, Calls-under-Messages placement, route compatibility, native/parent convergence, executable state matrix, multi-room live operations, accountable handover closure, source-linked Action Center behavior, capability-safe child workspace behavior, accountable daily care, accountable family communication, accountable medical incident lifecycle, reconciled family-ledger behavior, trustworthy inspection packaging, source-linked occupancy/future-place planning, accountable staffing/rota readiness, and recoverable academic rollover, plus motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; Phase 4 is complete, the rejected three-territory recommendation is historical, the six-system creative-direction program is active, and the explicit production choice remains open
+**Program state:** Product discovery and benchmark research closed; territory-neutral staff IA, capability-derived navigation and global search, Calls-under-Messages placement, route compatibility, native/parent convergence, executable state matrix, multi-room live operations, accountable handover closure, source-linked Action Center behavior, capability-safe child workspace behavior, accountable daily care, accountable family communication, accountable medical incident lifecycle, reconciled family-ledger behavior, trustworthy inspection packaging, source-linked occupancy/future-place planning, accountable staffing/rota readiness, and recoverable academic rollover, plus motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; Phase 4 is complete, the rejected three-territory recommendation is historical, the six-system program and weighted research shortlist are complete, Kinetic Kindness and Living Record advance with Care Commons as challenger, and the explicit production choice remains open
 **Reported progress:** **55% done / 45% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
@@ -112,12 +112,12 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 
 ## Current Tooling Note
 
-The Mobbin MCP is registered, authenticated, and available in this task. Two flow studies now cover Revolut, Notion, Cursor, Cosmos, Vercel, Duolingo, Duolingo ABC, Genie, 7shifts, Headspace, Things, Flighty, Airbnb, Stripe, and Apple Reminders. One exact Anything screen was retained; exact multi-step Anything, Brightwheel, and Famly results were unavailable, and unrelated matches were excluded.
+The Mobbin MCP is registered, authenticated, and available in this task. Two flow studies and the direction stress test now cover Revolut, Notion, Cursor, Cosmos, Vercel, Duolingo, Duolingo ABC, Genie, 7shifts, Headspace, Things, Flighty, Airbnb, Stripe, and Apple Reminders. The evaluation directly inspects current Headspace, Duolingo, Revolut, Notion, Vercel, and Cosmos screens. One exact Anything screen was retained; exact multi-step Anything, Brightwheel, and Famly results were unavailable, and unrelated matches were excluded.
 
 ## Next Work Queue
 
-1. Review the six systems in `/design-lab/brand-directions` and select, reject, or precisely hybridize one strategic direction.
-2. Expand the preferred one or two systems through the controlled dense-record, form, critical-state, completion, and cross-device specimen set before final selection if needed.
+1. Review the six systems in `/design-lab/brand-directions`, then the weighted dossier in `/design-lab/brand-directions/evaluation`; select one finalist or name one explicit proof round.
+2. If another proof round is required, expand Kinetic Kindness and Living Record independently through the same dense-record, critical-state, completion, and parent-facing specimens; keep Care Commons as the challenger and do not hybridize by taste.
 3. After selection, codify the final brand constitution, visual tokens, themes, component APIs, imagery rules, and motion tokens.
 4. Build the desktop-first production pilot across shell, Today, live attendance/ratios, and child profile with parity evidence.
 5. Validate the pilot with role, branch, permission, database, responsive, accessibility, and performance fixtures before rollout.
@@ -147,6 +147,7 @@ An item is complete only when:
 | 2026-07-10 | Create `ux-redesign-awards` directly from verified `main` | All local and remote restoration/design refs shared the same base, and the new name separates accepted work from rejected experiments | Yes |
 | 2026-07-10 | Preserve the approved Remotion identity work and exclude the dashboard card lab | The user approved the logo direction and explicitly rejected the dashboard experiment | Yes |
 | 2026-07-13 | Supersede the Daylight recommendation and reopen the creative gate with six strategic systems | The first three territories changed styling without diverging enough in identity, product expression, or strategic belief | Yes; no production tokens were selected |
+| 2026-07-13 | Advance Kinetic Kindness and Living Record to the research final, retaining Care Commons as challenger | Seven fixed weighted criteria and screen-level benchmarks show different strategic strengths while keeping the final brand lock explicit | Yes; this is a research shortlist, not a production selection |
 | 2026-07-10 | Organize the product around a live, explainable operating model and owned resolution | Current modules expose facts but force managers to assemble readiness and responsibility mentally | Yes, pending prototype and operator validation |
 | 2026-07-10 | Separate brand, guidance, operational, and evidence expression levels | Kiddz needs warmth and recognition without weakening dense or high-risk work | Yes, through territory testing |
 | 2026-07-10 | Design desktop, tablet, mobile, parent, and native projections around distinct jobs | Runtime measurements show that stacked desktop hierarchy preserves too much decision load | Yes, while shared object contracts remain fixed |
@@ -742,6 +743,18 @@ An item is complete only when:
 - **Evidence boundary:** The systems are brand-direction proofs, not final logos or production components. Real operator preference, trademark review, font licensing/fallback approval, illustration/photography production, sound, dark mode, RTL/200% text, assistive technology, and the complete dense-surface specimen set remain selection or constitution gates.
 - **Next action:** Review the six systems with the product owner. Expand the strongest one or two through the controlled dense record, form, critical, completion, and cross-device specimen set before final constitution if the brand choice is not yet decisive.
 - **Progress earned:** 0 percentage points. The creative gate is materially stronger but remains unselected, so Phase 3 stays 6 of 10% and total remains 55%.
+
+### 2026-07-13 - Phase 3 weighted direction stress test
+
+- **Question:** Which directions best survive nursery truth, ownability, emotional resonance, dense-product scale, accessibility, purposeful motion, and brand-world breadth without pretending expert judgment is audience evidence?
+- **Evidence:** The six controlled Riverside specimens; current Mobbin Headspace, Duolingo, Revolut, Notion, Vercel, and Cosmos screens; Design Council iteration; Ehrenberg-Bass distinctive-asset principles; Kantar brand strategy; NN/g visual hierarchy; Apple HIG; WCAG 2.2; the approved O-ring/dot identity seed; and existing product, parity, role, and state evidence.
+- **Decision:** Use seven fixed criteria weighted to 100. Advance Kinetic Kindness (90.4) and Living Record (88.0) to the research final, retain Care Commons (85.2) as the challenger, and hold Open Studio, Bright Signal, and Quiet Magic while preserving their valid product lessons. Do not hybridize finalists before one earns the lock.
+- **Artifacts:** `docs/redesign/brand-direction-evaluation.md`, `src/app/design-lab/brand-directions/_evaluation.ts`, `/design-lab/brand-directions/evaluation`, responsive evaluation styling, and the expanded brand-program verifier.
+- **Verification:** Deterministic checks prove seven unique criteria totaling 100, six complete 1-5 score records, exactly two finalists, one challenger, three held systems, expected weighted totals and ranking, explicit evidence/pressure/proof conditions, screen-level benchmark links, and no production winner. TypeScript, focused ESLint, and diff hygiene pass. Agent Browser verifies the evaluation at `1440 x 900` and `390 x 844` with one H1, zero page/table overflow, zero undersized controls, zero axe violations, and zero incomplete findings; the mobile ranking recomposes instead of scrolling horizontally.
+- **Parity:** The slice adds isolated decision-support data, documentation, and a design-lab route only. No production component, route behavior, query, mutation, database row, permission, legacy alias, native payload, or restored capability changed.
+- **Evidence boundary:** The scores are an expert heuristic, not operator comprehension, recognition/fame, trademark, font-license, or market evidence. The final brand lock, constitution, production tokens, component APIs, and page migration remain open.
+- **Next action:** Review the six unscored systems first, then the research dossier. Select one finalist or request one explicitly bounded proof round across the same specimens.
+- **Progress earned:** 0 percentage points. The research shortlist is complete, but the irreversible brand selection still gates the remaining Phase 3 credit; total remains 55%.
 
 ## Work Log Template
 

@@ -12,6 +12,7 @@ import {
   Space_Grotesk,
 } from "next/font/google"
 import "./brand-directions.css"
+import "./evaluation/evaluation.css"
 
 const inter = Inter({ subsets: ["latin"], variable: "--brand-font-inter", display: "swap" })
 const fredoka = Fredoka({ subsets: ["latin"], variable: "--brand-font-fredoka", display: "swap" })
