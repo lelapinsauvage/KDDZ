@@ -10,7 +10,7 @@ export default async function BrandDirectionsPage({ searchParams }: BrandDirecti
   const requested = Array.isArray(params.direction) ? params.direction[0] : params.direction
   const initialDirection = brandDirections.some((direction) => direction.id === requested)
     ? requested as BrandDirectionId
-    : brandDirections[0].id
+    : null
 
   return (
     <BrandDirectionRoom

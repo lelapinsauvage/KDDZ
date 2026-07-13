@@ -1,10 +1,11 @@
 "use client"
 
-import { AlertTriangle, ArrowRight, Check, CircleHelp, Clock3, Play, ShieldCheck, Sparkles, UsersRound } from "lucide-react"
+import { AlertTriangle, ArrowLeft, ArrowRight, Check, CircleHelp, Clock3, ExternalLink, Play, ShieldCheck, Sparkles, UsersRound } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 import { useState, type CSSProperties } from "react"
 import { AxeAuditHarness } from "@/components/design-lab/axe-audit-harness"
-import { brandDirections, type BrandDirection, type BrandDirectionId } from "../_data"
+import { brandDirections, pinterestReferenceById, pinterestReferences, type BrandDirection, type BrandDirectionId } from "../_data"
 
 const rooms = [
   { name: "Nest", count: "8 / 8", staff: "3 staff", state: "safe", label: "Safe now", detail: "Ella starts break at 11:45" },
@@ -18,60 +19,70 @@ export function BrandDirectionRoom({
   initialDirection,
 }: {
   axeAuditEnabled: boolean
-  initialDirection: BrandDirectionId
+  initialDirection: BrandDirectionId | null
 }) {
-  const [activeId, setActiveId] = useState<BrandDirectionId>(initialDirection)
+  const [activeId, setActiveId] = useState<BrandDirectionId | null>(initialDirection)
   const [motionRun, setMotionRun] = useState(0)
-  const active = brandDirections.find((direction) => direction.id === activeId) ?? brandDirections[0]
+  const active = activeId ? brandDirections.find((direction) => direction.id === activeId) ?? null : null
+
+  const replaceDirectionQuery = (id: BrandDirectionId | null) => {
+    const params = new URLSearchParams(window.location.search)
+    if (id) params.set("direction", id)
+    else params.delete("direction")
+    const query = params.toString()
+    window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`)
+  }
 
   const selectDirection = (id: BrandDirectionId) => {
     setActiveId(id)
     setMotionRun((value) => value + 1)
-    window.history.replaceState(null, "", `?direction=${id}`)
+    replaceDirectionQuery(id)
+    window.requestAnimationFrame(() => document.querySelector("#direction-proof")?.scrollIntoView({ behavior: "smooth", block: "start" }))
+  }
+
+  const clearDirection = () => {
+    setActiveId(null)
+    replaceDirectionQuery(null)
+    window.requestAnimationFrame(() => document.querySelector("#direction-gallery")?.scrollIntoView({ behavior: "smooth", block: "start" }))
   }
 
   return (
-    <main className="brand-room" data-axe-audit={axeAuditEnabled ? "axe" : undefined} data-direction={active.id}>
+    <main className="brand-room" data-axe-audit={axeAuditEnabled ? "axe" : undefined} data-direction={active?.id ?? "gallery"}>
       <AxeAuditHarness
         activeRootSelector='.brand-room[data-axe-audit="axe"]'
         auditNodeId="kiddz-brand-direction-axe-audit"
         auditTriggerId="kiddz-run-brand-direction-axe-audit"
         enabled={axeAuditEnabled}
-        signature={active.id}
+        signature={active?.id ?? "gallery"}
         surfaceToken="--surface"
       />
       <header className="brand-room__masthead">
         <div className="brand-room__brand">Kiddz <span>Online</span></div>
-        <div className="brand-room__status"><span aria-hidden="true" /> Direction gate · no selection</div>
+        <div className="brand-room__status"><span aria-hidden="true" /> {active ? `Inspecting ${active.name}` : "Direction gate · no selection"}</div>
       </header>
 
       <section className="brand-room__intro" aria-labelledby="brand-direction-title">
-        <p>Brand direction room · round two</p>
-        <h1 id="brand-direction-title">Six different beliefs about what Kiddz can become.</h1>
+        <p>Brand direction room · six options · no default winner</p>
+        <h1 id="brand-direction-title">See the whole creative field before choosing a direction.</h1>
         <span>
-          Same nursery truth. Different strategy, identity, typography, color, imagery, voice,
-          and motion. Production remains untouched until one system earns the decision.
+          Ten live Pinterest references become six independent strategies, identities, type systems,
+          palettes, and motion beliefs. Every source and every refusal is visible below.
         </span>
       </section>
 
-      <nav className="direction-switcher" aria-label="Creative directions">
-        {brandDirections.map((direction) => (
-          <button
-            aria-current={direction.id === active.id ? "page" : undefined}
-            className={direction.id === active.id ? "is-active" : ""}
-            key={direction.id}
-            onClick={() => selectDirection(direction.id)}
-            type="button"
-          >
-            <span>{direction.number}</span>
-            <strong>{direction.name}</strong>
-            <small>{direction.short}</small>
-          </button>
-        ))}
-      </nav>
+      <PinterestSourceWall />
+      <DirectionGallery activeId={activeId} onSelect={selectDirection} />
 
-      <div aria-live="polite" className="sr-only">Showing {active.name}</div>
-      <BrandBoard direction={active} motionRun={motionRun} onPlay={() => setMotionRun((value) => value + 1)} />
+      <div aria-live="polite" className="sr-only">{active ? `Showing full proof for ${active.name}` : "Showing all six creative directions"}</div>
+      {active ? (
+        <section className="direction-detail" id="direction-proof">
+          <header className="direction-detail__header">
+            <button onClick={clearDirection} type="button"><ArrowLeft aria-hidden="true" /> Back to all six</button>
+            <div><span>Full proof · not a selection</span><strong>{active.number} / {active.name}</strong></div>
+          </header>
+          <BrandBoard direction={active} motionRun={motionRun} onPlay={() => setMotionRun((value) => value + 1)} />
+        </section>
+      ) : null}
 
       <footer className="brand-room__boundary">
         <ShieldCheck aria-hidden="true" />
@@ -83,6 +94,130 @@ export function BrandDirectionRoom({
       </footer>
     </main>
   )
+}
+
+function PinterestSourceWall() {
+  const clusters = Array.from(new Set(pinterestReferences.map((reference) => reference.cluster)))
+
+  return (
+    <section className="pinterest-source-wall" aria-labelledby="pinterest-source-title">
+      <div className="pinterest-source-wall__heading">
+        <div>
+          <span>Live source board · refreshed 13 July 2026</span>
+          <h2 id="pinterest-source-title">Pinterest is evidence here, not decoration.</h2>
+        </div>
+        <p>The board contains ten saved references. We extracted four recurring taste signals, then translated them into six systems instead of copying one brand.</p>
+      </div>
+
+      <div className="pinterest-source-wall__body">
+        <a className="pinterest-board-visual" href="https://fr.pinterest.com/karims2381/_pins/" rel="noreferrer" target="_blank">
+          <Image
+            alt="Karim's Pinterest board showing ten saved references for motion, identity, child-world expression, and brand-to-product systems"
+            fill
+            priority
+            sizes="(max-width: 900px) 100vw, 42vw"
+            src="/brand-research/pinterest-board-2026-07-13.png"
+          />
+          <span>Open the live board <ExternalLink aria-hidden="true" /></span>
+        </a>
+
+        <div className="pinterest-clusters">
+          {clusters.map((cluster, index) => (
+            <section className="pinterest-cluster" key={cluster}>
+              <header><span>0{index + 1}</span><h3>{cluster}</h3></header>
+              {pinterestReferences.filter((reference) => reference.cluster === cluster).map((reference) => (
+                <a href={reference.href} key={reference.id} rel="noreferrer" target="_blank">
+                  <strong>{reference.title}</strong>
+                  <span>{reference.signal}</span>
+                  <ExternalLink aria-hidden="true" />
+                </a>
+              ))}
+            </section>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function DirectionGallery({ activeId, onSelect }: { activeId: BrandDirectionId | null; onSelect: (id: BrandDirectionId) => void }) {
+  return (
+    <section className="direction-gallery-section" id="direction-gallery" aria-labelledby="direction-gallery-title">
+      <header className="direction-gallery-section__heading">
+        <div><span>Six independent translations</span><h2 id="direction-gallery-title">Compare every direction at once.</h2></div>
+        <p>Each option has a different strategic belief, memory asset, typographic voice, color role, and Pinterest lineage. Opening proof does not select it.</p>
+      </header>
+
+      <div className="direction-gallery">
+        {brandDirections.map((direction) => (
+          <article
+            className={`direction-gallery-card${activeId === direction.id ? " is-open" : ""}`}
+            data-gallery-direction={direction.id}
+            key={direction.id}
+            style={{
+              "--card-ink": direction.colors[0].value,
+              "--card-accent": direction.colors[1].value,
+              "--card-third": direction.colors[2].value,
+              "--card-fourth": direction.colors[3].value,
+            } as CSSProperties}
+          >
+            <header className="direction-gallery-card__header">
+              <span>{direction.number} / 06</span>
+              <div><h3>{direction.name}</h3><p>{direction.short}</p></div>
+            </header>
+
+            <DirectionThumbnail direction={direction} />
+
+            <p className="direction-gallery-card__thesis">{direction.thesis}</p>
+
+            <div className="direction-gallery-card__system">
+              <div><span>Display</span><strong>{direction.typeDisplay}</strong></div>
+              <div><span>Product</span><strong>{direction.typeProduct}</strong></div>
+              <div className="direction-gallery-card__palette" aria-label={`${direction.name} palette`} role="group">
+                {direction.colors.map((color) => <i key={color.name} style={{ background: color.value }} title={`${color.name} ${color.value}`} />)}
+              </div>
+            </div>
+
+            <div className="direction-gallery-card__sources">
+              <span>Pinterest roots</span>
+              <div>{direction.pinterestRoots.map((id) => {
+                const reference = pinterestReferenceById[id]
+                return <a href={reference.href} key={id} rel="noreferrer" target="_blank">{reference.title}<ExternalLink aria-hidden="true" /></a>
+              })}</div>
+            </div>
+
+            <dl className="direction-gallery-card__decision">
+              <div><dt>Take</dt><dd>{direction.pinterestTake}</dd></div>
+              <div><dt>Refuse</dt><dd>{direction.pinterestReject}</dd></div>
+            </dl>
+
+            <button aria-pressed={activeId === direction.id} onClick={() => onSelect(direction.id)} type="button">
+              {activeId === direction.id ? "Proof open" : "Open full proof"}<ArrowRight aria-hidden="true" />
+            </button>
+          </article>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function DirectionThumbnail({ direction }: { direction: BrandDirection }) {
+  if (direction.id === "kinetic-kindness") {
+    return <div className="direction-thumbnail direction-thumbnail--kinetic"><strong>Kiddz</strong><span><i />nline</span><em>Care moves with you.</em></div>
+  }
+  if (direction.id === "open-studio") {
+    return <div className="direction-thumbnail direction-thumbnail--studio"><small>K/O · 26</small><strong>KIDDZ<br /><span>ONLINE</span></strong><em>CARE, COMPOSED DAILY</em></div>
+  }
+  if (direction.id === "living-record") {
+    return <div className="direction-thumbnail direction-thumbnail--record"><small>RIVERSIDE · MONDAY</small><strong>Kiddz</strong><em>online</em><span>Care, visibly handled.</span></div>
+  }
+  if (direction.id === "bright-signal") {
+    return <div className="direction-thumbnail direction-thumbnail--signal"><i><span /></i><div><strong>Kiddz</strong><em>Online</em><small>NOW / NEXT / OWNER</small></div></div>
+  }
+  if (direction.id === "care-commons") {
+    return <div className="direction-thumbnail direction-thumbnail--commons"><div><i>AM</i><i>LN</i><i>AR</i></div><strong>Kiddz</strong><em>online, together</em><span>One day. Held by many.</span></div>
+  }
+  return <div className="direction-thumbnail direction-thumbnail--quiet"><strong>Kiddz</strong><span>Online<i /></span><small>Care, visibly handled.</small></div>
 }
 
 function BrandBoard({ direction, motionRun, onPlay }: { direction: BrandDirection; motionRun: number; onPlay: () => void }) {

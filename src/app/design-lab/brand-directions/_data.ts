@@ -6,6 +6,26 @@ export type BrandDirectionId =
   | "care-commons"
   | "quiet-magic"
 
+export type PinterestReferenceId =
+  | "duolingo-motion"
+  | "messaging-brand"
+  | "klarna-system"
+  | "headspace-anxiety"
+  | "headspace-symbols"
+  | "ding-motion"
+  | "buddy-product"
+  | "british-kids"
+  | "kindrove-poster"
+  | "kindrove-system"
+
+export type PinterestReference = {
+  id: PinterestReferenceId
+  title: string
+  href: string
+  cluster: "Living marks" | "Brand to product" | "Emotional clarity" | "Expressive child world"
+  signal: string
+}
+
 export type BrandDirection = {
   id: BrandDirectionId
   number: string
@@ -21,8 +41,88 @@ export type BrandDirection = {
   voice: string
   bestAt: string
   risk: string
+  pinterestRoots: PinterestReferenceId[]
+  pinterestTake: string
+  pinterestReject: string
   colors: Array<{ name: string; value: string }>
 }
+
+export const pinterestReferences: PinterestReference[] = [
+  {
+    id: "duolingo-motion",
+    title: "Duolingo logo motion",
+    href: "https://fr.pinterest.com/pin/1025483777684516340/",
+    cluster: "Living marks",
+    signal: "A simple mark can gain character through anticipation, squash, and return-to-form.",
+  },
+  {
+    id: "messaging-brand",
+    title: "Messaging app identity",
+    href: "https://fr.pinterest.com/pin/1025483777684516337/",
+    cluster: "Brand to product",
+    signal: "Editorial type, one color field, product proof, and small characters can share one composition.",
+  },
+  {
+    id: "klarna-system",
+    title: "Klarna brand system",
+    href: "https://fr.pinterest.com/pin/1025483777684515586/",
+    cluster: "Brand to product",
+    signal: "Confident type and unapologetic color can coexist with real interface evidence.",
+  },
+  {
+    id: "headspace-anxiety",
+    title: "Headspace anxiety story",
+    href: "https://fr.pinterest.com/pin/1025483777684478819/",
+    cluster: "Emotional clarity",
+    signal: "Short language and a humane character can make an anxious moment approachable.",
+  },
+  {
+    id: "headspace-symbols",
+    title: "Headspace challenge symbols",
+    href: "https://fr.pinterest.com/pin/1025483777684478815/",
+    cluster: "Emotional clarity",
+    signal: "Simple illustrated symbols can explain difficult topics without stock photography.",
+  },
+  {
+    id: "ding-motion",
+    title: "Ding motion identity",
+    href: "https://fr.pinterest.com/pin/1025483777684478812/",
+    cluster: "Living marks",
+    signal: "A tiny geometric mark and black word can create a memorable identity through movement.",
+  },
+  {
+    id: "buddy-product",
+    title: "Buddy product world",
+    href: "https://fr.pinterest.com/pin/1025483777684319824/",
+    cluster: "Brand to product",
+    signal: "A colorful brand can remain legible when product modules, annotations, and collaboration stay structured.",
+  },
+  {
+    id: "british-kids",
+    title: "British Kids character family",
+    href: "https://fr.pinterest.com/pin/1025483777684319820/",
+    cluster: "Expressive child world",
+    signal: "A small family of bold characters can carry many moods around authoritative black typography.",
+  },
+  {
+    id: "kindrove-poster",
+    title: "Kindrove educational poster",
+    href: "https://fr.pinterest.com/pin/1025483777684319811/",
+    cluster: "Expressive child world",
+    signal: "High-energy shape and color can communicate joy when composition stays disciplined.",
+  },
+  {
+    id: "kindrove-system",
+    title: "Kindrove identity system",
+    href: "https://fr.pinterest.com/pin/1025483777684319809/",
+    cluster: "Expressive child world",
+    signal: "Consistent geometry lets a compact palette stretch across identity and campaign applications.",
+  },
+]
+
+export const pinterestReferenceById = Object.fromEntries(
+  pinterestReferences.map((reference) => [reference.id, reference]),
+) as Record<PinterestReferenceId, PinterestReference>
 
 export const brandDirections: BrandDirection[] = [
   {
@@ -40,6 +140,9 @@ export const brandDirections: BrandDirection[] = [
     voice: "Warm, direct, and specific.",
     bestAt: "A broad emotional world across parent, guidance, onboarding, and daily completion.",
     risk: "Can become childish or distribute the rainbow across routine operations.",
+    pinterestRoots: ["duolingo-motion", "headspace-anxiety", "ding-motion"],
+    pinterestTake: "A living mark, humane emotional timing, and a bright moment that always returns to order.",
+    pinterestReject: "Mascot theatre, constant bounce, and equal rainbow color across operational work.",
     colors: [
       { name: "Ink", value: "#292521" },
       { name: "Orange", value: "#FF6B2C" },
@@ -64,6 +167,9 @@ export const brandDirections: BrandDirection[] = [
     voice: "Concise, confident, and culturally alive.",
     bestAt: "A launchable modern identity, strong campaigns, and customizable manager workspaces.",
     risk: "Can become theatrical or turn graphic devices into arbitrary decoration.",
+    pinterestRoots: ["messaging-brand", "klarna-system", "kindrove-poster"],
+    pinterestTake: "Editorial confidence, graphic color planes, and a product shown as proof inside the brand world.",
+    pinterestReject: "Marketing-page scale inside daily tools and shapes added only to fill white space.",
     colors: [
       { name: "Ink", value: "#171717" },
       { name: "Ultra", value: "#3157FF" },
@@ -88,6 +194,9 @@ export const brandDirections: BrandDirection[] = [
     voice: "Observant, humane, and exact.",
     bestAt: "Profiles, handovers, incidents, parent communication, and evidence-heavy workflows.",
     risk: "Can feel like a journal and slow live comparison or high-volume action.",
+    pinterestRoots: ["headspace-symbols", "buddy-product", "klarna-system"],
+    pinterestTake: "Humane explanation, authored context, and a clear bridge between narrative and product evidence.",
+    pinterestReject: "Lifestyle editorialism, uncaptioned imagery, and visual pacing that slows floor work.",
     colors: [
       { name: "Ink", value: "#28231F" },
       { name: "Vermilion", value: "#E95735" },
@@ -112,6 +221,9 @@ export const brandDirections: BrandDirection[] = [
     voice: "Brief, causal, and operational.",
     bestAt: "Ratios, staffing, attendance, finance, medical, audit, and dense desktop work.",
     risk: "Can resemble fintech, DevOps, or generic blue enterprise software.",
+    pinterestRoots: ["buddy-product", "messaging-brand", "headspace-symbols"],
+    pinterestTake: "Structured colorful modules, immediate hierarchy, and symbols that make changing state legible.",
+    pinterestReject: "Fintech mimicry, decorative data graphics, and color without an operational consequence.",
     colors: [
       { name: "Ink", value: "#16181C" },
       { name: "Electric", value: "#245BFF" },
@@ -136,6 +248,9 @@ export const brandDirections: BrandDirection[] = [
     voice: "Inclusive, relational, and accountable.",
     bestAt: "Communication, staffing, handovers, family trust, and multi-role collaboration.",
     risk: "Portrait dependence can create privacy risk and shared language can blur individual ownership.",
+    pinterestRoots: ["british-kids", "headspace-anxiety", "buddy-product"],
+    pinterestTake: "A recognizable cast, relational language, and product structures that make collaboration visible.",
+    pinterestReject: "Decorative avatars, forced cheerfulness, and collective language that hides the accountable owner.",
     colors: [
       { name: "Ink", value: "#252421" },
       { name: "Coral", value: "#F05F4F" },
@@ -160,6 +275,9 @@ export const brandDirections: BrandDirection[] = [
     voice: "Short, exact, and quietly confident.",
     bestAt: "Long-session desktop use, command/search, focused forms, and premium interaction polish.",
     risk: "Can become borrowed minimalism with too little childcare warmth or ownership.",
+    pinterestRoots: ["ding-motion", "klarna-system", "kindrove-system"],
+    pinterestTake: "Monochrome authority, one memorable mark, and concentrated color that earns attention.",
+    pinterestReject: "Generic SaaS restraint, washed-out neutrality, and minimalism with no Kiddz memory asset.",
     colors: [
       { name: "Ink", value: "#1C1C1B" },
       { name: "Cobalt", value: "#3157FF" },

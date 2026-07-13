@@ -1,7 +1,8 @@
 # Kiddz Online Brand Direction Evaluation
 
 **Date:** 2026-07-13
-**Status:** Research shortlist and controlled finalist proof complete; final brand lock open
+**Status:** Weighted shortlist retained as provisional evidence; six-direction owner review reopened
+**Required entry:** `/design-lab/brand-directions`
 **Live evidence:** `/design-lab/brand-directions/evaluation`
 **Final proof:** `/design-lab/brand-directions/finalists`
 **Type/color readiness:** `docs/redesign/finalist-type-color-readiness.md`
@@ -12,6 +13,11 @@
 This dossier pressure-tests the six V2 creative directions. It ranks strategic
 potential; it does not claim that an unlaunched asset is already distinctive,
 and it does not select production tokens.
+
+The first implementation hid five directions behind a selector and linked
+reviewers directly to a finalist. That presentation over-signaled convergence.
+The decision gate is therefore reopened: review the neutral six-direction
+gallery and its visible Pinterest lineage before using this score as evidence.
 
 ## Method
 
@@ -171,7 +177,8 @@ direction should not set the brand constitution in its current form.
 
 ## Decision Protocol
 
-1. Review all six unscored specimens first.
+1. Open `/design-lab/brand-directions` with no `direction` query and review all
+   six systems plus their Pinterest roots, take rules, and refusal rules first.
 2. Review this evidence and the two finalists second.
 3. Review the completed controlled proof at
    `/design-lab/brand-directions/finalists`; its operations, incident, and parent
@@ -181,7 +188,9 @@ direction should not set the brand constitution in its current form.
 4. Review `/design-lab/brand-directions/identity-worlds`; it keeps the logo seed,
    source meaning, application jobs, and decision criteria constant while
    comparing memory asset, voice, image grammar, motion, and brand expression.
-5. Select Kinetic Kindness or Living Record. Do not create a hybrid by taste.
+5. Treat Kinetic Kindness and Living Record as research leads, not the only
+   owner-review options. Select one of the six only after the gallery review;
+   do not create a hybrid by taste.
 6. After the lock, codify the brand constitution before production components:
    purpose, promise, personality, distinctive assets, typography, color roles,
    illustration/imagery, voice, motion, accessibility, and do-not rules.
@@ -200,8 +209,8 @@ direction should not set the brand constitution in its current form.
 
 ## Open Gate
 
-No production winner is selected. Kinetic Kindness is the research lead after
-the controlled proof; Living Record remains the evidence-led alternative. This
-is not a production selection.
+No production winner is selected. Kinetic Kindness and Living Record retain
+their weighted research positions, but the owner-review shortlist is reopened
+until all six directions have been compared on the corrected neutral gallery.
 Component APIs, final tokens, production page migration, and brand-asset rollout
 remain paused until the brand lock is made.

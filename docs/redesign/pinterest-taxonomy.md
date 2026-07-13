@@ -1,8 +1,8 @@
 # Pinterest Reference Taxonomy
 
 **Board:** <https://fr.pinterest.com/karims2381/_pins/>
-**Snapshot date:** 2026-07-10
-**Status:** Initial public-board pass; the board remains a living source
+**Snapshot date:** 2026-07-13
+**Status:** Live board refreshed; visible six-direction lineage complete
 
 ## Why This Exists
 
@@ -12,6 +12,11 @@ Initial browser evidence is stored in:
 
 - `docs/redesign/research/pinterest-board-2026-07-10.png`
 - `docs/redesign/research/pinterest-board-full-2026-07-10.png`
+- `docs/redesign/research/pinterest-board-2026-07-13.png`
+
+The refreshed board still exposes the same ten saved references. The current
+board capture, all ten direct pin links, four taste clusters, and all six
+direction lineages are visible together at `/design-lab/brand-directions`.
 
 ## Saved Reference Catalog
 
@@ -27,6 +32,25 @@ Initial browser evidence is stored in:
 | [British Kids identity and mascots](https://fr.pinterest.com/pin/1025483777684319820/) | Character family, expressive identity | Distinct colors and expressions create a flexible brand family around confident black typography | The manager app is for adults; characters belong to brand, guidance, success, and empty states rather than every control |
 | [Kindrove educational poster](https://fr.pinterest.com/pin/1025483777684319811/) | Childcare brand color and shape | High-energy colors, friendly organic shapes, and bold display type communicate joy and care | Avoid rainbow equality where every color competes and nothing signals importance |
 | [Kindrove toy-brand logo](https://fr.pinterest.com/pin/1025483777684319809/) | Logo and graphic system | A small set of strong colors can create many brand compositions when geometry stays consistent | Do not turn operational components into logo fragments or decorative toys |
+
+## Visible Direction Lineage
+
+The roots below are references, not templates. Each direction names both the
+principle it extracts and the failure mode it refuses. No direction is selected
+by this mapping.
+
+| Direction | Pinterest roots | Take | Refuse |
+| --- | --- | --- | --- |
+| Kinetic Kindness | Duolingo motion; Headspace anxiety story; Ding motion | Living mark, humane timing, and bright motion that returns to order | Mascot theatre, constant bounce, and rainbow operations |
+| Open Studio | Messaging identity; Klarna system; Kindrove poster | Editorial confidence, color planes, and product shown as proof | Marketing scale inside tools and shapes used as filler |
+| Living Record | Headspace symbols; Buddy product; Klarna system | Humane explanation, authored context, and narrative joined to evidence | Lifestyle editorialism, uncaptioned imagery, and slow floor work |
+| Bright Signal | Buddy product; Messaging identity; Headspace symbols | Structured colorful modules, immediate hierarchy, and symbols for change | Fintech mimicry, decorative data graphics, and color without consequence |
+| Care Commons | British Kids; Headspace anxiety story; Buddy product | Recognizable cast, relational language, and visible collaboration | Decorative avatars, forced cheerfulness, and hidden ownership |
+| Quiet Magic | Ding motion; Klarna system; Kindrove system | Monochrome authority, one memorable mark, and concentrated color | Generic SaaS restraint, washed-out neutrality, and no Kiddz memory asset |
+
+The earlier weighted shortlist is provisional research evidence. The product
+owner must first review the six options together on the neutral gallery; the
+interface does not open on a finalist or mark any direction as selected.
 
 ## Recurring Visual Signals
 

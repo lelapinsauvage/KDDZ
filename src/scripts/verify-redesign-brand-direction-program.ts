@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
   brandDirections,
   directionById,
+  pinterestReferenceById,
+  pinterestReferences,
   type BrandDirectionId,
 } from "../app/design-lab/brand-directions/_data";
 import {
@@ -26,6 +28,7 @@ const program = read("docs/redesign/creative-direction-program-v2.md");
 const briefs = read("docs/redesign/creative-directions-v2.md");
 const oldGate = read("docs/redesign/creative-selection-gate.md");
 const evaluationDossier = read("docs/redesign/brand-direction-evaluation.md");
+const pinterestTaxonomy = read("docs/redesign/pinterest-taxonomy.md");
 const page = read("src/app/design-lab/brand-directions/page.tsx");
 const evaluationPage = read("src/app/design-lab/brand-directions/evaluation/page.tsx");
 const room = read("src/app/design-lab/brand-directions/_components/brand-direction-room.tsx");
@@ -40,6 +43,11 @@ assert.equal(new Set(brandDirections.map((direction) => direction.thesis)).size,
 assert.equal(new Set(brandDirections.map((direction) => direction.motion)).size, 6);
 assert(new Set(brandDirections.map((direction) => direction.typeDisplay)).size >= 5);
 assert(new Set(brandDirections.map((direction) => direction.typeProduct)).size >= 5);
+assert.equal(pinterestReferences.length, 10);
+assert.equal(new Set(pinterestReferences.map((reference) => reference.id)).size, 10);
+assert.equal(new Set(pinterestReferences.map((reference) => reference.href)).size, 10);
+assert.equal(new Set(pinterestReferences.map((reference) => reference.cluster)).size, 4);
+assert.equal(Object.keys(pinterestReferenceById).length, 10);
 assert.equal(evaluationCriteria.reduce((sum, criterion) => sum + criterion.weight, 0), 100);
 assert.equal(brandDirectionEvaluations.length, 6);
 assert.equal(new Set(brandDirectionEvaluations.map((evaluation) => evaluation.directionId)).size, 6);
@@ -70,8 +78,19 @@ for (const direction of brandDirections) {
     `${direction.id} repeats a palette value`,
   );
   assert.match(direction.risk, /can|if|risk/i, `${direction.id} needs an explicit failure mode`);
+  assert.equal(direction.pinterestRoots.length, 3, `${direction.id} needs three visible Pinterest roots`);
+  assert.equal(new Set(direction.pinterestRoots).size, 3, `${direction.id} repeats a Pinterest root`);
+  assert(direction.pinterestTake.length > 60, `${direction.id} needs a specific Pinterest take rule`);
+  assert(direction.pinterestReject.length > 60, `${direction.id} needs a specific Pinterest refusal rule`);
+  for (const referenceId of direction.pinterestRoots) {
+    assert(pinterestReferenceById[referenceId], `${direction.id} has an unresolved Pinterest root`);
+  }
   assert.match(briefs, new RegExp(`## ${Number(direction.number)}\\. ${direction.name}`));
 }
+assert.deepEqual(
+  new Set(brandDirections.flatMap((direction) => direction.pinterestRoots)),
+  new Set(pinterestReferences.map((reference) => reference.id)),
+);
 
 for (const source of [
   "Design Council",
@@ -96,6 +115,7 @@ assert.match(evaluationDossier, /distinctive-asset potential/i);
 assert.match(evaluationDossier, /Kinetic Kindness[\s\S]*90\.4/);
 assert.match(evaluationDossier, /Living Record[\s\S]*88\.0/);
 assert.match(evaluationDossier, /No production winner is selected/);
+assert.match(evaluationDossier, /owner-review shortlist is reopened/i);
 for (const app of ["Headspace", "Duolingo", "Revolut", "Notion", "Vercel", "Cosmos"]) {
   assert.match(evaluationDossier, new RegExp(app), `Evaluation benchmark missing: ${app}`);
 }
@@ -103,12 +123,20 @@ for (const app of ["Headspace", "Duolingo", "Revolut", "Notion", "Vercel", "Cosm
 assert.match(page, /searchParams: Promise/);
 assert.match(page, /initialDirection=\{initialDirection\}/);
 assert.match(page, /axeAuditEnabled=\{params\.audit === "axe"\}/);
+assert.match(page, /:\s*null/);
+assert.doesNotMatch(page, /brandDirections\[0\]\.id/);
 assert.match(room, /data-axe-audit=\{axeAuditEnabled \? "axe" : undefined\}/);
 assert.match(room, /data-motion-run=\{motionRun\}/);
 assert.match(room, /Controlled product proof/);
 assert.match(room, /Accident report needs manager review/);
 assert.match(room, /Safe now\. Two things need handling before lunch/);
 assert.match(room, /brand-directions\/evaluation/);
+assert.match(room, /pinterestReferences\.map/);
+assert.match(room, /brandDirections\.map/);
+assert.match(room, /Back to all six/);
+assert.match(room, /no default winner/i);
+assert.match(room, /pinterest-board-2026-07-13\.png/);
+assert.match(room, /params\.delete\("direction"\)/);
 assert.doesNotMatch(room, /chart|recharts/i);
 assert.match(evaluationPage, /Seven weighted criteria/);
 assert.match(evaluationPage, /No production winner is selected/);
@@ -126,6 +154,14 @@ assert.match(evaluationStylesheet, /\.evaluation-table-wrap \{ overflow: visible
 assert.match(evaluationStylesheet, /@media \(forced-colors: active\)/);
 assert.doesNotMatch(evaluationStylesheet, /linear-gradient|radial-gradient/);
 
+assert.match(pinterestTaxonomy, /Snapshot date:\*\* 2026-07-13/);
+assert.match(pinterestTaxonomy, /## Visible Direction Lineage/);
+for (const direction of brandDirections) {
+  assert.match(pinterestTaxonomy, new RegExp(direction.name));
+}
+assert(existsSync(resolve("docs/redesign/research/pinterest-board-2026-07-13.png")));
+assert(existsSync(resolve("public/brand-research/pinterest-board-2026-07-13.png")));
+
 process.stdout.write(
-  `Brand direction program verification passed (${brandDirections.length} systems, ${evaluationCriteria.length} weighted criteria, two finalists, no production selection)\n`,
+  `Brand direction program verification passed (${brandDirections.length} visible systems, ${pinterestReferences.length} Pinterest references, ${evaluationCriteria.length} weighted criteria, no default or production selection)\n`,
 );

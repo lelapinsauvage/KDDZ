@@ -7,6 +7,11 @@
 **Working surface:** `/design-lab/brand-directions`
 **Finalist identity proof:** `/design-lab/brand-directions/identity-worlds`
 
+The working surface is the required decision entry point. It opens with no
+active direction and shows the refreshed Pinterest source board, ten direct
+references, four taste clusters, and all six systems together. Detailed proofs
+remain available from each option, but no finalist is preselected.
+
 ## Why The Direction Gate Was Reset
 
 The first territory round proved that the same operational truth could survive three visual treatments, but it did not create enough real divergence. Daylight, Signal, and Carebook changed temperature, type, and density while retaining almost the same white SaaS shell. The provisional Daylight recommendation was rejected by the product owner. It is historical evidence, not an active recommendation.
@@ -133,10 +138,12 @@ Render identical nursery content in every system. Test calm, forecast, critical,
 
 ## Selection Scorecard
 
-The completed weighted evaluation and research shortlist live in
+The weighted evaluation and research shortlist live in
 `docs/redesign/brand-direction-evaluation.md` and
 `/design-lab/brand-directions/evaluation`. The scorecard ranks potential; it
-does not select production tokens.
+does not select production tokens. Its shortlist is provisional until the
+product owner reviews the corrected six-direction gallery without a preselected
+finalist.
 
 The completed identical two-finalist proof lives in
 `docs/redesign/finalist-proof-round.md` and

@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-07-13
 **Plan:** `docs/redesign-master-plan.md`
-**Program state:** Product discovery and benchmark research closed; territory-neutral staff IA, capability-derived navigation and global search, Calls-under-Messages placement, route compatibility, native/parent convergence, executable state matrix, multi-room live operations, accountable handover closure, source-linked Action Center behavior, capability-safe child workspace behavior, accountable daily care, accountable family communication, accountable medical incident lifecycle, reconciled family-ledger behavior, trustworthy inspection packaging, source-linked occupancy/future-place planning, accountable staffing/rota readiness, and recoverable academic rollover, plus motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; Phase 4 is complete, the rejected three-territory recommendation is historical, the six-system program, weighted shortlist, identical two-finalist proof, shared type/color readiness, and equal-footing identity-world due diligence are complete, Kinetic Kindness is the research lead, Living Record remains the evidence-led alternative, and the explicit production choice plus dedicated Arabic family remain open
+**Program state:** Product discovery and benchmark research closed; territory-neutral staff IA, capability-derived navigation and global search, Calls-under-Messages placement, route compatibility, native/parent convergence, executable state matrix, multi-room live operations, accountable handover closure, source-linked Action Center behavior, capability-safe child workspace behavior, accountable daily care, accountable family communication, accountable medical incident lifecycle, reconciled family-ledger behavior, trustworthy inspection packaging, source-linked occupancy/future-place planning, accountable staffing/rota readiness, and recoverable academic rollover, plus motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; Phase 4 is complete, the rejected three-territory recommendation is historical, the six-system program and finalist due diligence exist, but the owner-review shortlist is reopened because the prior interface hid five options and over-signaled a finalist; the corrected gate now exposes the live Pinterest evidence and all six systems with no default selection, while the explicit production choice and dedicated Arabic family remain open
 **Reported progress:** **55% done / 45% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
@@ -92,7 +92,7 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 
 | Reference | Web | Mobile/Mobbin | Flow notes | Synthesis |
 | --- | --- | --- | --- | --- |
-| Pinterest board | Initial visible set reviewed | N/A | Complete first pass | Integrated in expression map |
+| Pinterest board | Ten visible pins refreshed 2026-07-13 | N/A | Four clusters and six direction lineages complete | Visible in neutral direction gallery |
 | Revolut | Official product/design process reviewed | Sending-money flows inspected | Complete first pass | Integrated in three maps |
 | Notion | Current spacing/adjacency system reviewed | Web creation/filter flows inspected | Complete first pass | Integrated in three maps |
 | Cursor | Current public product and state model reviewed | Agent task/review flows inspected | Complete first pass | Integrated in three maps |
@@ -116,11 +116,12 @@ The Mobbin MCP is registered, authenticated, and available in this task. Two flo
 
 ## Next Work Queue
 
-1. Review `/design-lab/brand-directions/finalists` and `/design-lab/brand-directions/identity-worlds`, then explicitly select Kinetic Kindness or Living Record; do not hybridize by taste.
-2. After selection, codify the final brand constitution, including the tested Arabic family, visual tokens, themes, component APIs, imagery rules, and motion tokens.
-3. Build the desktop-first production pilot across shell, Today, live attendance/ratios, and child profile with parity evidence.
-4. Validate the pilot with role, branch, permission, database, responsive, accessibility, and performance fixtures before rollout.
-5. Continue operator, jurisdiction, real-device, trademark, font-license, and direct-nursery questions at their implementation gates.
+1. Review all six systems and their visible Pinterest lineage at `/design-lab/brand-directions`; the plain URL must show no default winner.
+2. Use the weighted evaluation, finalist proof, and identity worlds only after the six-way review, then explicitly select one direction; do not hybridize by taste.
+3. After selection, codify the final brand constitution, including the tested Arabic family, visual tokens, themes, component APIs, imagery rules, and motion tokens.
+4. Build the desktop-first production pilot across shell, Today, live attendance/ratios, and child profile with parity evidence.
+5. Validate the pilot with role, branch, permission, database, responsive, accessibility, and performance fixtures before rollout.
+6. Continue operator, jurisdiction, real-device, trademark, font-license, and direct-nursery questions at their implementation gates.
 
 ## Definition of a Completed Tracker Item
 
@@ -150,6 +151,7 @@ An item is complete only when:
 | 2026-07-13 | Keep Kinetic Kindness as the research lead after the identical two-finalist proof | It best matches the white-dominant, colorful, playful, motion-rich, ownable brief while Living Record remains stronger for evidence-led trust | Yes; this is a recommendation, not the production selection |
 | 2026-07-13 | Keep the Arabic brand family open while advancing Noto Sans Arabic as the neutral product baseline | Fredoka, Newsreader, and Inter are OFL and production-feasible but none covers Arabic; Readex Pro and Noto Naskh Arabic need direction-specific testing after brand selection | Yes; no Arabic font is selected or loaded in production |
 | 2026-07-13 | Keep Kinetic Kindness as the research lead after the equal-footing identity-world proof | Its O-ring/dot memory system, consequence-aware warmth, image grammar, and leave/carry/return motion best extend the approved seed; Living Record remains the stronger authorship-led alternative | Yes; no production brand, mark, illustration, or token is selected |
+| 2026-07-13 | Reopen owner review across all six directions and make Pinterest lineage visible | The prior selector and direct finalist links presented one apparent option even though six existed in code; a valid decision requires simultaneous comparison with traceable source logic and no default winner | Yes; weighted scores remain provisional evidence |
 | 2026-07-10 | Organize the product around a live, explainable operating model and owned resolution | Current modules expose facts but force managers to assemble readiness and responsibility mentally | Yes, pending prototype and operator validation |
 | 2026-07-10 | Separate brand, guidance, operational, and evidence expression levels | Kiddz needs warmth and recognition without weakening dense or high-risk work | Yes, through territory testing |
 | 2026-07-10 | Design desktop, tablet, mobile, parent, and native projections around distinct jobs | Runtime measurements show that stacked desktop hierarchy preserves too much decision load | Yes, while shared object contracts remain fixed |
@@ -793,6 +795,17 @@ An item is complete only when:
 - **Evidence boundary:** Product-owner and operator preference, unaided recognition/fame, trademark and naming clearance, final mark geometry, illustration anatomy, characters, commissioned photography, cultural and consent review, sound/haptics, tested Arabic family, production email/PDF/native/print/campaign projection, and asset-performance budgets remain open gates.
 - **Next action:** Review both product and identity proofs, explicitly select Kinetic Kindness or Living Record, then codify the selected brand/design constitution before production tokens, components, or pilot pages.
 - **Progress earned:** 0 percentage points. The identity-world uncertainty is closed at the reversible proof layer, but the irreversible brand selection still gates the remaining Phase 3 credit; total remains 55%.
+
+### 2026-07-13 - Phase 3 six-direction and Pinterest visibility correction
+
+- **Question:** Can the product owner see the actual breadth of exploration and trace every direction back to concrete Pinterest evidence before any finalist is implied?
+- **Evidence:** Refreshed live Pinterest board with ten visible saved pins; four recurring taste clusters; six existing direction systems; the failed selector-first presentation; direct owner feedback that only one option and no Pinterest exploration were visible.
+- **Decision:** Reopen the owner-review shortlist. Make the plain direction URL a neutral gallery with all six systems, no active state, a dated board capture, all ten direct pin links, direction-specific roots, explicit take/refuse rules, and optional deep proof that preserves unrelated query state.
+- **Artifacts:** `/design-lab/brand-directions`; `docs/redesign/pinterest-taxonomy.md`; `docs/redesign/research/pinterest-board-2026-07-13.png`; public research image; typed Pinterest lineage data; deterministic gallery checks.
+- **Verification:** Agent Browser verified the plain gallery and all six direct proof URLs at `1440 x 900`, plus the plain gallery at `390 x 844`: six direction cards, ten source links, four clusters, one H1, zero default active cards, zero default proofs, zero page overflow, zero undersized mobile controls, and query-safe open/close behavior. Automated axe returned zero violations and zero incomplete findings at both viewports. TypeScript, focused ESLint, the six-system/Pinterest verifier, finalist verifier, identity-world verifier, 348-route/30-alias compatibility, diff hygiene, public image delivery, and the production build pass; only the known middleware deprecation and CSS `@page` warnings remain.
+- **Parity:** This changes only the isolated decision lab, research evidence, documentation, and verification. Production pages, routes, queries, mutations, permissions, database records, legacy aliases, native/parent payloads, and restored capabilities remain untouched.
+- **Next action:** Product owner reviews the six-way gallery before consulting the provisional weighted shortlist and finalist proofs.
+- **Progress earned:** 0 percentage points. This repairs evidence visibility and decision integrity without claiming a selected brand constitution; Phase 3 remains 6 of 10% and total remains 55%.
 
 ## Work Log Template
 
