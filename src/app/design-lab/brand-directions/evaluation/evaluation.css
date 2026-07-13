@@ -48,6 +48,8 @@ body { margin: 0; background: var(--evaluation-surface); color: var(--evaluation
 .evaluation-detail h2 { font-size: 40px; font-weight: 590; line-height: 1.08; margin: 14px 0; }
 .evaluation-shortlist header p,
 .evaluation-ranking header p { color: var(--evaluation-muted); font-size: 15px; line-height: 1.55; margin: 0; }
+.evaluation-shortlist__proof { align-items: center; display: inline-flex; font-size: 13px; font-weight: 680; gap: 7px; margin-top: 22px; min-height: 32px; text-decoration: none; }
+.evaluation-shortlist__proof svg { height: 15px; width: 15px; }
 .evaluation-shortlist > div { border-bottom: 1px solid #cfcec8; border-top: 1px solid #cfcec8; display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 48px; }
 .evaluation-shortlist article { min-height: 290px; padding: 28px 34px 30px 0; }
 .evaluation-shortlist article + article { border-left: 1px solid #cfcec8; padding-left: 34px; }

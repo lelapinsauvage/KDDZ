@@ -133,6 +133,13 @@ The completed weighted evaluation and research shortlist live in
 `/design-lab/brand-directions/evaluation`. The scorecard ranks potential; it
 does not select production tokens.
 
+The completed identical two-finalist proof lives in
+`docs/redesign/finalist-proof-round.md` and
+`/design-lab/brand-directions/finalists`. It tests operations, a high-trust
+record and form, and a parent-safe projection without changing source content or
+behavior. Kinetic Kindness is the research lead; Living Record remains the
+evidence-led alternative; neither is locked for production.
+
 | Criterion | Weight | Reject below |
 | --- | ---: | ---: |
 | Strategic distinctiveness | 20% | 3.5 / 5 |

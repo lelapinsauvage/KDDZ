@@ -58,6 +58,7 @@ export default async function BrandDirectionEvaluationPage({ searchParams }: Eva
           <span>Research shortlist</span>
           <h2 id="shortlist-title">Two finalists. One useful challenger.</h2>
           <p>The finalists win for different reasons, so neither should be diluted into a hybrid before the decision.</p>
+          <Link className="evaluation-shortlist__proof" href="/design-lab/brand-directions/finalists">Open controlled final proof <ArrowUpRight aria-hidden="true" /></Link>
         </header>
         <div>
           {finalists.map((evaluation, index) => {

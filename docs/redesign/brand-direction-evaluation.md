@@ -1,8 +1,9 @@
 # Kiddz Online Brand Direction Evaluation
 
 **Date:** 2026-07-13
-**Status:** Research shortlist complete; final brand lock open
+**Status:** Research shortlist and controlled finalist proof complete; final brand lock open
 **Live evidence:** `/design-lab/brand-directions/evaluation`
+**Final proof:** `/design-lab/brand-directions/finalists`
 **Production redesign:** Paused
 
 This dossier pressure-tests the six V2 creative directions. It ranks strategic
@@ -169,12 +170,14 @@ direction should not set the brand constitution in its current form.
 
 1. Review all six unscored specimens first.
 2. Review this evidence and the two finalists second.
-3. Select one finalist, or return both finalists for one explicitly named proof
-   round. Do not create a hybrid by taste.
-4. After the lock, codify the brand constitution before production components:
+3. Review the completed controlled proof at
+   `/design-lab/brand-directions/finalists`; its operations, incident, and parent
+   surfaces preserve the same source content and behavior for both finalists.
+4. Select Kinetic Kindness or Living Record. Do not create a hybrid by taste.
+5. After the lock, codify the brand constitution before production components:
    purpose, promise, personality, distinctive assets, typography, color roles,
    illustration/imagery, voice, motion, accessibility, and do-not rules.
-5. Test the chosen constitution on the same three proof surfaces: live
+6. Test the chosen constitution on the same three proof surfaces: live
    operations, a high-trust record, and a parent-facing moment.
 
 ## External Research Basis
@@ -189,5 +192,8 @@ direction should not set the brand constitution in its current form.
 
 ## Open Gate
 
-No production winner is selected. Component APIs, final tokens, production page
-migration, and brand-asset rollout remain paused until the brand lock is made.
+No production winner is selected. Kinetic Kindness is the research lead after
+the controlled proof; Living Record remains the evidence-led alternative. This
+is not a production selection.
+Component APIs, final tokens, production page migration, and brand-asset rollout
+remain paused until the brand lock is made.

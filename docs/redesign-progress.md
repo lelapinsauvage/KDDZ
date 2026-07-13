@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-07-13
 **Plan:** `docs/redesign-master-plan.md`
-**Program state:** Product discovery and benchmark research closed; territory-neutral staff IA, capability-derived navigation and global search, Calls-under-Messages placement, route compatibility, native/parent convergence, executable state matrix, multi-room live operations, accountable handover closure, source-linked Action Center behavior, capability-safe child workspace behavior, accountable daily care, accountable family communication, accountable medical incident lifecycle, reconciled family-ledger behavior, trustworthy inspection packaging, source-linked occupancy/future-place planning, accountable staffing/rota readiness, and recoverable academic rollover, plus motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; Phase 4 is complete, the rejected three-territory recommendation is historical, the six-system program and weighted research shortlist are complete, Kinetic Kindness and Living Record advance with Care Commons as challenger, and the explicit production choice remains open
+**Program state:** Product discovery and benchmark research closed; territory-neutral staff IA, capability-derived navigation and global search, Calls-under-Messages placement, route compatibility, native/parent convergence, executable state matrix, multi-room live operations, accountable handover closure, source-linked Action Center behavior, capability-safe child workspace behavior, accountable daily care, accountable family communication, accountable medical incident lifecycle, reconciled family-ledger behavior, trustworthy inspection packaging, source-linked occupancy/future-place planning, accountable staffing/rota readiness, and recoverable academic rollover, plus motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; Phase 4 is complete, the rejected three-territory recommendation is historical, the six-system program, weighted shortlist, and identical two-finalist proof are complete, Kinetic Kindness is the research lead, Living Record remains the evidence-led alternative, and the explicit production choice remains open
 **Reported progress:** **55% done / 45% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
@@ -112,16 +112,15 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 
 ## Current Tooling Note
 
-The Mobbin MCP is registered, authenticated, and available in this task. Two flow studies and the direction stress test now cover Revolut, Notion, Cursor, Cosmos, Vercel, Duolingo, Duolingo ABC, Genie, 7shifts, Headspace, Things, Flighty, Airbnb, Stripe, and Apple Reminders. The evaluation directly inspects current Headspace, Duolingo, Revolut, Notion, Vercel, and Cosmos screens. One exact Anything screen was retained; exact multi-step Anything, Brightwheel, and Famly results were unavailable, and unrelated matches were excluded.
+The Mobbin MCP is registered, authenticated, and available in this task. Two flow studies and the direction stress test now cover Revolut, Notion, Cursor, Cosmos, Vercel, Duolingo, Duolingo ABC, Genie, 7shifts, Headspace, Things, Flighty, Airbnb, Stripe, and Apple Reminders. The evaluation directly inspects current Headspace, Duolingo, Revolut, Notion, Vercel, and Cosmos screens. One exact Anything screen was retained; exact multi-step Anything, Brightwheel, and Famly results were unavailable, and unrelated matches were excluded. The controlled finalist proof now applies Kinetic Kindness and Living Record to identical source-backed operations, incident, and parent-delivery surfaces instead of adding another reference lane.
 
 ## Next Work Queue
 
-1. Review the six systems in `/design-lab/brand-directions`, then the weighted dossier in `/design-lab/brand-directions/evaluation`; select one finalist or name one explicit proof round.
-2. If another proof round is required, expand Kinetic Kindness and Living Record independently through the same dense-record, critical-state, completion, and parent-facing specimens; keep Care Commons as the challenger and do not hybridize by taste.
-3. After selection, codify the final brand constitution, visual tokens, themes, component APIs, imagery rules, and motion tokens.
-4. Build the desktop-first production pilot across shell, Today, live attendance/ratios, and child profile with parity evidence.
-5. Validate the pilot with role, branch, permission, database, responsive, accessibility, and performance fixtures before rollout.
-6. Continue operator, jurisdiction, real-device, and direct-nursery questions at their implementation gates.
+1. Review the controlled final proof at `/design-lab/brand-directions/finalists` and explicitly select Kinetic Kindness or Living Record; do not hybridize by taste.
+2. After selection, codify the final brand constitution, visual tokens, themes, component APIs, imagery rules, and motion tokens.
+3. Build the desktop-first production pilot across shell, Today, live attendance/ratios, and child profile with parity evidence.
+4. Validate the pilot with role, branch, permission, database, responsive, accessibility, and performance fixtures before rollout.
+5. Continue operator, jurisdiction, real-device, trademark, font-license, and direct-nursery questions at their implementation gates.
 
 ## Definition of a Completed Tracker Item
 
@@ -148,6 +147,7 @@ An item is complete only when:
 | 2026-07-10 | Preserve the approved Remotion identity work and exclude the dashboard card lab | The user approved the logo direction and explicitly rejected the dashboard experiment | Yes |
 | 2026-07-13 | Supersede the Daylight recommendation and reopen the creative gate with six strategic systems | The first three territories changed styling without diverging enough in identity, product expression, or strategic belief | Yes; no production tokens were selected |
 | 2026-07-13 | Advance Kinetic Kindness and Living Record to the research final, retaining Care Commons as challenger | Seven fixed weighted criteria and screen-level benchmarks show different strategic strengths while keeping the final brand lock explicit | Yes; this is a research shortlist, not a production selection |
+| 2026-07-13 | Keep Kinetic Kindness as the research lead after the identical two-finalist proof | It best matches the white-dominant, colorful, playful, motion-rich, ownable brief while Living Record remains stronger for evidence-led trust | Yes; this is a recommendation, not the production selection |
 | 2026-07-10 | Organize the product around a live, explainable operating model and owned resolution | Current modules expose facts but force managers to assemble readiness and responsibility mentally | Yes, pending prototype and operator validation |
 | 2026-07-10 | Separate brand, guidance, operational, and evidence expression levels | Kiddz needs warmth and recognition without weakening dense or high-risk work | Yes, through territory testing |
 | 2026-07-10 | Design desktop, tablet, mobile, parent, and native projections around distinct jobs | Runtime measurements show that stacked desktop hierarchy preserves too much decision load | Yes, while shared object contracts remain fixed |
@@ -755,6 +755,18 @@ An item is complete only when:
 - **Evidence boundary:** The scores are an expert heuristic, not operator comprehension, recognition/fame, trademark, font-license, or market evidence. The final brand lock, constitution, production tokens, component APIs, and page migration remain open.
 - **Next action:** Review the six unscored systems first, then the research dossier. Select one finalist or request one explicitly bounded proof round across the same specimens.
 - **Progress earned:** 0 percentage points. The research shortlist is complete, but the irreversible brand selection still gates the remaining Phase 3 credit; total remains 55%.
+
+### 2026-07-13 - Phase 3 identical two-finalist proof
+
+- **Question:** Which finalist survives the same live operations, high-trust accident record and review form, and parent-facing daily-care projection without changing content, hierarchy, behavior, or source truth?
+- **Evidence:** Kinetic Kindness and Living Record strategy, identity, typography, color, and motion hypotheses; source-backed Riverside live-operations, Alma incident, and Noah daily-care fixtures; weighted evaluation and master-plan proof requirements.
+- **Decision:** Keep Kinetic Kindness as the research lead because it best matches the white-dominant, expressive, purposeful-motion, ownable brief; preserve Living Record as the legitimate evidence-led alternative. This is not the production brand lock, and no hybrid was created.
+- **Artifacts:** `docs/redesign/finalist-proof-round.md`, `src/app/design-lab/brand-directions/_finalist-data.ts`, `/design-lab/brand-directions/finalists`, evaluation links, and `src/scripts/verify-redesign-finalist-proof.ts`.
+- **Verification:** Agent Browser completed both finalists at `1440 x 900` and `390 x 844` through cover disclosure, empty-note validation, valid approval, and parent preview. All four runs had one H1, one active finalist, correct direct rendering, labelled form control, expected validation and completion states, zero page/table overflow, zero undersized visible controls, zero axe violations, and zero incomplete findings. The finalist verifier, six-system brand verifier, focused ESLint, full TypeScript, 347-route/30-alias compatibility, diff hygiene, and the production build pass; the build retains only the documented middleware, CSS `@page`, and authenticated dynamic-prerender warnings.
+- **Parity:** The slice adds isolated design-lab data, routes, styling, decision documentation, and verification only. No production component, query, mutation, database row, permission, legacy alias, native/parent payload, route behavior, or restored capability changed.
+- **Evidence boundary:** Product-owner selection, operator comprehension, recognition/fame, trademark, font licensing/fallback, illustration/photography production, sound, dark mode, RTL/200% text, assistive technology, and production migration remain open gates.
+- **Next action:** Explicitly select Kinetic Kindness or Living Record, then codify the chosen brand/design constitution before creating production tokens or components.
+- **Progress earned:** 0 percentage points. The bounded final proof is complete, but the irreversible brand selection still gates the remaining Phase 3 credit; total remains 55%.
 
 ## Work Log Template
 
